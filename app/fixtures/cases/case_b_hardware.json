@@ -1,0 +1,87 @@
+{
+  "caseId": "case_b",
+  "label": "硬件文案 · 智能穿戴众筹",
+  "industry": "智能穿戴 / 硬件众筹",
+  "scene": "将智能穿戴硬件的卖点转成面向海外众筹支持者的英文商品文案。",
+  "text": "自研高密度堆料主板，极限压榨功耗，支持底层协议调试。",
+  "searchQuery": "嵌入式 PCB 低功耗 调试",
+  "searchAliases": {
+    "T1": ["堆料", "元器件", "主板"],
+    "T2": ["功耗", "续航", "低功耗"],
+    "T3": ["底层调试", "协议调试", "硬件调试"]
+  },
+  "defaultAudienceId": "b_backer",
+  "levels": ["plain", "genre"],
+  "audiences": [
+    {
+      "id": "b_backer",
+      "label": "海外硬件众筹支持者",
+      "recommendedLevel": "plain",
+      "constraint": "生成可直接阅读的英文众筹短文案。强调自研高密度主板、元件用料、功耗优化和底层协议调试。只描述设计目标，不承诺功耗水平、续航或开源。",
+      "personaSetId": "b_backer"
+    }
+  ],
+  "terms": [
+    {"id": "T1", "surface": "堆料", "kind": "context", "keyPointIds": ["KP1"]},
+    {"id": "T2", "surface": "极限压榨功耗", "kind": "claim", "keyPointIds": ["KP2"]},
+    {"id": "T3", "surface": "底层协议调试", "kind": "context", "keyPointIds": ["KP3"]}
+  ],
+  "keyPoints": [
+    {"id": "KP1", "text": "主板为自研、高密度设计，并强调元件用料", "short": "自研高密度主板"},
+    {"id": "KP2", "text": "进行了功耗优化", "short": "功耗优化"},
+    {"id": "KP3", "text": "支持底层协议调试", "short": "底层协议调试"}
+  ],
+  "decisions": [
+    {
+      "id": "DB1", "termId": "T1", "title": "堆料的表达",
+      "choice": "把堆料写成对元件用料的描述，避免 stacking materials",
+      "rationale": "原句表达对主板用料和选型的重视，没有列出具体器件规格。",
+      "evidenceIds": [], "attribution": "editor", "levels": ["plain", "genre"]
+    },
+    {
+      "id": "DB2", "termId": "T2", "title": "功耗声称的边界",
+      "choice": "写 optimized for power efficiency 或 power-optimized",
+      "rationale": "原文支持设计上的功耗优化，缺少实测数值、对比基准和工况。",
+      "evidenceIds": [], "attribution": "editor", "levels": ["plain", "genre"]
+    },
+    {
+      "id": "DB3", "termId": "T3", "title": "调试功能的边界",
+      "choice": "写 supports low-level protocol debugging",
+      "rationale": "支持协议调试是具体功能，开源、无限制改装和开放全部接口是另外的承诺。",
+      "evidenceIds": [], "attribution": "editor", "levels": ["plain", "genre"]
+    }
+  ],
+  "claimPolicy": {
+    "T2": {
+      "action": "review",
+      "status": "warn",
+      "rule": "性能声称",
+      "reason": "可描述功耗优化。承诺具体续航、功耗或同比降幅前，需要测试数据、工况和对比基准。"
+    }
+  },
+  "fidelityRules": {
+    "KP1": {"all": [["in-house", "in house", "self-developed", "custom"], ["board", "pcb"], ["high-density", "high density"], ["component", "parts"]]},
+    "KP2": {"all": [["power", "energy"], ["optimiz", "optimis", "efficien", "tuned"]]},
+    "KP3": {"all": [["low-level", "low level"], ["protocol"], ["debug"]]}
+  },
+  "forbiddenPatterns": [
+    {
+      "pattern": "\\b(?:open[-\\s]?source|fully hackable|unrestricted (?:modding|access)|supports? (?:full|unrestricted) (?:modding|customization))\\b",
+      "label": "调试承诺", "violates": "KP3", "reason": "原文只声明支持底层协议调试，请删除开源或无条件改装承诺。"
+    },
+    {
+      "pattern": "\\b(?:all[-\\s]?day|multi[-\\s]?day|unlimited) (?:battery|run ?time|use)|\\b\\d+(?:[.,]\\d+)?\\s*[- ]?\\s*(?:hours?|hrs?|h|days?|watts?|milliwatts?|mw|w)\\b|\\d+(?:[.,]\\d+)?\\s*%",
+      "label": "续航或功耗数值", "violates": "KP2", "reason": "原文没有电池续航、用电数值或百分比，请删除量化承诺。"
+    },
+    {
+      "pattern": "\\b(?:best[-\\s]in[-\\s]class|industry[-\\s]leading|lowest(?:\\s+power)?|longest|unbeatable|ultimate|extreme|certified|award[-\\s]winning)\\b",
+      "label": "无依据的比较或认证", "violates": "KP2", "reason": "原文没有对比、认证或奖项依据，请删除绝对化用语和认证承诺。"
+    }
+  ],
+  "flowbackQueries": {
+    "T1": "硬件 堆料 英文 怎么翻译",
+    "T2": "低功耗硬件 续航 测试工况",
+    "T3": "硬件 底层协议调试 开源 区别"
+  },
+  "testEnabled": true
+}

@@ -1,0 +1,229 @@
+{
+  "$defs": {
+    "Judgment": {
+      "additionalProperties": false,
+      "properties": {
+        "keyPointId": {
+          "title": "Keypointid",
+          "type": "string"
+        },
+        "quote": {
+          "title": "Quote",
+          "type": "string"
+        },
+        "verdict": {
+          "enum": [
+            "hit",
+            "missing",
+            "contradicted"
+          ],
+          "title": "Verdict",
+          "type": "string"
+        }
+      },
+      "required": [
+        "keyPointId",
+        "verdict",
+        "quote"
+      ],
+      "title": "Judgment",
+      "type": "object"
+    },
+    "Reader": {
+      "additionalProperties": false,
+      "properties": {
+        "judgments": {
+          "items": {
+            "$ref": "#/$defs/Judgment"
+          },
+          "title": "Judgments",
+          "type": "array"
+        },
+        "personaId": {
+          "title": "Personaid",
+          "type": "string"
+        },
+        "personaLabel": {
+          "title": "Personalabel",
+          "type": "string"
+        },
+        "retelling": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Retelling"
+        },
+        "simulated": {
+          "const": true,
+          "default": true,
+          "title": "Simulated",
+          "type": "boolean"
+        },
+        "status": {
+          "default": "ok",
+          "enum": [
+            "ok",
+            "failed"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "version": {
+          "enum": [
+            "literal",
+            "selected"
+          ],
+          "title": "Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "personaId",
+        "personaLabel",
+        "version"
+      ],
+      "title": "Reader",
+      "type": "object"
+    },
+    "Tally": {
+      "additionalProperties": false,
+      "properties": {
+        "hit": {
+          "title": "Hit",
+          "type": "integer"
+        },
+        "valid": {
+          "title": "Valid",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "hit",
+        "valid"
+      ],
+      "title": "Tally",
+      "type": "object"
+    },
+    "TestSummary": {
+      "additionalProperties": false,
+      "properties": {
+        "literal": {
+          "$ref": "#/$defs/Tally"
+        },
+        "selected": {
+          "$ref": "#/$defs/Tally"
+        }
+      },
+      "required": [
+        "literal",
+        "selected"
+      ],
+      "title": "TestSummary",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "completed": {
+      "title": "Completed",
+      "type": "integer"
+    },
+    "expected": {
+      "title": "Expected",
+      "type": "integer"
+    },
+    "judgeError": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Judgeerror"
+    },
+    "keyPointIds": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Keypointids",
+      "type": "array"
+    },
+    "level": {
+      "enum": [
+        "literal",
+        "plain",
+        "light",
+        "balanced",
+        "technical",
+        "genre",
+        "single"
+      ],
+      "title": "Level",
+      "type": "string"
+    },
+    "mode": {
+      "enum": [
+        "live",
+        "replay",
+        "degraded",
+        "dev_stub"
+      ],
+      "title": "Mode",
+      "type": "string"
+    },
+    "provenance": {
+      "enum": [
+        "real_run",
+        "dev_stub"
+      ],
+      "title": "Provenance",
+      "type": "string"
+    },
+    "readers": {
+      "items": {
+        "$ref": "#/$defs/Reader"
+      },
+      "title": "Readers",
+      "type": "array"
+    },
+    "revision": {
+      "title": "Revision",
+      "type": "integer"
+    },
+    "runId": {
+      "title": "Runid",
+      "type": "string"
+    },
+    "summary": {
+      "$ref": "#/$defs/TestSummary"
+    },
+    "testId": {
+      "title": "Testid",
+      "type": "string"
+    }
+  },
+  "required": [
+    "testId",
+    "runId",
+    "revision",
+    "level",
+    "keyPointIds",
+    "expected",
+    "completed",
+    "readers",
+    "summary",
+    "mode",
+    "provenance"
+  ],
+  "title": "TestResult",
+  "type": "object"
+}

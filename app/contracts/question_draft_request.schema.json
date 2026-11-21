@@ -1,0 +1,97 @@
+{
+  "$defs": {
+    "QuestionSource": {
+      "additionalProperties": false,
+      "properties": {
+        "keyPointId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Keypointid"
+        },
+        "kind": {
+          "enum": [
+            "reader_misreading",
+            "manual",
+            "example",
+            "guard_gap"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "testId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Testid"
+        },
+        "text": {
+          "maxLength": 1000,
+          "minLength": 1,
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "text"
+      ],
+      "title": "QuestionSource",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "caseId": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Caseid"
+    },
+    "runId": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Runid"
+    },
+    "source": {
+      "$ref": "#/$defs/QuestionSource"
+    },
+    "termIds": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Termids",
+      "type": "array"
+    }
+  },
+  "required": [
+    "source"
+  ],
+  "title": "QuestionDraftRequest",
+  "type": "object"
+}

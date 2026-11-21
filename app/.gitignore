@@ -1,0 +1,14 @@
+.venv/
+.venv-win/
+var/
+web/node_modules/
+web/tsconfig.tsbuildinfo
+server/.pytest_cache/
+**/__pycache__/
+.env
+
+.env.*
+!.env.example
+*.log
+*.sqlite3*
+.DS_Store

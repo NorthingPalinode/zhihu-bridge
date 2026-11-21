@@ -1,0 +1,92 @@
+{
+  "note": "功效声称词表（V6 §6.7，团队维护）。zh 用于扫描中文原文；各语言代码（en/ja/ko/es/pt/id/th/vi/de/fr/ar/ru）用于扫描对应目标语言候选稿，zh 字段指向原文中对应的功效词（若存在）。",
+  "zh": ["祛湿", "清热解毒", "清热", "解毒", "上火", "去火", "排毒"],
+  "en": [
+    {"pattern": "\\bdetox\\w*", "zh": "解毒"},
+    {"pattern": "\\bcures?\\b|\\bcuring\\b", "zh": null},
+    {"pattern": "\\btreat(s|ing|ment)?\\b", "zh": null},
+    {"pattern": "\\bheal(s|ing)?\\b", "zh": null},
+    {"pattern": "anti-inflammatory", "zh": null},
+    {"pattern": "boost(s|ing)? (your )?immunity", "zh": null},
+    {"pattern": "clears? (away )?heat|heat-clearing", "zh": "清热解毒"},
+    {"pattern": "(remov\\w*|expel\\w*|clear\\w*) dampness|dampness-(removing|clearing|expelling)", "zh": "祛湿"},
+    {"pattern": "internal heat", "zh": "上火"}
+  ],
+  "ja": [
+    {"pattern": "デトックス|解毒|排毒", "zh": "解毒"},
+    {"pattern": "清熱|熱を冷ます|熱を下げる", "zh": "清热解毒"},
+    {"pattern": "除湿効果|湿気を取り除く|祛湿", "zh": "祛湿"},
+    {"pattern": "のぼせを治|炎症を抑える|抗炎症", "zh": "上火"},
+    {"pattern": "治療|治癒|完治|病気を治|免疫力を高め", "zh": null}
+  ],
+  "ko": [
+    {"pattern": "디톡스|해독|독소\\s*배출", "zh": "解毒"},
+    {"pattern": "열을\\s*내리|청열|해열", "zh": "清热解毒"},
+    {"pattern": "습기\\s*제거|제습\\s*효능", "zh": "祛湿"},
+    {"pattern": "속열|화기\\s*완화|항염", "zh": "上火"},
+    {"pattern": "치료|완치|치유|면역력\\s*강화", "zh": null}
+  ],
+  "es": [
+    {"pattern": "\\bdesintoxic\\w*|\\bdetox\\w*", "zh": "解毒"},
+    {"pattern": "\\bcura(r|s|ndo)?\\b|\\bsana(r|s|ndo)?\\b", "zh": null},
+    {"pattern": "\\btrata(r|miento)\\b|\\bantiinflamatori\\w*", "zh": null},
+    {"pattern": "refuerza\\w* la inmunidad|fortalece\\w* el sistema inmune", "zh": null},
+    {"pattern": "elimina\\w* el calor|baja\\w* el calor interno", "zh": "清热解毒"},
+    {"pattern": "elimina\\w* la humedad", "zh": "祛湿"},
+    {"pattern": "calor interno", "zh": "上火"}
+  ],
+  "pt": [
+    {"pattern": "\\bdesintoxic\\w*|\\bdetox\\w*", "zh": "解毒"},
+    {"pattern": "\\bcura(r|s|ndo)?\\b|\\btrata(r|mento)\\b", "zh": null},
+    {"pattern": "\\banti-inflamat[oó]ri\\w*|fortalece\\w* a imunidade", "zh": null},
+    {"pattern": "elimina\\w* o calor|alivia\\w* o calor interno", "zh": "清热解毒"},
+    {"pattern": "elimina\\w* a umidade", "zh": "祛湿"},
+    {"pattern": "calor interno", "zh": "上火"}
+  ],
+  "id": [
+    {"pattern": "\\bdetoks\\w*|\\bdetox\\w*|menetralisir racun|membuang racun", "zh": "解毒"},
+    {"pattern": "\\bmenyembuhkan\\b|\\bmengobati\\b|\\banti-?inflamasi\\b", "zh": null},
+    {"pattern": "meningkatkan (daya tahan|imunitas)", "zh": null},
+    {"pattern": "meredakan panas dalam|panas dalam", "zh": "上火"},
+    {"pattern": "menghilangkan kelembapan|mengusir lembap", "zh": "祛湿"}
+  ],
+  "th": [
+    {"pattern": "ดีท็อกซ์|ล้างพิษ|ขับสารพิษ", "zh": "解毒"},
+    {"pattern": "แก้ร้อนใน|ดับร้อน|ร้อนใน", "zh": "上火"},
+    {"pattern": "ขับความชื้น|ลดความชื้นในร่างกาย", "zh": "祛湿"},
+    {"pattern": "รักษาโรค|บำบัดโรค|ต้านการอักเสบ|เสริมภูมิคุ้มกัน", "zh": null}
+  ],
+  "vi": [
+    {"pattern": "giải độc|thải độc|\\bdetox\\w*", "zh": "解毒"},
+    {"pattern": "thanh nhiệt|mát gan", "zh": "清热解毒"},
+    {"pattern": "trừ thấp|khử ẩm", "zh": "祛湿"},
+    {"pattern": "nóng trong|giảm nóng trong", "zh": "上火"},
+    {"pattern": "chữa bệnh|điều trị|kháng viêm|tăng cường miễn dịch", "zh": null}
+  ],
+  "de": [
+    {"pattern": "\\bentgift\\w*|\\bdetox\\w*", "zh": "解毒"},
+    {"pattern": "\\bheil(t|en|ung)?\\b|\\bbehandl\\w*", "zh": null},
+    {"pattern": "entzündungshemmend|stärkt das immunsystem", "zh": null},
+    {"pattern": "leitet hitze ab|innere hitze", "zh": "清热解毒"},
+    {"pattern": "entfernt feuchtigkeit|gegen feuchtigkeit im körper", "zh": "祛湿"}
+  ],
+  "fr": [
+    {"pattern": "\\bd[ée]tox\\w*|\\bd[ée]sintox\\w*", "zh": "解毒"},
+    {"pattern": "\\bgu[ée]ri\\w*|\\bsoigne\\w*|\\btraite(ment|r)?\\b", "zh": null},
+    {"pattern": "anti-inflammatoire|renforce\\w* l'immunit[ée]", "zh": null},
+    {"pattern": "chasse\\w* la chaleur|chaleur interne", "zh": "清热解毒"},
+    {"pattern": "chasse\\w* l'humidit[ée]|draine\\w* l'humidit[ée]", "zh": "祛湿"}
+  ],
+  "ar": [
+    {"pattern": "إزالة السموم|تنظيف السموم|ديتوكس", "zh": "解毒"},
+    {"pattern": "يعالج|علاج|يشفي|شفاء|مضاد للالتهاب|يعزز المناعة", "zh": null},
+    {"pattern": "يخفض الحرارة الداخلية|الحرارة الداخلية", "zh": "上火"},
+    {"pattern": "يزيل الرطوبة|طرد الرطوبة", "zh": "祛湿"}
+  ],
+  "ru": [
+    {"pattern": "детокс\\w*|вывод\\w* токсин\\w*|очищ\\w* от токсин\\w*", "zh": "解毒"},
+    {"pattern": "\\bлеч(ит|ить|ение)\\b|исцел\\w*|противовоспалительн\\w*|укрепл\\w* иммунитет", "zh": null},
+    {"pattern": "снима\\w* внутренний жар|внутренний жар", "zh": "上火"},
+    {"pattern": "вывод\\w* сырость|избавля\\w* от сырости", "zh": "祛湿"}
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "kind": "question_recommendations",
+  "query": "仙侠 渡劫 雷劫 翻译 英文",
+  "fetchedAt": "2026-11-19T13:35:27.746Z",
+  "provenance": "real_run",
+  "origin": "Day 0 实测：zhihu-cli 0.6.3 `question recommend`（refs/fixtures/day0_zhihu_search_samples.json · P1_qrec_A），原样保留标题与链接",
+  "items": [
+    {
+      "title": "小时候跑 800 米体测像渡劫，长大后反倒主动跑 10 公里上瘾，这种反差原因是什么？",
+      "url": "https://www.zhihu.com/question/2104548621190423196"
+    },
+    {
+      "title": "穿越到修仙界做一个法拉第笼是不是可以挡住所有雷劫？",
+      "url": "https://www.zhihu.com/question/2075607895882973368"
+    },
+    {
+      "title": "得了HPV51怎么能好，求解，渡劫中？",
+      "url": "https://www.zhihu.com/question/1906619668925506462"
+    },
+    {
+      "title": "劫是什么？劫是恶果，还是生慧的准备？渡劫，是反抗恶果，还是精进的历练？",
+      "url": "https://www.zhihu.com/question/2090890028721369783"
+    },
+    {
+      "title": "网文仙侠迭代成功，玄幻却未诞生新版本，你认为玄幻的下一个版本是什么？",
+      "url": "https://www.zhihu.com/question/1937403863943603166"
+    }
+  ]
+}

@@ -1,0 +1,1178 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zhihu Bridge 原型</title>
+<link rel="icon" type="image/svg+xml" href="./assets/zhihu-bridge-mark.svg">
+<style>
+:root{
+  --bg:#F4F5F7; --bg-2:#ECEEF2; --panel:#FFFFFF; --panel-2:#F9FAFB;
+  --ink:#12151C; --ink-2:#465063; --ink-3:#8B93A3; --line:#E4E7EC; --line-2:#EEF0F3;
+  --brand:#0A62F5; --brand-soft:#EAF1FE;
+  --amber:#C27406; --amber-soft:#FDF3E1;
+  --red:#D93636; --red-soft:#FDECEC;
+  --green:#0C9A6A; --green-soft:#E5F6EF;
+  --violet:#7552F2; --violet-soft:#F1EDFE;
+  --teal:#0E94A3; --teal-soft:#E4F5F6;
+  --slate:#6B7686;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 10px 28px -14px rgba(16,24,40,.14);
+  --shadow-lg:0 30px 70px -24px rgba(16,24,40,.30);
+  --radius:18px;
+  --serif:"Source Serif 4","Noto Serif SC","Source Han Serif SC","Songti SC","STSong",serif;
+  --sans:"Inter","PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,sans-serif;
+  --mono:"JetBrains Mono","SFMono-Regular",Menlo,Consolas,monospace;
+}
+[data-theme="dark"]{
+  --bg:#0E1116; --bg-2:#161A21; --panel:#151920; --panel-2:#1A1F27;
+  --ink:#EDF0F5; --ink-2:#B3BBC8; --ink-3:#7D8696; --line:#262C36; --line-2:#20252E;
+  --brand:#4D8DFF; --brand-soft:#16233D;
+  --amber:#F0A63A; --amber-soft:#2C2214;
+  --red:#FF6B6B; --red-soft:#311A1C;
+  --green:#3CCB95; --green-soft:#132A22;
+  --violet:#9C84FF; --violet-soft:#211C38;
+  --teal:#3BC3D1; --teal-soft:#122A2E;
+  --slate:#97A1B2;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 28px -14px rgba(0,0,0,.6);
+  --shadow-lg:0 30px 70px -24px rgba(0,0,0,.7);
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased;font-size:15px;transition:background .3s,color .3s;min-height:100vh}
+button{font:inherit;color:inherit}
+kbd{font-family:var(--mono);font-size:11px;padding:1px 5px;border-radius:5px;border:1px solid var(--line);background:var(--panel-2);color:var(--ink-3)}
+.serif{font-family:var(--serif)}
+
+/* ---------- Topbar ---------- */
+.topbar{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:12px 28px;background:color-mix(in srgb,var(--bg) 84%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid transparent}
+.state-work .topbar{border-bottom-color:var(--line)}
+.brand{display:flex;align-items:center;gap:10px;font-weight:650;font-size:16px;cursor:pointer;user-select:none}
+.brand small{color:var(--ink-3);font-weight:500;font-size:13px}
+.logo{display:block;width:32px;height:32px;flex:none}
+.work-only{display:none!important}
+.state-work .work-only{display:flex!important}
+.seg{display:flex;background:var(--bg-2);border-radius:11px;padding:3px;gap:2px}
+.seg button{border:0;background:transparent;padding:6px 12px;border-radius:8px;font-size:13px;color:var(--ink-2);cursor:pointer;display:flex;gap:6px;align-items:center}
+.seg button.on{background:var(--panel);color:var(--ink);box-shadow:var(--shadow)}
+.stepper{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-3);margin-left:8px}
+.stepper .st{display:flex;align-items:center;gap:6px;padding:4px 8px;border-radius:999px;transition:all .3s}
+.stepper .st i{width:7px;height:7px;border-radius:50%;background:var(--line);transition:all .3s}
+.stepper .st.done{color:var(--ink-2)} .stepper .st.done i{background:var(--green)}
+.stepper .st.cur{color:var(--brand);background:var(--brand-soft)} .stepper .st.cur i{background:var(--brand);box-shadow:0 0 0 4px color-mix(in srgb,var(--brand) 25%,transparent)}
+.spacer{flex:1}
+.tool{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:6px 10px;font-size:13px;cursor:pointer;display:flex;gap:7px;align-items:center;color:var(--ink-2);transition:all .2s}
+.tool:hover{border-color:var(--ink-3);color:var(--ink)}
+.tool.on{border-color:var(--brand);color:var(--brand);background:var(--brand-soft)}
+.tool[disabled]{opacity:.4;pointer-events:none}
+.livechip{font-size:12px;color:var(--ink-3);display:flex;align-items:center;gap:6px}
+.livechip i{width:7px;height:7px;border-radius:50%;background:var(--amber)}
+
+/* ---------- Hero ---------- */
+.hero{min-height:calc(100vh - 60px);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 16px 90px;text-align:center;transition:opacity .45s,transform .45s}
+.hero.leaving{opacity:0;transform:translateY(-18px) scale(.98)}
+.state-work .hero{display:none}
+.eyebrow{font-size:13px;letter-spacing:.14em;color:var(--brand);font-weight:600;margin-bottom:18px}
+.hero h1{font-family:var(--serif);font-size:clamp(34px,5.2vw,62px);line-height:1.2;margin:0 0 16px;font-weight:700;letter-spacing:.02em}
+.hero .lead{color:var(--ink-2);font-size:18px;max-width:660px;line-height:1.75;margin:0 0 38px}
+.composer{width:min(780px,100%);background:var(--panel);border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow-lg);padding:22px 22px 16px;text-align:left;transition:box-shadow .3s,border-color .3s}
+.composer:focus-within{border-color:color-mix(in srgb,var(--brand) 50%,var(--line))}
+.composer textarea{width:100%;border:0;outline:0;resize:none;font-family:var(--serif);font-size:22px;line-height:1.7;background:transparent;color:var(--ink);min-height:92px}
+.composer textarea::placeholder{color:var(--ink-3)}
+.composer-foot{display:flex;align-items:center;gap:10px;justify-content:space-between;flex-wrap:wrap;margin-top:6px}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:var(--panel-2);border-radius:999px;padding:7px 12px;font-size:13px;color:var(--ink-2);cursor:pointer;display:inline-flex;gap:7px;align-items:center;transition:all .2s}
+.chip:hover{border-color:var(--brand);color:var(--brand)}
+.btn{border:0;border-radius:12px;padding:11px 18px;font-weight:600;font-size:14px;cursor:pointer;display:inline-flex;gap:8px;align-items:center;transition:transform .15s,box-shadow .2s,opacity .2s}
+.btn:active{transform:scale(.98)}
+.btn-primary{background:var(--brand);color:#fff;box-shadow:0 8px 20px -8px color-mix(in srgb,var(--brand) 70%,transparent)}
+.btn-primary:hover{box-shadow:0 12px 26px -8px color-mix(in srgb,var(--brand) 80%,transparent)}
+.btn-ghost{background:var(--bg-2);color:var(--ink)}
+.btn[disabled]{opacity:.45;pointer-events:none}
+.hero-foot{margin-top:28px;font-size:12px;color:var(--ink-3);display:flex;gap:16px;flex-wrap:wrap;justify-content:center}
+
+/* ---------- Workbench ---------- */
+.workbench{display:none;grid-template-columns:minmax(0,28fr) minmax(0,44fr) minmax(0,28fr);gap:20px;padding:22px 28px 60px;max-width:1760px;margin:0 auto;align-items:start}
+.state-work .workbench{display:grid}
+.col{display:flex;flex-direction:column;gap:20px;min-width:0}
+.workbench.enter .col-left{animation:inL .75s cubic-bezier(.2,.8,.2,1) both}
+.workbench.enter .col-mid{animation:inM .6s cubic-bezier(.2,.8,.2,1) both}
+.workbench.enter .col-right{animation:inR .75s cubic-bezier(.2,.8,.2,1) both}
+@keyframes inL{from{opacity:0;transform:translateX(90px) scale(.97)}}
+@keyframes inR{from{opacity:0;transform:translateX(-90px) scale(.97)}}
+@keyframes inM{from{opacity:0;transform:scale(.96)}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px 22px;transition:opacity .5s,filter .5s,box-shadow .5s,border-color .5s;position:relative}
+.workbench.spot .panel:not(.active){opacity:.3;filter:blur(1.6px) saturate(.4)}
+.panel.active{border-color:color-mix(in srgb,var(--brand) 55%,var(--line));box-shadow:0 0 0 4px color-mix(in srgb,var(--brand) 10%,transparent),0 22px 50px -20px color-mix(in srgb,var(--brand) 45%,transparent)}
+.panel-h{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.step-no{font-family:var(--mono);font-size:12px;color:var(--ink-3)}
+.panel-h h3{margin:0;font-size:15px;font-weight:650}
+.panel-h .meta{margin-left:auto}
+.meta{font-size:12px;color:var(--ink-3)}
+.demo-tag{font-size:11px;padding:2px 8px;border-radius:999px;background:var(--bg-2);color:var(--ink-3);white-space:nowrap}
+.waiting{display:flex;flex-direction:column;gap:9px}
+.waiting i{display:block;height:10px;border-radius:6px;background:linear-gradient(90deg,var(--bg-2),var(--line-2),var(--bg-2));background-size:200% 100%;animation:shimmer 1.6s infinite}
+.waiting i:nth-child(2){width:80%} .waiting i:nth-child(3){width:55%}
+@keyframes shimmer{to{background-position:-200% 0}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}}
+@keyframes pop{from{opacity:0;transform:scale(.85)}}
+
+/* source */
+.source-text{font-family:var(--serif);font-size:24px;line-height:1.95;letter-spacing:.02em}
+.src-term{border-radius:6px;padding:1px 2px;transition:background .5s,box-shadow .5s;cursor:default}
+.src-term.on{background:var(--tbg);box-shadow:inset 0 -2px 0 var(--tc)}
+.tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.tag{display:inline-flex;gap:7px;align-items:center;padding:5px 11px;border-radius:999px;font-size:13px;background:var(--tbg);color:var(--tc);animation:pop .4s cubic-bezier(.2,.9,.3,1.2) both;cursor:default}
+.tag b{font-family:var(--serif);font-weight:700}
+.tag span{opacity:.8;font-size:12px}
+.t-culture{--tc:var(--violet);--tbg:var(--violet-soft)}
+.t-jargon{--tc:var(--teal);--tbg:var(--teal-soft)}
+.t-claim{--tc:var(--red);--tbg:var(--red-soft)}
+.t-perf{--tc:var(--amber);--tbg:var(--amber-soft)}
+.note-empty{font-size:13px;color:var(--ink-3);line-height:1.6}
+
+/* evidence */
+.ev{perspective:1400px;margin-bottom:12px;animation:slideIn .55s cubic-bezier(.2,.8,.2,1) both;cursor:pointer}
+@keyframes slideIn{from{opacity:0;transform:translateX(-24px)}}
+.ev-inner{display:grid;transition:transform .75s cubic-bezier(.2,.8,.2,1);transform-style:preserve-3d}
+.ev.flipped .ev-inner{transform:rotateY(180deg)}
+.ev-face{grid-area:1/1;backface-visibility:hidden;-webkit-backface-visibility:hidden;border:1px solid var(--line);border-radius:14px;padding:14px 16px;background:var(--panel-2);transition:border-color .3s,box-shadow .3s}
+.ev-back{transform:rotateY(180deg)}
+.ev.hl .ev-face,.ev.ping .ev-face{border-color:var(--brand);box-shadow:0 0 0 3px color-mix(in srgb,var(--brand) 18%,transparent)}
+.ev-top{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink-3);margin-bottom:6px}
+.ev-top .dot{width:8px;height:8px;border-radius:50%;background:var(--evc)}
+.ev-top .lvl{color:var(--evc);font-weight:600}
+.ev-top .votes{margin-left:auto}
+.ev-title{font-weight:650;font-size:14.5px;line-height:1.5;margin-bottom:6px}
+.ev-sum{font-size:13.5px;line-height:1.65;color:var(--ink-2)}
+.ev-author{font-size:12px;color:var(--ink-3);margin-top:8px;display:flex;justify-content:space-between;gap:8px}
+.ev-flip{color:var(--brand)}
+.dispute{display:inline-flex;gap:5px;align-items:center;font-size:11.5px;color:var(--amber);background:var(--amber-soft);padding:2px 8px;border-radius:999px;font-weight:600}
+.pc{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.pc div{font-size:12.5px;line-height:1.55;padding:8px 10px;border-radius:10px;background:var(--bg-2);color:var(--ink-2)}
+.pc b{display:block;font-size:11.5px;margin-bottom:2px;color:var(--ink)}
+.ev-none{border:1px dashed var(--line);border-radius:14px;padding:16px;color:var(--ink-2);font-size:13.5px;line-height:1.7;background:var(--panel-2)}
+
+/* strategy + bridge */
+.strategy{background:var(--panel-2);border:1px solid var(--line-2);border-radius:14px;padding:14px 16px 10px;margin-bottom:8px}
+.strategy-top{display:flex;align-items:baseline;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.strategy-top .lbl{font-size:12px;color:var(--ink-3)}
+.strategy-top b{font-size:15px}
+.strategy-top .meta{margin-left:auto}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:6px;border-radius:6px;background:linear-gradient(90deg,var(--brand),var(--violet));outline:none;margin:6px 0}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:var(--panel);border:2px solid var(--ink);box-shadow:0 4px 12px rgba(0,0,0,.2);cursor:grab;transition:transform .15s}
+input[type=range]::-webkit-slider-thumb:active{transform:scale(1.15);cursor:grabbing}
+input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:var(--panel);border:2px solid var(--ink);cursor:grab}
+.stops{display:grid;grid-template-columns:repeat(5,1fr);margin-top:6px}
+.stops button{border:0;background:none;font-size:12px;color:var(--ink-3);cursor:pointer;padding:4px 0}
+.stops button:first-child{text-align:left} .stops button:last-child{text-align:right}
+.stops button.on{color:var(--ink);font-weight:600}
+.bridge{display:flex;flex-direction:column;gap:2px;margin:14px 0 16px}
+.b-row{display:grid;grid-template-columns:minmax(92px,auto) minmax(70px,1fr) minmax(0,1.35fr);align-items:end;min-height:60px;--arc:var(--brand)}
+.b-zh{font-family:var(--serif);font-size:19px;font-weight:700;padding:6px 10px;border-radius:10px;justify-self:end;white-space:nowrap;transition:background .25s,box-shadow .25s;cursor:default}
+.b-en{font-size:15.5px;line-height:1.4;padding:6px 10px;border-radius:10px;justify-self:start;transition:background .25s,box-shadow .25s;cursor:default}
+.b-zh.hl,.b-en.hl{background:var(--brand-soft);box-shadow:0 0 0 1px color-mix(in srgb,var(--brand) 40%,transparent)}
+.b-arc{position:relative;height:60px}
+.b-arc svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.b-arc path{fill:none;stroke:var(--arc);stroke-width:2;vector-effect:non-scaling-stroke;transition:stroke .4s,stroke-width .2s}
+.b-row.hl .b-arc path{stroke-width:3.5}
+.b-arc svg.draw{animation:reveal 1s cubic-bezier(.4,0,.2,1) both}
+.b-arc path.dashed{stroke-dasharray:5 5}
+@keyframes reveal{from{clip-path:inset(-30% 100% -30% 0)}to{clip-path:inset(-30% 0 -30% 0)}}
+@keyframes fadeIn{from{opacity:0}}
+.b-arc .end{position:absolute;bottom:9px;width:9px;height:9px;border-radius:50%;background:var(--panel);border:2px solid var(--arc);transition:border-color .4s}
+.b-arc .end.l{left:-4px} .b-arc .end.r{right:-4px}
+.b-arc .mk{position:absolute;left:50%;top:6px;transform:translateX(-50%);width:20px;height:20px;border-radius:50%;background:var(--arc);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:700;box-shadow:0 0 0 4px var(--panel);animation:pop .4s .7s both;transition:background .4s}
+.b-en.swap{animation:swap .5s cubic-bezier(.2,.8,.2,1)}
+@keyframes swap{from{opacity:0;filter:blur(6px);transform:translateX(-8px)}}
+.b-blocked s{color:var(--red);text-decoration-thickness:2px}
+.b-blocked small{display:block;font-size:12px;color:var(--ink-3)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--ink-3);margin-top:-4px;margin-bottom:14px}
+.legend span{display:flex;align-items:center;gap:5px}
+.legend i{width:16px;height:0;border-top:2px solid var(--c)}
+.legend i.d{border-top-style:dashed}
+
+.tx-grid{display:grid;grid-template-columns:1fr;gap:14px}
+.duel-on .tx-grid{grid-template-columns:1fr 1fr}
+.tx-card{border:1px solid var(--line);border-radius:14px;padding:16px 18px;background:var(--panel-2);min-width:0}
+.tx-label{font-size:12px;color:var(--ink-3);display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
+.tx-label .live{width:7px;height:7px;border-radius:50%;background:var(--green)}
+.tx-text{font-size:20px;line-height:1.7;letter-spacing:-.005em;min-height:68px}
+.w{display:inline-block}
+.w.fresh{animation:wIn .55s cubic-bezier(.2,.8,.2,1) both}
+@keyframes wIn{from{opacity:0;filter:blur(7px);transform:translateY(7px)}}
+.tterm{border-radius:6px;transition:background .25s,box-shadow .25s;box-shadow:inset 0 -1.5px 0 color-mix(in srgb,var(--brand) 35%,transparent)}
+.tterm.hl{background:var(--brand-soft);box-shadow:inset 0 -2px 0 var(--brand)}
+.tnote{color:var(--ink-3);font-style:italic}
+.literal{margin-top:12px;padding-top:12px;border-top:1px dashed var(--line);font-size:13px;color:var(--ink-3);line-height:1.6}
+.literal b{font-weight:600;color:var(--ink-2);margin-right:6px}
+.duel-card{display:none;border-color:color-mix(in srgb,var(--red) 30%,var(--line))}
+.duel-on .duel-card{display:block;animation:fadeUp .5s both}
+.duel-card .tx-text{font-size:18px}
+.flag{background:var(--red-soft);box-shadow:inset 0 -2px 0 var(--red);border-radius:4px;position:relative;cursor:help}
+.flag::after{content:attr(data-tip);position:absolute;left:0;bottom:calc(100% + 8px);background:var(--ink);color:var(--bg);font-size:12px;line-height:1.5;padding:6px 9px;border-radius:8px;width:max-content;max-width:240px;opacity:0;pointer-events:none;transform:translateY(4px);transition:all .2s;z-index:5;font-style:normal}
+.flag:hover::after{opacity:1;transform:none}
+.duel-sum{margin-top:12px;font-size:12.5px;color:var(--red);font-weight:600}
+.annos{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;margin-top:14px}
+.anno{border:1px solid color-mix(in srgb,var(--violet) 35%,var(--line));background:var(--violet-soft);border-radius:12px;padding:12px 14px;animation:fadeUp .5s both}
+.anno h4{margin:0 0 2px;font-size:14px}
+.anno .zh{font-family:var(--serif);font-size:13px;color:var(--violet);margin-bottom:6px}
+.anno p{margin:0;font-size:12.5px;line-height:1.6;color:var(--ink-2)}
+.anno .src{margin-top:8px;font-size:11.5px;color:var(--ink-3)}
+
+/* guard */
+.g-list{display:flex;flex-direction:column}
+.g-item{display:grid;grid-template-columns:30px 1fr;gap:12px;padding:13px 0;border-top:1px solid var(--line-2);animation:fadeUp .45s both}
+.g-item:first-child{border-top:0;padding-top:2px}
+.g-icon{width:28px;height:28px;border-radius:9px;display:grid;place-items:center;font-size:13px;font-weight:700}
+.g-block .g-icon{background:var(--red-soft);color:var(--red)}
+.g-warn .g-icon{background:var(--amber-soft);color:var(--amber)}
+.g-ok .g-icon{background:var(--green-soft);color:var(--green)}
+.g-info .g-icon{background:var(--brand-soft);color:var(--brand)}
+.g-title{font-weight:600;font-size:14.5px;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.g-map{font-size:13px;color:var(--ink-2);margin-top:3px}
+.g-map .zh{font-family:var(--serif)}
+.strike{background:linear-gradient(var(--red),var(--red)) no-repeat 0 58%/0% 2px;animation:strike .6s .35s forwards;color:var(--red)}
+@keyframes strike{to{background-size:100% 2px}}
+.g-reason{color:var(--ink-2);font-size:13.5px;line-height:1.65;margin-top:4px}
+.g-ev{font-size:12px;color:var(--brand);cursor:pointer;margin-top:4px;display:inline-block;border:0;background:none;padding:0}
+.g-form{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.g-form input{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:9px;padding:7px 10px;font:inherit;font-size:13px;min-width:0}
+.g-form input.h{width:90px} .g-form input.c{flex:1;min-width:140px}
+.g-foot{margin-top:12px;font-size:12px;color:var(--ink-3);display:flex;gap:6px;align-items:center}
+
+/* test */
+.kps{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.kp{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;line-height:1.5;cursor:pointer;padding:6px 8px;border-radius:10px;transition:background .2s}
+.kp:hover{background:var(--bg-2)}
+.kp input{display:none}
+.kp-box{width:16px;height:16px;border-radius:5px;border:1.5px solid var(--ink-3);flex:none;margin-top:2px;display:grid;place-items:center;transition:all .2s}
+.kp input:checked + .kp-box{background:var(--brand);border-color:var(--brand)}
+.kp input:checked + .kp-box::after{content:"";width:8px;height:4px;border-left:2px solid #fff;border-bottom:2px solid #fff;transform:rotate(-45deg) translate(1px,-1px)}
+.kp-n{font-family:var(--mono);font-size:11.5px;color:var(--ink-3);margin-top:2px}
+.kp input:not(:checked) ~ .kp-t{color:var(--ink-3);text-decoration:line-through}
+.sub-h{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink-3);margin:4px 0 8px}
+.ai-chip{font-size:11px;color:var(--brand);background:var(--brand-soft);padding:1px 7px;border-radius:999px}
+.run-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.run-row .meta{line-height:1.5}
+.stale{font-size:12.5px;background:var(--amber-soft);color:var(--amber);border-radius:10px;padding:8px 12px;margin-bottom:12px;display:flex;gap:8px;align-items:center;justify-content:space-between;animation:fadeUp .3s both}
+.stale button{border:0;background:none;color:inherit;font-weight:600;cursor:pointer;text-decoration:underline}
+.p-card{border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:10px;background:var(--panel-2);animation:fadeUp .4s both}
+.p-head{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.avatar{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:13px;color:#fff;flex:none}
+.p-head b{font-size:14px;display:block}
+.p-head small{font-size:12px;color:var(--ink-3)}
+.react{margin-left:auto;font-size:11.5px;padding:2px 9px;border-radius:999px;font-weight:600;white-space:nowrap;animation:pop .3s both}
+.r-pos{background:var(--green-soft);color:var(--green)}
+.r-mid{background:var(--amber-soft);color:var(--amber)}
+.r-neg{background:var(--red-soft);color:var(--red)}
+.p-line{display:grid;grid-template-columns:38px 1fr;gap:8px;font-size:13.5px;line-height:1.6;padding:4px 0}
+.vtag{font-size:11px;color:var(--ink-3);padding-top:3px}
+.p-line.tr .vtag{color:var(--brand);font-weight:600}
+.rt{color:var(--ink-2);font-style:italic;min-height:21px}
+.reading .rt{background:linear-gradient(90deg,var(--bg-2),var(--line-2),var(--bg-2));background-size:200% 100%;animation:shimmer 1.4s infinite;border-radius:6px;color:transparent}
+.mis{background:var(--amber-soft);color:var(--amber);box-shadow:inset 0 -2px 0 var(--amber);border-radius:3px;padding:0 1px;font-style:normal}
+.mis-tag{font-size:10.5px;color:var(--amber);font-weight:700;font-style:normal;margin-left:4px;white-space:nowrap}
+.imm{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--ink-3);margin-top:6px}
+.imm i{width:7px;height:7px;border-radius:50%;background:var(--line)}
+.imm i.on{background:var(--violet)}
+.score{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;border-radius:14px;padding:16px;background:var(--bg-2);margin:14px 0 12px;animation:fadeUp .5s both}
+.s-col small{display:block;font-size:12px;color:var(--ink-3);margin-bottom:4px}
+.s-col b{font-size:34px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.s-col span{display:block;font-size:12px;color:var(--ink-3);margin-top:2px}
+.s-col.hi b{color:var(--brand)}
+.s-arrow{font-size:20px;color:var(--ink-3)}
+table.mx{width:100%;border-collapse:collapse;font-size:12.5px;animation:fadeUp .5s both}
+table.mx th{font-weight:600;color:var(--ink-3);text-align:center;padding:6px 4px;font-family:var(--mono);font-size:11.5px}
+table.mx th:first-child,table.mx td:first-child{text-align:left}
+table.mx td{padding:7px 4px;border-top:1px solid var(--line-2);text-align:center;white-space:nowrap}
+table.mx .off{opacity:.3}
+.mxc{display:inline-flex;gap:4px;align-items:center}
+.mxc span{width:20px;height:20px;border-radius:6px;display:inline-grid;place-items:center;font-size:11px;font-weight:700;animation:pop .35s both}
+.mxc .y{background:var(--green-soft);color:var(--green)}
+.mxc .n{background:var(--red-soft);color:var(--red)}
+.mxc em{color:var(--ink-3);font-style:normal;font-size:10px}
+.disclaimer{font-size:11.5px;color:var(--ink-3);margin-top:12px;line-height:1.6}
+
+/* delivery */
+.video{position:relative;aspect-ratio:16/9;border-radius:14px;overflow:hidden;background:radial-gradient(120% 90% at 30% 20%,#3b3466 0%,#141828 55%,#07080d 100%);display:flex;flex-direction:column;justify-content:flex-end;padding:16px 18px;color:#fff}
+.video::before{content:"";position:absolute;inset:0;background:radial-gradient(60% 40% at 70% 30%,rgba(140,170,255,.25),transparent 70%)}
+.video .tc{position:absolute;top:12px;left:14px;font-family:var(--mono);font-size:11px;opacity:.7}
+.video .play{position:absolute;top:50%;left:50%;transform:translate(-50%,-70%);width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.14);display:grid;place-items:center;backdrop-filter:blur(6px)}
+.sub-zh{position:relative;font-family:var(--serif);font-size:13px;opacity:.75;text-align:center;margin-bottom:4px}
+.sub-en{position:relative;font-size:15px;line-height:1.45;text-align:center;text-shadow:0 1px 6px rgba(0,0,0,.6)}
+.pcard{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--panel-2)}
+.pcard .img{height:120px;background:linear-gradient(135deg,var(--c1),var(--c2));display:flex;align-items:flex-end;padding:12px 14px;color:#fff;font-weight:700;font-size:18px;letter-spacing:.01em}
+.pcard .body{padding:14px 16px;font-size:14px;line-height:1.65;color:var(--ink-2)}
+.pcard ul{margin:0;padding-left:18px}
+.pcard li{margin:3px 0}
+.attr{display:flex;align-items:center;gap:10px;margin-top:12px;padding:10px 12px;border-radius:12px;border:1px solid var(--line);font-size:12.5px;transition:all .4s}
+.attr .avatar{width:26px;height:26px;font-size:11px}
+.attr .who{flex:1;min-width:0;line-height:1.45}
+.attr .who b{display:block;font-size:12.5px}
+.attr .who span{color:var(--ink-3)}
+.pill{font-size:11.5px;padding:3px 9px;border-radius:999px;font-weight:600;white-space:nowrap}
+.pill.pending{background:var(--amber-soft);color:var(--amber)}
+.pill.ok{background:var(--green-soft);color:var(--green)}
+.attr.glow{animation:glow 1.6s ease-out}
+@keyframes glow{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--green) 60%,transparent);border-color:var(--green)}100%{box-shadow:0 0 0 14px transparent}}
+.link-btn{border:0;background:none;color:var(--brand);font-size:12.5px;cursor:pointer;font-weight:600;padding:0;white-space:nowrap}
+
+/* sheet (answerer) */
+.backdrop{position:fixed;inset:0;background:rgba(8,10,16,.38);backdrop-filter:blur(3px);opacity:0;pointer-events:none;transition:opacity .4s;z-index:60}
+.backdrop.on{opacity:1;pointer-events:auto}
+.sheet{position:fixed;top:0;right:0;bottom:0;width:min(1080px,100%);background:var(--bg);z-index:61;transform:translateX(104%);transition:transform .6s cubic-bezier(.2,.8,.2,1);overflow-y:auto;box-shadow:var(--shadow-lg);border-left:1px solid var(--line)}
+.sheet.on{transform:none}
+.sheet-top{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:12px;padding:16px 28px;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);flex-wrap:wrap}
+.sheet-top h2{margin:0;font-size:17px}
+.sheet-body{padding:24px 28px 48px;display:grid;grid-template-columns:1.1fr 1fr;gap:20px}
+.sheet-body .full{grid-column:1/-1}
+.me{display:flex;align-items:center;gap:12px;padding:16px 18px;border-radius:16px;background:linear-gradient(120deg,var(--brand-soft),var(--violet-soft));margin-bottom:0}
+.me .avatar{width:44px;height:44px;font-size:16px}
+.me b{font-size:16px}
+.me small{display:block;color:var(--ink-3);font-size:12px}
+.req{border:1px solid var(--line);border-radius:14px;padding:16px;background:var(--panel-2)}
+.req-row{display:grid;grid-template-columns:72px 1fr;gap:8px;font-size:13.5px;line-height:1.6;padding:3px 0}
+.req-row span{color:var(--ink-3)}
+.quote{margin:12px 0;padding:12px 14px;border-left:3px solid var(--brand);background:var(--panel);border-radius:0 10px 10px 0;font-size:13.5px;line-height:1.7;color:var(--ink-2)}
+.req-actions{display:flex;gap:10px;margin-top:12px;align-items:center}
+.approved{display:flex;align-items:center;gap:8px;color:var(--green);font-weight:600;font-size:14px;animation:pop .4s both}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.kpi{border-radius:14px;background:var(--panel-2);border:1px solid var(--line);padding:14px}
+.kpi b{font-size:28px;font-weight:700;display:block;letter-spacing:-.02em}
+.kpi span{font-size:12px;color:var(--ink-3)}
+.bars{display:flex;flex-direction:column;gap:9px}
+.bar{display:grid;grid-template-columns:56px 1fr 26px;align-items:center;gap:10px;font-size:12.5px;color:var(--ink-2)}
+.bar .track{height:10px;border-radius:6px;background:var(--bg-2);overflow:hidden}
+.bar .fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--brand),var(--violet));width:0;transition:width 1s cubic-bezier(.2,.8,.2,1)}
+.bar em{font-style:normal;text-align:right;font-variant-numeric:tabular-nums}
+.pool-item{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;padding:14px 0;border-top:1px solid var(--line-2)}
+.pool-item:first-child{border-top:0}
+.pool-q{font-weight:600;font-size:14.5px}
+.pool-zh{font-size:13px;color:var(--ink-2);margin-top:2px}
+.pool-meta{font-size:12px;color:var(--ink-3);margin-top:4px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.gap{color:var(--amber);font-weight:600}
+.has{color:var(--green);font-weight:600}
+
+/* modal */
+.modal{position:fixed;left:50%;top:50%;transform:translate(-50%,-46%) scale(.98);width:min(620px,calc(100% - 32px));background:var(--panel);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow-lg);z-index:80;padding:22px 24px;opacity:0;pointer-events:none;transition:all .35s cubic-bezier(.2,.8,.2,1)}
+.modal.on{opacity:1;pointer-events:auto;transform:translate(-50%,-50%)}
+.modal h3{margin:0 0 4px;font-size:16px}
+.draft{border:1px solid var(--line);border-radius:14px;padding:16px;margin:14px 0;background:var(--panel-2)}
+.draft .t{font-family:var(--serif);font-size:18px;font-weight:700;line-height:1.5;margin-bottom:8px}
+.draft .b{font-size:14px;line-height:1.75;color:var(--ink-2);min-height:48px}
+.topics{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.topics span{font-size:12px;padding:3px 9px;border-radius:999px;background:var(--brand-soft);color:var(--brand)}
+.modal-foot{display:flex;gap:10px;justify-content:flex-end;align-items:center;flex-wrap:wrap}
+.modal-foot .meta{margin-right:auto}
+
+/* trace drawer */
+.drawer{position:fixed;left:0;right:0;bottom:0;height:min(320px,45vh);background:#0B0E14;color:#C9D1DC;z-index:55;transform:translateY(102%);transition:transform .5s cubic-bezier(.2,.8,.2,1);border-top:1px solid #1E2430;display:flex;flex-direction:column;font-family:var(--mono);font-size:12.5px}
+.drawer.on{transform:none}
+.drawer-h{display:flex;align-items:center;gap:12px;padding:10px 20px;border-bottom:1px solid #1E2430;color:#8A94A6;font-size:12px}
+.drawer-h b{color:#E6EDF3}
+.drawer-body{overflow-y:auto;padding:10px 20px 20px}
+.tl{display:grid;grid-template-columns:70px 140px 1fr;gap:12px;padding:3px 0;animation:fadeIn .3s both}
+.tl .tt{color:#5C6779}
+.tl .tk{color:#7EB6FF}
+.tl.w .tk{color:#F0B45A}
+.tl.ok .tk{color:#5BD3A0}
+
+/* toast */
+.toast{position:fixed;left:50%;bottom:28px;transform:translate(-50%,20px);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:13.5px;opacity:0;pointer-events:none;transition:all .35s;z-index:90;box-shadow:var(--shadow-lg)}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+
+@media (max-width:1180px){
+  .workbench{grid-template-columns:1fr;padding:16px}
+  .stepper{display:none}
+  .sheet-body{grid-template-columns:1fr}
+}
+@media (max-width:640px){
+  .topbar{padding:10px 16px;position:relative;gap:8px}
+  .brand small,.livechip{display:none!important}
+  .duel-on .tx-grid{grid-template-columns:1fr}
+  .b-row{grid-template-columns:auto minmax(40px,1fr) minmax(0,1.4fr)}
+  .b-zh{font-size:16px}
+  .tl{grid-template-columns:56px 1fr;}
+  .tl .td{grid-column:1/-1}
+}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="topbar">
+    <div class="brand" id="brand" title="返回首页（R）">
+      <img class="logo" src="./assets/zhihu-bridge-mark.svg" width="32" height="32" alt="">
+      <div>Zhihu Bridge <small>知乎跨文化认知转译舱 · 原型</small></div>
+    </div>
+    <div class="seg work-only" id="caseSeg"></div>
+    <div class="stepper work-only" id="stepper"></div>
+    <div class="spacer"></div>
+    <div class="livechip work-only"><i></i>缓存回放 · 演示数据</div>
+    <button class="tool work-only" id="tDuel" title="有知乎 vs 无知乎">对照 <kbd>D</kbd></button>
+    <button class="tool work-only" id="tSheet" title="切换到答主视角">答主视角 <kbd>A</kbd></button>
+    <button class="tool work-only" id="tTrace" title="Agent 追踪">追踪 <kbd>T</kbd></button>
+    <button class="tool" id="tTheme" title="切换主题">◐</button>
+  </header>
+
+  <section class="hero" id="hero">
+    <div class="eyebrow">ZHIHU HACKATHON S3 · AI × 出海</div>
+    <h1>让海外读懂，<br>也让他们信得过。</h1>
+    <p class="lead">出海的难点不在语言，而在认知框架。Zhihu Bridge 用知乎的专业讨论做证据与约束，把中文内容转译成海外受众看得懂、信得过的表达。</p>
+    <div class="composer">
+      <textarea id="input" rows="3" placeholder="粘贴一段卖点、台词或文案……"></textarea>
+      <div class="composer-foot">
+        <div class="chips" id="heroChips"></div>
+        <button class="btn btn-primary" id="startBtn">开始转译 →</button>
+      </div>
+    </div>
+    <div class="hero-foot"><span>快捷键 <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> 载入案例</span><span>原型：所有知乎回答、答主、团队与评测结果均为演示数据</span></div>
+  </section>
+
+  <main class="workbench" id="wb">
+    <section class="col col-left">
+      <div class="panel" id="pSource">
+        <div class="panel-h"><span class="step-no">01</span><h3>源文与认知壁垒</h3><span class="meta" id="industry"></span></div>
+        <div class="source-text" id="sourceText"></div>
+        <div class="tags" id="tags"></div>
+      </div>
+      <div class="panel" id="pEvidence">
+        <div class="panel-h"><span class="step-no">02</span><h3>知乎证据</h3><span class="demo-tag meta">演示数据 · 点击卡片翻转</span></div>
+        <div id="evidence"></div>
+      </div>
+    </section>
+
+    <section class="col col-mid">
+      <div class="panel" id="pBridge">
+        <div class="panel-h"><span class="step-no">03</span><h3>认知桥 · 策略转译</h3><span class="meta">悬停任意词查看对应关系</span></div>
+        <div class="strategy">
+          <div class="strategy-top"><span class="lbl">转译策略</span><b id="lvlName">平衡</b><span class="meta" id="lvlFit"></span></div>
+          <input type="range" id="lvl" min="1" max="5" step="1" value="3" aria-label="归化到异化">
+          <div class="stops" id="stops"></div>
+        </div>
+        <div class="bridge" id="bridge"></div>
+        <div class="legend">
+          <span><i style="--c:var(--violet)"></i>文化考据</span>
+          <span><i style="--c:var(--brand)"></i>工程实践</span>
+          <span><i class="d" style="--c:var(--amber)"></i>观点分歧 / 待补充</span>
+          <span><i style="--c:var(--red)"></i>已拦截</span>
+          <span><i class="d" style="--c:var(--slate)"></i>证据不足</span>
+        </div>
+        <div class="tx-grid">
+          <div class="tx-card duel-card" id="duelCard"></div>
+          <div class="tx-card" id="txCard">
+            <div class="tx-label"><i class="live"></i>Zhihu Bridge · 知乎循证约束 <span id="txLvl"></span></div>
+            <div class="tx-text" id="txText"></div>
+            <div class="annos" id="annos"></div>
+            <div class="literal" id="literal"></div>
+          </div>
+        </div>
+      </div>
+      <div class="panel" id="pGuard">
+        <div class="panel-h"><span class="step-no">04</span><h3>合规守门</h3><span class="meta" id="guardSum"></span></div>
+        <div class="g-list" id="guard"></div>
+        <div class="g-foot" id="guardFoot"><span class="gf-item"><code>F-KP</code> 原文信息点保真</span><span class="gf-item"><code>L</code> 当地广告法排查</span><span class="gf-item"><code>C</code> 当地风俗习惯排查</span><span class="gf-item"><code>S</code> 语义复核</span></div>
+      </div>
+    </section>
+
+    <section class="col col-right">
+      <div class="panel" id="pTest">
+        <div class="panel-h"><span class="step-no">05</span><h3>模拟读者复述测试</h3><span class="demo-tag meta">模拟评估</span></div>
+        <div id="testBody"></div>
+      </div>
+      <div class="panel" id="pDeliver">
+        <div class="panel-h"><span class="step-no">06</span><h3 id="delTitle">海外交付</h3></div>
+        <div id="deliver"></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="backdrop" id="backdrop"></div>
+<aside class="sheet" id="sheet" aria-label="知乎答主共创中心"></aside>
+<div class="modal" id="modal"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-h"><b>Agent Trace</b><span>检索 · 分歧 · 守门 · 评估 全链路日志</span><span class="spacer"></span><span>按 T 关闭</span></div>
+  <div class="drawer-body" id="traceBody"></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ======================= DATA（全部为演示数据） ======================= */
+const LEVELS={1:{name:'完全归化',fit:'适合：大众投放、众筹首页'},2:{name:'偏归化',fit:'适合：宣传短文案'},3:{name:'平衡',fit:'适合：微短剧字幕、游戏宣发'},4:{name:'偏异化',fit:'适合：游戏内文本、粉丝社区'},5:{name:'完全异化',fit:'适合：核心读者、文化爱好者'}};
+const TYPE={'文化概念':'t-culture','行业黑话':'t-jargon','功效声称':'t-claim','性能声称':'t-perf'};
+const EVL={'文化考据':'var(--violet)','工程实践':'var(--brand)','行业经验':'var(--teal)','机制推测':'var(--slate)','人群研究':'var(--green)'};
+const POS=['看懂了','很喜欢','信任','可接受','能懂'], NEG=['看不懂','误解','困惑','不信任'];
+const AV=['#7552F2','#0A62F5','#0E94A3','#C27406','#D93636','#0C9A6A'];
+
+const CASES={
+a:{
+  id:'a', short:'仙侠台词', industry:'仙侠游戏 / 微短剧出海',
+  source:`此乃天道因果，若扛不过九重雷劫，便只能魂飞魄散。`,
+  terms:[
+    {zh:'天道因果',type:'文化概念',ev:[0,1]},
+    {zh:'九重雷劫',type:'文化概念',ev:[0,1]},
+    {zh:'魂飞魄散',type:'文化概念',ev:[2]}
+  ],
+  evidence:[
+    {author:'演示答主 · 道教文化研究',title:'仙侠作品里的“雷劫”是从哪来的？',level:'文化考据',votes:'3.2k',summary:'雷劫源自道教“天劫”观念与内丹修炼叙事，在仙侠作品中被塑造为修行者突破境界时必须承受的生死考验。',back:'摘录：……网文语境里的“劫”不是抢劫，而是“劫数”，即注定要经历的考验。把它译成 robbery 是最常见的误译……',terms:[0,1]},
+    {author:'演示答主 · 网文出海译者',title:'海外读者怎么理解 Dao、Tribulation 这些词？',level:'行业经验',votes:'1.8k',summary:'英文仙侠社区已形成约定译法：天道 → Heavenly Dao，天劫 → Heavenly Tribulation。老读者反感过度归化，新读者需要注释。',back:'摘录：……把 tribulation 换成 test，老读者会觉得“味道没了”；但路人观众确实更容易看懂。关键是先想清楚给谁看……',terms:[0,1]},
+    {author:'演示答主 · 古典文学',title:'“魂飞魄散”里的魂和魄有什么区别？',level:'文化考据',votes:'960',summary:'传统观念中人有三魂七魄。“魂飞魄散”意味着彻底消亡、不能轮回，程度比“死亡”更重。',back:'摘录：……所以这个词翻成 die 是不够的，它强调的是“连转世的机会都没有”……',terms:[2]}
+  ],
+  literal:`This is heaven's way cause and effect; if cannot carry nine heavy thunder robbery, then only soul fly spirit scatter.`,
+  levels:{
+    1:[{t:'Fate has passed judgment',term:0},{t:'. Fail '},{t:'the final storm trial',term:1},{t:', and '},{t:'your soul is gone forever',term:2},{t:'.'}],
+    2:[{t:'This is '},{t:'the will of Heaven',term:0},{t:'. Fail '},{t:'the Ninefold Storm Trial',term:1},{t:', and '},{t:'your soul will be destroyed',term:2},{t:'.'}],
+    3:[{t:'This is '},{t:'the karma of the Dao',term:0},{t:'. Fail '},{t:'the Nine Heavenly Tribulations',term:1},{t:' — the lightning trials every cultivator must survive — ',note:true},{t:'and '},{t:'your soul will scatter into nothing',term:2},{t:'.'}],
+    4:[{t:'This is '},{t:'the karma of the Heavenly Dao',term:0},{t:'. Fail '},{t:'the Nine Heavenly Tribulations',term:1},{t:', and '},{t:'your soul will scatter',term:2},{t:'.'}],
+    5:[{t:'This is '},{t:'the karma of the Heavenly Dao (tiāndào)',term:0},{t:'. Fail '},{t:'the Ninefold Thunder Tribulation (léijié)',term:1},{t:', and '},{t:'your hun and po souls shall scatter',term:2},{t:'.'}]
+  },
+  annos:{
+    4:[{h:'Tribulation',zh:'渡劫 / 雷劫',b:'修行者突破境界时必须承受的天降考验，常以雷电形式出现。扛不过，便身死道消。',ev:0}],
+    5:[{h:'Heavenly Dao · tiāndào',zh:'天道',b:'仙侠世界中支配万物的最高法则，常被理解为有意志的“天”。',ev:1},{h:'Thunder Tribulation · léijié',zh:'雷劫',b:'突破境界时降下的雷电考验，九重为极，源自道教“天劫”观念。',ev:0},{h:'Hun & Po',zh:'魂魄',b:'传统观念中人有三魂七魄。“魂飞魄散”意味着彻底消亡，连转世的机会都没有。',ev:2}]
+  },
+  duel:[{t:'This is the karma of the Heavenly Dao, as recorded in the ancient Taoist scripture '},{t:'“The Thunder Tribulation Sutra”',flag:'编造出处：知乎证据中未找到这部典籍'},{t:'. Fail the Nine Tribulations, and your soul '},{t:'will be reborn as a wandering ghost',flag:'语义错误：魂飞魄散意味着彻底消亡，不会转世'},{t:'.'}],
+  guard(l){const g=[{type:'ok',title:'未发现功效或性能声称',reason:'台词属于剧情与文化表达，不涉及产品功效。'},{type:'ok',title:'事实检查通过',reason:'译文没有新增原文不存在的事实或出处。'}];if(l>=4)g.push({type:'info',title:'已生成注释卡',reason:'异化档保留原有术语，注释内容来自知乎考据回答。',ev:0});return g;},
+  kp:['这是天道 / 命运层面的裁决','雷劫是必须扛过的生死考验','失败意味着灵魂彻底消亡，而不只是死亡'],
+  personas:[{name:'Maya',desc:'资深仙侠网文读者 · 5 年'},{name:'Jake',desc:'北美短剧路人观众'},{name:'Lena',desc:'奇幻 RPG 玩家'}],
+  results:{
+    literal:[
+      {text:`Reads like a raw machine translation, but "thunder robbery" is probably a heavenly tribulation — someone has to survive a lightning trial.`,hits:[0,1,0],spread:0,react:'勉强看懂',imm:2},
+      {text:`Someone is going to get robbed by thunder? And then his soul flies away? I honestly can't tell what's happening.`,hits:[0,0,0],spread:0,mis:'robbed by thunder',misP:1,react:'看不懂',imm:1},
+      {text:`Sounds like a "thunder robbery" boss event, and if you lose, your soul flies off — maybe you respawn?`,hits:[0,1,0],spread:1,mis:'maybe you respawn',misP:2,react:'误解',imm:2}
+    ],
+    low:[
+      {text:`Clear enough — fate's judgment, a deadly storm trial, soul destroyed. But it reads like generic fantasy; the cultivation flavor is gone.`,hits:[1,1,1],spread:0,react:'能懂但无感',imm:2},
+      {text:`Fate has judged him, and he has to survive some deadly storm trial or his soul is destroyed for good. Got it.`,hits:[1,1,1],spread:0,react:'看懂了',imm:4},
+      {text:`A trial of fate — survive the storm or lose your soul forever. Classic high-fantasy stakes.`,hits:[1,1,1],spread:0,react:'看懂了',imm:3}
+    ],
+    mid:[
+      {text:`Love it — proper tribulation lore with just enough explanation. Karma of the Dao, nine lightning trials, soul scattered into nothing.`,hits:[1,1,1],spread:0,react:'很喜欢',imm:5},
+      {text:`He has to survive lightning trials that every "cultivator" faces, or his soul scatters… so he respawns somewhere else?`,hits:[0,1,0],spread:1,mis:'so he respawns somewhere else',misP:2,react:'部分理解',imm:3},
+      {text:`Cosmic karma decides his fate; he must survive nine lightning trials or be wiped out completely.`,hits:[1,1,1],spread:0,react:'看懂了',imm:4}
+    ],
+    high:[
+      {text:`Perfect — this is exactly how the community translates it, and the hun/po note is a nice touch.`,hits:[1,1,1],spread:0,react:'很喜欢',imm:5},
+      {text:`Lots of Chinese terms here… Heavenly Dao, léijié… some kind of lightning test? I'd need to read the glossary.`,hits:[0,1,0],spread:1,react:'吃力',imm:2},
+      {text:`The Heavenly Dao's karma — he faces the Thunder Tribulation, and failing means his souls scatter. The notes help.`,hits:[1,1,0],spread:1,react:'能懂',imm:4}
+    ]
+  },
+  delivery:{title:'海外交付 · 双语字幕预览',type:'video',tc:'PV_EP01 · 00:42:15'},
+  answerer:{author:'演示答主 · 道教文化研究',init:'道',ev:0,team:'「云阙游戏」出海团队（虚构）',usage:'北美宣发 PV 字幕 · 术语注释卡',markets:'北美 · 东南亚',
+    dash:{cited:12,markets:4,qs:3,bars:[['北美',6],['东南亚',3],['欧洲',2],['日韩',1]]},
+    pool:[
+      {q:'Why do cultivators have to survive lightning?',zh:'为什么修仙者突破时要挨雷劈？',src:'Reddit 样本',n:23,gap:true,draft:{title:'为什么仙侠作品里突破境界要“渡雷劫”？这个设定从哪来？',body:'近期在海外仙侠读者社区（样本 23 条）中，很多读者问：修仙者突破时为什么要被雷劈？这是惩罚还是考验？希望了解道教文化或网文史的朋友，用通俗的方式讲讲雷劫设定的来源，以及它在故事里的意义。',topics:['仙侠','道教文化','网络文学出海'],invite:['演示答主 · 道教文化研究','演示答主 · 网文出海译者']}},
+      {q:'Is the "Dao" basically the Force?',zh:'“道”是不是就是原力？',src:'YouTube 评论样本',n:31,gap:false},
+      {q:"What's the difference between hun and po?",zh:'魂和魄有什么区别？',src:'Reddit 样本',n:15,gap:true,draft:{title:'“魂”和“魄”有什么区别？“魂飞魄散”到底有多严重？',body:'海外读者在仙侠作品评论区（样本 15 条）经常问：hun 和 po 是两个灵魂吗？“魂飞魄散”和普通的死亡有什么不同？希望懂古典文学或民俗的朋友解答。',topics:['古典文学','民俗','网络文学出海'],invite:['演示答主 · 古典文学']}}
+    ]},
+  trace:[['extract','识别 3 个壁垒词：天道因果 / 九重雷劫 / 魂飞魄散（文化概念）',310],['zhihu.search','q="雷劫 来源" · q="仙侠 术语 英文译法" · q="魂飞魄散 魂魄"',180],['retrieve','本地证据库(演示) 命中 14 条 → 重排 top3 · 0.91 / 0.87 / 0.82',420],['dispute.check','未发现立场对立',90],['translate','5 档一次生成（含对齐信息）· 1,184 tokens',2380],['guard','0 拦截 · 0 待补充 · 事实检查通过',640,'ok']]
+},
+b:{
+  id:'b', short:'硬件文案', industry:'开源硬件 / 智能穿戴众筹',
+  source:`自研高密度堆料主板，极限压榨功耗，支持底层协议调试。`,
+  terms:[
+    {zh:'堆料',type:'行业黑话',ev:[0]},
+    {zh:'极限压榨功耗',type:'性能声称',ev:[1]},
+    {zh:'底层协议调试',type:'行业黑话',ev:[0,2]}
+  ],
+  evidence:[
+    {author:'演示答主 · 嵌入式工程师',title:'硬件圈说的“堆料”到底指什么？',level:'工程实践',votes:'2.4k',summary:'“堆料”指元器件规格、供电与散热的用料高于常规需求，强调扎实可靠，而不是“堆砌冗余”。',back:'摘录：……直译成 stacking materials，海外读者会以为是乱堆元件。更贴切的说法是 premium / over-spec components……',terms:[0,2]},
+    {author:'演示答主 · 低功耗设计',title:'可穿戴设备的功耗优化，宣传时应该怎么说？',level:'工程实践',votes:'1.1k',summary:'功耗表现取决于使用场景与测试条件。负责任的写法是给出待机电流、典型续航和测试工况，而不是“极限”之类的形容词。',back:'摘录：……海外众筹评论区最常见的质疑就是“你的续航是在什么条件下测的”……',terms:[1]},
+    {author:'演示答主 · 硬件创业复盘',title:'我们在海外众筹踩过的坑',level:'行业经验',votes:'3.6k',summary:'海外极客重视可改装性和透明度。“开放底层调试”有吸引力，但不要把“支持调试”说成“开源”，二者是不同的承诺。',back:'摘录：……页面写了 open-source，结果被支持者追着要仓库链接，差评就是这么来的……',terms:[2]}
+  ],
+  literal:`Self-developed high-density stacking material motherboard, extremely squeeze power consumption, support bottom protocol debugging.`,
+  levels:{
+    1:[{t:'Premium-built',term:0},{t:' custom board. '},{t:'All-day battery',term:1},{t:'. '},{t:'Fully hackable',term:2},{t:'.'}],
+    2:[{t:'Custom high-density PCB with '},{t:'premium components',term:0},{t:'. '},{t:'Optimized for low power',term:1},{t:'. '},{t:'Open to tinkering',term:2},{t:'.'}],
+    3:[{t:'Custom high-density PCB built with '},{t:'premium components',term:0},{t:'. '},{t:'Deeply optimized for low power draw',term:1},{t:'. '},{t:'Low-level protocol access for debugging and mods',term:2},{t:'.'}],
+    4:[{t:'Custom high-density PCB with '},{t:'over-spec premium components',term:0},{t:' (“duīliào”)',note:true},{t:'. '},{t:'Deep power optimization',term:1},{t:'. '},{t:'Low-level protocol debugging supported',term:2},{t:'.'}],
+    5:[{t:'In-house high-density board with '},{t:'“duīliào” (generously over-specced parts)',term:0},{t:', '},{t:'aggressively power-squeezed',term:1},{t:', and '},{t:'low-level protocol debugging',term:2},{t:'.'}]
+  },
+  annos:{
+    4:[{h:'duīliào',zh:'堆料',b:'中国硬件工程师的说法：元器件、供电和散热用料高于常规需求，强调扎实可靠。',ev:0}],
+    5:[{h:'duīliào',zh:'堆料',b:'中国硬件工程师的说法：元器件、供电和散热用料高于常规需求，强调扎实可靠。',ev:0},{h:'Power-squeezing',zh:'压榨功耗',b:'通过软硬件协同把功耗压到很低的工程做法。具体数值以规格表为准。',ev:1}]
+  },
+  duel:[{t:'An '},{t:'open-source',flag:'事实检查：原文未声明开源，请确认'},{t:', ultra-efficient powerhouse with '},{t:'the longest battery life in its class',flag:'无依据的比较级：缺少测试数据与对比对象'},{t:'. Built with stacked premium materials for '},{t:'unbeatable',flag:'绝对化用语'},{t:' performance.'}],
+  guard(l){
+    const g=[];
+    if(l===1){
+      g.push({type:'warn',title:'性能声称缺少数据',map:['极限压榨功耗','All-day battery'],reason:'原文没有给出续航数据，“All-day”无法验证。请补充典型续航与测试条件。',ev:1});
+      g.push({type:'warn',title:'承诺范围过宽',map:['底层协议调试','Fully hackable'],reason:'原文只说“支持底层协议调试”，“完全可改装”超出了原文承诺。',ev:2});
+    }else{
+      g.push({type:'info',title:'已去除绝对化表述',map:['极限',''],reason:'“极限”无法验证，转译中不使用 extreme、ultimate、best-in-class 等词。',ev:1});
+    }
+    const bt=state.battery;
+    g.push(bt?{type:'ok',title:'已补充续航数据',reason:`典型续航 ${bt.h} 小时 · 测试条件：${bt.c||'未填写'}。数据已写入转译文案。`}
+             :{type:'warn',title:'待补充：续航数据',reason:'海外众筹受众更信数据，不信形容词。填写后会自动写入文案。',form:true,ev:1});
+    g.push({type:'ok',title:'事实检查通过',reason:'没有新增“开源”“获奖”“认证”等原文没有的承诺。'});
+    return g;
+  },
+  kp:['主板为自研，用料扎实','经过深度功耗优化','支持底层调试，方便改装'],
+  personas:[{name:'Sam',desc:'Kickstarter 早期支持者'},{name:'Priya',desc:'Reddit 硬件极客'},{name:'Tom',desc:'普通科技消费者'}],
+  results:{
+    literal:[
+      {text:`A self-made motherboard with "stacking materials"? "Extremely squeeze power consumption" sounds like it drains the battery.`,hits:[1,0,0],spread:1,mis:'sounds like it drains the battery',misP:1,react:'误解',imm:1},
+      {text:`Custom board, I think. "Bottom protocol debugging" probably means low-level access? The rest is unclear.`,hits:[1,0,1],spread:0,react:'勉强看懂',imm:2},
+      {text:`I don't really get it — something about stacking materials and squeezing power?`,hits:[0,0,0],spread:0,react:'看不懂',imm:1}
+    ],
+    low:[
+      {text:`Well-built custom board, all-day battery, and you can hack it. Sounds great — but "all-day" based on what?`,hits:[1,1,1],spread:0,react:'有疑问',imm:3},
+      {text:`"Fully hackable" — so is it open-source? Where's the repo?`,hits:[1,1,0],spread:0,mis:'so is it open-source',misP:2,react:'期望过高',imm:3},
+      {text:`A solid gadget with great battery life that tinkerers can modify.`,hits:[1,1,1],spread:0,react:'看懂了',imm:4}
+    ],
+    mid:[
+      {text:`Custom PCB, premium parts, low power draw, and low-level access for mods. Clear pitch.`,hits:[1,1,1],spread:0,react:'看懂了',imm:4},
+      {text:`Premium components plus low-level protocol access — exactly what I look for. Power claims need numbers, though.`,hits:[1,1,1],spread:0,react:'很喜欢',imm:5},
+      {text:`A well-made device that uses little power; the debugging part is for advanced users.`,hits:[1,1,1],spread:1,react:'看懂了',imm:3}
+    ],
+    high:[
+      {text:`Premium over-spec parts — nice to learn the term "duīliào". Power-optimized and debuggable.`,hits:[1,1,1],spread:0,react:'很喜欢',imm:4},
+      {text:`Love the engineering honesty. "Aggressively power-squeezed" is a fun phrase.`,hits:[1,1,1],spread:0,react:'很喜欢',imm:5},
+      {text:`Too much jargon for me — some Chinese engineering term and power stuff.`,hits:[0,1,0],spread:1,react:'吃力',imm:2}
+    ]
+  },
+  delivery:{title:'海外交付 · 众筹页卖点模块',type:'product',name:'Orbit One',c1:'#0A62F5',c2:'#0E94A3'},
+  answerer:{author:'演示答主 · 嵌入式工程师',init:'嵌',ev:0,team:'「星舰实验室」出海团队（虚构）',usage:'Kickstarter 页面卖点模块',markets:'北美 · 欧洲',
+    dash:{cited:7,markets:3,qs:2,bars:[['北美',4],['欧洲',2],['日本',1]]},
+    pool:[
+      {q:'"Over-spec" vs "over-engineered" — is it a good thing?',zh:'“堆料”和“过度设计”是一回事吗？',src:'r/hardware 样本',n:18,gap:true,draft:{title:'硬件宣传里的“堆料”和“过度设计”有什么区别？对用户真的有好处吗？',body:'海外硬件社区（样本 18 条）经常把中国厂商说的“堆料”理解成 over-engineered。希望有硬件研发经验的朋友讲讲：堆料具体堆在哪里？什么情况下对用户有实际价值？',topics:['硬件开发','嵌入式','消费电子出海'],invite:['演示答主 · 嵌入式工程师']}},
+      {q:'Why do Chinese gadgets list so many specs?',zh:'为什么中国产品爱列一大堆参数？',src:'YouTube 评论样本',n:26,gap:false},
+      {q:'What does "supports debugging" actually let me do?',zh:'“支持底层调试”到底能做什么？',src:'Kickstarter 评论样本',n:12,gap:true,draft:{title:'智能穿戴设备“支持底层协议调试”，对普通极客意味着什么？',body:'海外众筹评论（样本 12 条）里，很多支持者分不清“支持调试”和“开源”。希望懂嵌入式开发的朋友讲讲两者的区别，以及能实际做哪些改装。',topics:['嵌入式','开源硬件','众筹'],invite:['演示答主 · 嵌入式工程师','演示答主 · 硬件创业复盘']}}
+    ]},
+  trace:[['extract','识别 3 个壁垒词：堆料 / 底层协议调试（行业黑话）· 极限压榨功耗（性能声称）',290],['zhihu.search','q="堆料 含义" · q="可穿戴 功耗 宣传" · q="众筹 开源 承诺"',170],['retrieve','本地证据库(演示) 命中 11 条 → 重排 top3 · 0.89 / 0.86 / 0.80',380],['dispute.check','未发现立场对立',80],['translate','5 档一次生成（含对齐信息）· 1,036 tokens',2210],['guard','1 待补充（续航数据）· 绝对化表述已去除 · 事实检查通过',590,'w']]
+},
+c:{
+  id:'c', short:'草本茶卖点', industry:'新中式草本饮品',
+  source:`回南天祛湿茶，清热解毒，拯救熬夜上火。`,
+  terms:[
+    {zh:'回南天',type:'文化概念',ev:[2]},
+    {zh:'祛湿',type:'功效声称',ev:[0,1],blocked:{s:'removes dampness',n:'已拦截 · 改为天气与风味描述'}},
+    {zh:'清热解毒',type:'功效声称',ev:[0],blocked:{s:'detox',n:'已拦截 · 不做功效声称'}},
+    {zh:'熬夜上火',type:'功效声称',ev:[0],blocked:{s:'restores you after late nights',n:'已拦截 · 删除身体修复暗示'}}
+  ],
+  evidence:[
+    {author:'演示答主 · 营养科医生',title:'凉茶真的能“清热解毒”吗？',level:'机制推测',votes:'5.1k',summary:'部分配料有体外或动物研究，但缺少可靠的人群研究支持“解毒”“降火”这类功效。',disputed:true,pro:'地方饮食经验悠久，部分成分有初步研究。',con:'“上火”“湿气”不是现代医学概念，功效缺乏人群证据。',terms:[1,2,3]},
+    {author:'演示答主 · 食品科学',title:'凉茶常见配料的研究现状',level:'机制推测',votes:'1.3k',summary:'常见配料包括菊花、金银花、甘草等。相关研究多为成分分析，不能直接推出健康功效。',back:'摘录：……成分里有某种物质，不等于喝下去就有某种效果，中间隔着剂量、吸收和人群研究……',terms:[1]},
+    {author:'演示答主 · 岭南民俗',title:'回南天和广府凉茶文化',level:'文化考据',votes:'2.7k',summary:'回南天是华南春季常见的返潮天气，墙面“出水”、空气湿重。喝凉茶是广府地区由来已久的生活习俗。',back:'摘录：……对广府人来说，凉茶首先是一种生活方式和地方记忆，其次才是“功效”……',terms:[0]}
+  ],
+  literal:`Return-south-weather dampness-removing tea, clears heat and detoxifies, saves staying-up internal heat.`,
+  levels:{
+    1:[{t:'A light herbal tea for '},{t:"Guangdong's humid spring",term:0},{t:'. Earthy, gently bitter and refreshing.'}],
+    2:[{t:'Brewed for '},{t:"Guangdong's humid spring",term:0},{t:', when walls sweat and the air turns heavy. A Cantonese herbal tea tradition, loved for its gently bitter, earthy taste.'}],
+    3:[{t:'Brewed for '},{t:"Guangdong's humid “Huinantian” spring",term:0},{t:', when walls sweat and the air turns heavy. A Cantonese herbal tea tradition passed down for generations, loved for its gently bitter, earthy taste.'}],
+    4:[{t:'Brewed for '},{t:"Huinantian, Guangdong's damp spring season",term:0},{t:'. A traditional Cantonese liángchá (herbal tea), loved for its gently bitter, earthy taste.'}],
+    5:[{t:'Liángchá for '},{t:'Huinantian',term:0},{t:': the Cantonese herbal tea people traditionally brew when the spring air turns damp — '},{t:'to “clear heat” (qīngrè), as the folk saying goes',term:2},{t:'. '},{t:'A cultural custom, not a medical claim.',note:true}]
+  },
+  annos:{
+    4:[{h:'Huinantian',zh:'回南天',b:'华南春季的返潮天气，墙面和地板会“出水”，空气湿重。',ev:2},{h:'Liángchá',zh:'凉茶',b:'广府地区的传统草本饮品，是当地由来已久的生活习俗。',ev:2}],
+    5:[{h:'Huinantian',zh:'回南天',b:'华南春季的返潮天气，墙面和地板会“出水”，空气湿重。',ev:2},{h:'Qīngrè',zh:'清热',b:'中国民间饮食文化中的说法。此处作为文化概念介绍，不代表任何健康功效。',ev:0}]
+  },
+  duel:[{t:'A natural '},{t:'detox tea',flag:'药效暗示：知乎相关讨论存在明显分歧'},{t:' that '},{t:'fights inflammation',flag:'疾病相关声称：高风险'},{t:' and '},{t:'restores your body after late nights',flag:'身体修复暗示：缺乏依据'},{t:'. '},{t:'Backed by 2,000 years of Chinese medicine',flag:'无法核实的历史与背书声称'},{t:'.'}],
+  guard(l){
+    const g=[
+      {type:'block',title:'拦截：药效暗示',map:['清热解毒','detox'],reason:'“detox”在海外广告中属于高风险健康声称；知乎相关讨论对该功效存在明显分歧，缺少人群研究。',ev:0},
+      {type:'block',title:'拦截：功效声称',map:['祛湿','removes dampness'],reason:'“湿气”不是现代医学概念，直接转成功效会被理解为医疗承诺。',ev:0},
+      {type:'block',title:'拦截：身体修复暗示',map:['拯救熬夜上火','restores you after late nights'],reason:'暗示饮品能修复熬夜带来的身体问题，缺乏依据。',ev:0},
+      {type:'info',title:'改走文化叙事与风味描述',reason:'以回南天气候与广府饮茶习俗为主线，只描述口味与传统，不承诺功效。',ev:2}
+    ];
+    if(l===5)g.push({type:'info',title:'“清热”保留为文化概念',reason:'用 “as the folk saying goes” 明确为民间说法，并声明不是医疗声称。',ev:0});
+    return g;
+  },
+  kp:['这是一款岭南传统草本茶','与回南天的潮湿天气相关','口感微苦、带草本香气（不承诺功效）'],
+  personas:[{name:'Emma',desc:'健康生活方式消费者'},{name:'Ken',desc:'亚洲美食爱好者'},{name:'Noah',desc:'怀疑型科学党'}],
+  results:{
+    literal:[
+      {text:`A tea that removes dampness and detoxes you after staying up late? Sounds like a wellness detox product.`,hits:[1,0,0],spread:0,mis:'detoxes you',misP:2,react:'误解',imm:2},
+      {text:`Some "return-south-weather" tea — no idea what that is — that clears heat?`,hits:[1,0,0],spread:1,react:'困惑',imm:2},
+      {text:`"Clears heat and detoxifies"? That's a pseudoscience red flag. I'd scroll past.`,hits:[0,0,0],spread:0,react:'不信任',imm:1}
+    ],
+    low:[
+      {text:`A light herbal tea for humid spring days — earthy and refreshing.`,hits:[1,1,1],spread:0,react:'看懂了',imm:3},
+      {text:`A herbal tea from Guangdong for the humid season. Slightly bitter. Sounds nice.`,hits:[1,1,1],spread:0,react:'看懂了',imm:3},
+      {text:`Fine — it's just a herbal tea, no wild claims.`,hits:[1,0,1],spread:1,react:'可接受',imm:3}
+    ],
+    mid:[
+      {text:`Love the "walls sweat" detail — a Cantonese tradition for the damp season, gently bitter.`,hits:[1,1,1],spread:0,react:'很喜欢',imm:4},
+      {text:`"Huinantian" sounds fascinating — I'd try it as a cultural thing.`,hits:[1,1,1],spread:0,react:'很喜欢',imm:5},
+      {text:`Honest framing. A tradition and a taste, not a cure.`,hits:[1,1,1],spread:0,react:'信任',imm:4}
+    ],
+    high:[
+      {text:`A traditional liángchá for Huinantian — I like learning the words, though I'm not sure what it tastes like.`,hits:[1,1,0],spread:1,react:'能懂',imm:4},
+      {text:`Liángchá for the damp spring season — love the cultural detail.`,hits:[1,1,1],spread:0,react:'很喜欢',imm:5},
+      {text:`Appreciate that it says it's a custom, not a medical claim.`,hits:[1,1,1],spread:0,react:'信任',imm:4}
+    ]
+  },
+  delivery:{title:'海外交付 · 商品页文案',type:'product',name:'Nanfeng Herbal · 南风草本（虚构）',c1:'#0C9A6A',c2:'#C27406'},
+  answerer:{author:'演示答主 · 岭南民俗',init:'岭',ev:2,team:'「南风草本」出海团队（虚构）',usage:'独立站商品页 · 品牌故事',markets:'北美 · 东南亚',
+    dash:{cited:9,markets:4,qs:3,bars:[['北美',4],['东南亚',3],['英国',1],['澳洲',1]]},
+    pool:[
+      {q:'What is "Huinantian" and why do walls sweat?',zh:'什么是回南天？为什么墙会“出水”？',src:'TikTok 评论样本',n:41,gap:true,draft:{title:'回南天为什么会让墙壁“出水”？广府人有哪些应对的生活习惯？',body:'海外短视频评论区（样本 41 条）对“回南天墙壁出水”的画面非常好奇。希望了解华南气候与民俗的朋友，讲讲回南天的成因，以及当地人的生活习惯（比如喝凉茶的习俗）。',topics:['回南天','岭南文化','气象'],invite:['演示答主 · 岭南民俗']}},
+      {q:'Is Chinese herbal tea actually healthy?',zh:'中式草本茶真的健康吗？',src:'Reddit 样本',n:33,gap:false},
+      {q:'What does "heatiness" mean in Cantonese culture?',zh:'粤语文化里的“热气”是什么意思？',src:'YouTube 评论样本',n:19,gap:true,draft:{title:'粤语里的“热气”“上火”是什么意思？该怎么向外国朋友解释？',body:'海外评论（样本 19 条）常把 heatiness 理解成体温或辣味。希望懂粤语文化的朋友，从生活习俗的角度解释这个概念，也欢迎从现代医学视角补充。',topics:['粤语','岭南文化','饮食文化'],invite:['演示答主 · 岭南民俗','演示答主 · 营养科医生']}}
+    ]},
+  trace:[['extract','识别 4 个壁垒词：回南天（文化概念）· 祛湿 / 清热解毒 / 熬夜上火（功效声称）',300],['zhihu.search','q="凉茶 清热解毒 证据" · q="回南天 凉茶 习俗" · q="凉茶 配料 研究"',190],['retrieve','本地证据库(演示) 命中 16 条 → 重排 top3 · 0.93 / 0.84 / 0.81',410],['dispute.check','⚠ 检测到立场对立：凉茶功效（支持 vs 质疑）→ 作为守门硬约束',160,'w'],['translate','5 档一次生成（含对齐信息）· 1,092 tokens',2290],['guard','3 拦截（功效声称）· 改走文化叙事',710,'w']]
+}
+};
+
+/* ======================= STATE & HELPERS ======================= */
+const state={phase:'hero',caseId:null,custom:null,level:3,ready:false,duel:false,trace:false,sheet:false,battery:null,auth:{a:false,b:false,c:false},kp:{},test:null,testing:false,runId:0,prevWords:[],traceLines:[],t0:0};
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const C=()=>CASES[state.caseId];
+const grp=l=>l<=2?'low':(l===3?'mid':'high');
+const reactCls=r=>POS.includes(r)?'r-pos':(NEG.includes(r)?'r-neg':'r-mid');
+function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('on');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove('on'),2200);}
+
+/* ======================= TOPBAR ======================= */
+const STEPS=['识别','检索','转译','守门','测试'];
+function buildChrome(){
+  $('#caseSeg').innerHTML=Object.values(CASES).map((c,i)=>`<button data-case="${c.id}"><kbd>${i+1}</kbd>${c.short}</button>`).join('');
+  $('#heroChips').innerHTML=Object.values(CASES).map((c,i)=>`<button class="chip" data-fill="${c.id}"><kbd>${i+1}</kbd>${c.short}</button>`).join('');
+  $('#stepper').innerHTML=STEPS.map((s,i)=>`<span class="st" data-s="${i+1}"><i></i>${s}</span>`).join('');
+  $('#stops').innerHTML=[1,2,3,4,5].map(l=>`<button data-l="${l}">${LEVELS[l].name}</button>`).join('');
+}
+function setStep(n){$$('#stepper .st').forEach(el=>{const s=+el.dataset.s;el.classList.toggle('done',s<n);el.classList.toggle('cur',s===n);});}
+function spotlight(ids){const wb=$('#wb');$$('.panel').forEach(p=>p.classList.remove('active'));if(!ids){wb.classList.remove('spot');return;}wb.classList.add('spot');ids.forEach(id=>$('#'+id).classList.add('active'));}
+function syncTools(){
+  $$('#caseSeg button').forEach(b=>b.classList.toggle('on',b.dataset.case===state.caseId));
+  $('#tDuel').classList.toggle('on',state.duel);$('#tTrace').classList.toggle('on',state.trace);$('#tSheet').classList.toggle('on',state.sheet);
+  const real=!!state.caseId&&state.ready;
+  $('#tDuel').disabled=!real;$('#tSheet').disabled=!real;
+}
+
+/* ======================= TRACE ======================= */
+function tlog(k,d,cls){const t=((performance.now()-state.t0)/1000).toFixed(2);state.traceLines.push({t,k,d,cls});const b=$('#traceBody');b.insertAdjacentHTML('beforeend',`<div class="tl ${cls||''}"><span class="tt">+${t}s</span><span class="tk">${esc(k)}</span><span class="td">${esc(d)}</span></div>`);b.scrollTop=b.scrollHeight;}
+
+/* ======================= FLOW ======================= */
+async function start(caseId,customText){
+  const rid=++state.runId;
+  state.caseId=caseId;state.custom=caseId?null:customText;state.ready=false;state.test=null;state.testing=false;state.battery=null;state.prevWords=[];state.level=3;
+  closeSheet();closeModal();
+  if(caseId&&!state.kp[caseId])state.kp[caseId]=C().kp.map(()=>true);
+  $('#lvl').value=3;
+  $('#traceBody').innerHTML='';state.traceLines=[];state.t0=performance.now();
+  // enter workbench
+  if(state.phase==='hero'){
+    $('#hero').classList.add('leaving');await sleep(380);if(rid!==state.runId)return;
+    state.phase='work';document.body.classList.add('state-work');$('#hero').classList.remove('leaving');
+    const wb=$('#wb');wb.classList.remove('enter');void wb.offsetWidth;wb.classList.add('enter');
+    window.scrollTo({top:0});
+  }
+  syncTools();
+  const c=caseId?C():null;
+  const src=caseId?c.source:customText;
+  $('#industry').textContent=c?c.industry:'自定义输入';
+  tlog('pipeline.start',`case=${caseId||'custom'} market=北美 mode=缓存回放(演示)`);
+  // placeholders
+  const wait='<div class="waiting"><i></i><i></i><i></i></div>';
+  $('#sourceText').textContent=src;$('#tags').innerHTML='';
+  $('#evidence').innerHTML=wait;$('#bridge').innerHTML=wait;$('#txText').innerHTML='';$('#annos').innerHTML='';$('#literal').innerHTML='';
+  $('#guard').innerHTML=wait;$('#guardSum').textContent='';$('#testBody').innerHTML=wait;$('#deliver').innerHTML=wait;$('#delTitle').textContent='海外交付';
+  $('#duelCard').innerHTML='';$('#pBridge').classList.toggle('duel-on',false);state.duel=false;syncTools();
+  renderLevelUI();
+  await sleep(state.phase==='work'?650:0);if(rid!==state.runId)return;
+
+  // 1 识别
+  setStep(1);spotlight(['pSource']);
+  if(c){
+    renderSource(c,false);await sleep(350);
+    for(let i=0;i<c.terms.length;i++){if(rid!==state.runId)return;$$(`#sourceText [data-terms~="${i}"]`).forEach(e=>e.classList.add('on'));addTag(c,i);await sleep(380);}
+    tlog(...c.trace[0]);
+  }else{
+    $('#tags').innerHTML='<div class="note-empty">未识别到原型内置的壁垒词。实时版本会调用模型识别。</div>';
+    tlog('extract','原型未内置该输入 → 进入低确定性演示','w');
+  }
+  await sleep(450);if(rid!==state.runId)return;
+
+  // 2 检索
+  setStep(2);spotlight(['pEvidence']);
+  if(c){tlog(...c.trace[1]);renderEvidence(c,true);await sleep(c.evidence.length*260+500);if(rid!==state.runId)return;tlog(...c.trace[2]);tlog(c.trace[3][0],c.trace[3][1],c.trace[3][3]);}
+  else{$('#evidence').innerHTML=`<div class="ev-none"><b>知乎证据不足</b><br>没有检索到足够相关的知乎回答。下游转译将进入低确定性模式：不做事实性与功效性表述，并标注“本段未经循证”。</div>`;tlog('retrieve','命中 0 条（相关度低于阈值）→ 证据不足','w');await sleep(600);}
+  if(rid!==state.runId)return;
+
+  // 3 转译
+  setStep(3);spotlight(['pBridge']);
+  if(c){renderBridge(true);renderTranslation('type');renderAnnos();renderLiteral();tlog(...c.trace[4]);}
+  else{renderCustomBridge();}
+  await sleep(1500);if(rid!==state.runId)return;
+
+  // 4 守门
+  setStep(4);spotlight(['pGuard']);
+  if(c){renderGuard();const tr=c.trace[5];tlog(tr[0],tr[1],tr[3]);}
+  else{$('#guard').innerHTML=gItem({type:'info',title:'低确定性模式',reason:'证据不足时，不输出事实性与功效性表述；所有内容标注“本段未经循证”。'});$('#guardSum').textContent='低确定性';}
+  await sleep(1100);if(rid!==state.runId)return;
+
+  // ready
+  spotlight(null);setStep(5);
+  if(c){renderTestSetup();renderDelivery();state.ready=true;tlog('ready','等待手动触发复述测试','ok');}
+  else{$('#testBody').innerHTML='<div class="note-empty">证据不足时不运行复述测试。请使用三个预置案例体验完整流程。</div>';$('#deliver').innerHTML='<div class="note-empty">低确定性内容不生成交付物。</div>';}
+  syncTools();
+}
+
+function reset(){state.runId++;state.phase='hero';state.caseId=null;state.ready=false;state.duel=false;closeSheet();closeModal();state.trace=false;$('#drawer').classList.remove('on');$('#hero').classList.remove('leaving');document.body.classList.remove('state-work');spotlight(null);syncTools();window.scrollTo({top:0});}
+
+/* ======================= RENDER: SOURCE / EVIDENCE ======================= */
+function renderSource(c){
+  let html='',pos=0;const s=c.source;
+  const marks=c.terms.map((t,i)=>({i,idx:s.indexOf(t.zh),len:t.zh.length,type:t.type})).filter(m=>m.idx>=0).sort((a,b)=>a.idx-b.idx);
+  marks.forEach(m=>{html+=esc(s.slice(pos,m.idx));html+=`<span class="src-term ${TYPE[m.type]}" data-terms="${m.i}">${esc(s.substr(m.idx,m.len))}</span>`;pos=m.idx+m.len;});
+  html+=esc(s.slice(pos));$('#sourceText').innerHTML=html;$('#tags').innerHTML='';
+}
+function addTag(c,i){const t=c.terms[i];$('#tags').insertAdjacentHTML('beforeend',`<span class="tag ${TYPE[t.type]}" data-terms="${i}"><b>#${esc(t.zh)}</b><span>${t.type}</span></span>`);}
+function renderEvidence(c,anim){
+  $('#evidence').innerHTML=c.evidence.map((e,i)=>{
+    const back=e.disputed?`<div class="ev-title">正反观点</div><div class="pc"><div><b>支持方</b>${esc(e.pro)}</div><div><b>质疑方</b>${esc(e.con)}</div></div>`:`<div class="ev-title">原文摘录</div><div class="ev-sum">${esc(e.back)}</div>`;
+    return `<div class="ev" id="ev-${i}" data-terms="${e.terms.join(' ')}" style="--evc:${EVL[e.level]};animation-delay:${anim?i*0.26:0}s">
+      <div class="ev-inner">
+        <div class="ev-face"><div class="ev-top"><i class="dot"></i><span class="lvl">${e.level}</span>${e.disputed?'<span class="dispute">⚠ 观点存在分歧</span>':''}<span class="votes">赞同 ${e.votes}</span></div>
+          <div class="ev-title">${esc(e.title)}</div><div class="ev-sum">${esc(e.summary)}</div>
+          <div class="ev-author"><span>${esc(e.author)}</span><span class="ev-flip">翻转 ↻</span></div></div>
+        <div class="ev-face ev-back">${back}<div class="ev-author"><span>原文链接 · zhihu.com/…（演示）</span><span class="ev-flip">返回 ↺</span></div></div>
+      </div></div>`;}).join('');
+}
+function focusEvidence(i){const el=$('#ev-'+i);if(!el)return;el.scrollIntoView({behavior:'smooth',block:'center'});el.classList.remove('ping');void el.offsetWidth;el.classList.add('ping');setTimeout(()=>el.classList.remove('ping'),1600);}
+
+/* ======================= RENDER: BRIDGE ======================= */
+function segsFor(l){
+  const c=C();let segs=c.levels[l].map(s=>({...s}));
+  if(c.id==='b'&&state.battery){const h=state.battery.h;segs=segs.map(s=>s.term===1?{...s,t:l===1?`Up to ${h} h battery life`:`${s.t}: up to ${h} h of typical use`}:s);}
+  return segs;
+}
+function arcInfo(i){
+  const c=C(),t=c.terms[i],segs=segsFor(state.level),has=segs.some(s=>s.term===i);
+  if(c.id==='b'&&i===1&&!state.battery)return{kind:'pending',color:'var(--amber)',mk:'!'};
+  if(t.blocked&&!has)return{kind:'blocked',color:'var(--red)',mk:'✕'};
+  if(t.blocked&&has)return{kind:'disputed',color:'var(--amber)',mk:'≈'};
+  const ev=c.evidence[t.ev[0]];return{kind:'ok',color:EVL[ev.level],mk:'✓'};
+}
+function rightLabel(i){
+  const c=C(),t=c.terms[i],seg=segsFor(state.level).find(s=>s.term===i);
+  if(seg)return esc(seg.t);
+  if(t.blocked)return `<span class="b-blocked"><s>${esc(t.blocked.s)}</s><small>${esc(t.blocked.n)}</small></span>`;
+  return '—';
+}
+function renderBridge(draw){
+  const c=C();
+  $('#bridge').innerHTML=c.terms.map((t,i)=>{
+    const a=arcInfo(i);const dashed=a.kind==='pending'||a.kind==='disputed';
+    return `<div class="b-row" data-terms="${i}" style="--arc:${a.color}">
+      <div class="b-zh" data-terms="${i}">${esc(t.zh)}</div>
+      <div class="b-arc"><svg viewBox="0 0 100 60" preserveAspectRatio="none" class="${draw?'draw':''}" style="animation-delay:${draw?i*0.18:0}s"><path class="${dashed?'dashed':''}" d="M0,51 C28,6 72,6 100,51"/></svg><i class="end l"></i><i class="end r"></i><span class="mk" style="animation-delay:${draw?0.7+i*0.18:0}s">${a.mk}</span></div>
+      <div class="b-en" data-terms="${i}" id="ben-${i}">${rightLabel(i)}</div></div>`;}).join('');
+}
+function updateBridge(){
+  const c=C();
+  c.terms.forEach((t,i)=>{
+    const row=$(`.b-row[data-terms="${i}"]`);if(!row)return;const a=arcInfo(i);
+    row.style.setProperty('--arc',a.color);
+    const p=row.querySelector('path');p.setAttribute('class',(a.kind==='pending'||a.kind==='disputed')?'dashed':'');
+    row.querySelector('.mk').textContent=a.mk;
+    const en=$('#ben-'+i);const html=rightLabel(i);
+    if(en.innerHTML!==html){en.innerHTML=html;en.classList.remove('swap');void en.offsetWidth;en.classList.add('swap');}
+  });
+}
+function renderCustomBridge(){
+  $('#bridge').innerHTML=`<div class="b-row" style="--arc:var(--slate)"><div class="b-zh">原文</div><div class="b-arc"><svg viewBox="0 0 100 60" preserveAspectRatio="none"><path class="dashed" d="M0,51 C28,6 72,6 100,51"/></svg><i class="end l"></i><i class="end r"></i><span class="mk">?</span></div><div class="b-en">未经循证</div></div>`;
+  $('#txText').innerHTML='<span class="tnote">原型不调用实时模型。实时版本中，这里会输出低确定性转译，并标注“本段未经循证”。</span>';
+  $('#literal').innerHTML='';$('#annos').innerHTML='';
+}
+
+/* ======================= RENDER: TRANSLATION ======================= */
+function lcsKeep(a,b){const n=a.length,m=b.length;const dp=Array.from({length:n+1},()=>new Uint16Array(m+1));for(let i=n-1;i>=0;i--)for(let j=m-1;j>=0;j--)dp[i][j]=a[i]===b[j]?dp[i+1][j+1]+1:Math.max(dp[i+1][j],dp[i][j+1]);const keep=new Set();let i=0,j=0;while(i<n&&j<m){if(a[i]===b[j]){keep.add(j);i++;j++;}else if(dp[i+1][j]>=dp[i][j+1])i++;else j++;}return keep;}
+function renderTranslation(mode){
+  const segs=segsFor(state.level);
+  const words=[];segs.forEach(s=>s.t.split(/(\s+)/).forEach(p=>{if(p&&!/^\s+$/.test(p))words.push(p);}));
+  const keep=mode==='diff'?lcsKeep(state.prevWords,words):new Set();
+  let wi=0,fresh=0,html='';
+  segs.forEach(s=>{
+    let inner='';
+    s.t.split(/(\s+)/).forEach(p=>{if(!p)return;if(/^\s+$/.test(p)){inner+=' ';return;}
+      const isNew=mode==='type'||(mode==='diff'&&!keep.has(wi));
+      inner+=isNew?`<span class="w fresh" style="animation-delay:${Math.min(fresh++,40)*(mode==='type'?45:28)}ms">${esc(p)}</span>`:`<span class="w">${esc(p)}</span>`;wi++;});
+    if(s.term!==undefined)html+=`<span class="tterm" data-terms="${s.term}">${inner}</span>`;
+    else if(s.note)html+=`<span class="tnote">${inner}</span>`;else html+=inner;
+  });
+  $('#txText').innerHTML=html;state.prevWords=words;
+  $('#txLvl').textContent=`· 第 ${state.level} 档 ${LEVELS[state.level].name}`;
+}
+function renderAnnos(){const c=C(),list=c.annos[state.level]||[];$('#annos').innerHTML=list.map((a,i)=>`<div class="anno" style="animation-delay:${i*0.1}s"><h4>${esc(a.h)}</h4><div class="zh">${esc(a.zh)}</div><p>${esc(a.b)}</p><div class="src">来源：知乎考据 · ${esc(c.evidence[a.ev].author)}</div></div>`).join('');}
+function renderLiteral(){$('#literal').innerHTML=`<b>机翻直译（对照）</b>${esc(C().literal)}`;}
+function renderDuel(){
+  const c=C();let n=0;
+  const html=c.duel.map(s=>s.flag?(n++,`<span class="flag" data-tip="${esc(s.flag)}">${esc(s.t)}</span>`):esc(s.t)).join('');
+  $('#duelCard').innerHTML=`<div class="tx-label"><i class="live" style="background:var(--red)"></i>无约束大模型 · 日常 prompt「帮我写成吸引人的英文广告」</div><div class="tx-text">${html}</div><div class="duel-sum">发现 ${n} 处风险 · 悬停查看原因</div>`;
+}
+
+/* ======================= LEVEL ======================= */
+function renderLevelUI(){$('#lvlName').textContent=`第 ${state.level} 档 · ${LEVELS[state.level].name}`;$('#lvlFit').textContent=LEVELS[state.level].fit;$$('#stops button').forEach(b=>b.classList.toggle('on',+b.dataset.l===state.level));}
+function setLevel(l){
+  l=Math.max(1,Math.min(5,l));if(l===state.level&&state.ready)return;
+  state.level=l;$('#lvl').value=l;renderLevelUI();
+  if(!state.caseId||!state.ready)return;
+  updateBridge();renderTranslation('diff');renderAnnos();renderGuard(true);renderDelivery();renderStale();
+  tlog('translate.switch',`第 ${l} 档 ${LEVELS[l].name} · 读取已生成结果（0 次调用）`);
+}
+
+/* ======================= GUARD ======================= */
+function gItem(it,i=0,quick){
+  const icon={block:'✕',warn:'!',ok:'✓',info:'i'}[it.type];
+  const status={block:'拦截',warn:'待核对',ok:'通过',info:'提示'}[it.type];
+  const meta=it.code?'<div class="g-meta"><code>'+esc(it.code)+'</code><span>'+status+'</span></div>':'';
+  const map=it.map&&it.map[1]?`<div class="g-map"><span class="zh">${esc(it.map[0])}</span> → <span class="${it.type==='block'&&!quick?'strike':''}" ${it.type==='block'&&quick?'style="text-decoration:line-through;color:var(--red)"':''}>${esc(it.map[1])}</span></div>`:'';
+  const form=it.form?`<div class="g-form"><input class="h" id="bH" type="number" min="1" max="999" placeholder="续航 (h)"><input class="c" id="bC" placeholder="测试条件，如：蓝牙常连、每小时同步一次"><button class="btn btn-ghost" id="bApply" style="padding:7px 12px">写入文案</button></div>`:'';
+  const ev=it.ev!==undefined?`<button class="g-ev" data-ev="${it.ev}">查看知乎证据 →</button>`:'';
+  return `<div class="g-item g-${it.type}" style="animation-delay:${quick?0:i*0.18}s"><div class="g-icon">${icon}</div><div><div class="g-title">${esc(it.title)}</div>${meta}${map}<div class="g-reason">${esc(it.reason)}</div>${form}${ev}</div></div>`;
+}
+function renderGuard(quick){
+  const items=C().guard(state.level);
+  $('#guard').innerHTML=items.map((it,i)=>gItem(it,i,quick)).join('');
+  const nb=items.filter(x=>x.type==='block').length,nw=items.filter(x=>x.type==='warn').length;
+  $('#guardSum').innerHTML=nb?`<span style="color:var(--red)">${nb} 处拦截</span>`:(nw?`<span style="color:var(--amber)">${nw} 项待处理</span>`:`<span style="color:var(--green)">通过</span>`);
+}
+
+/* ======================= TEST ======================= */
+function renderTestSetup(){
+  const c=C(),en=state.kp[c.id];
+  $('#testBody').innerHTML=`
+    <div class="sub-h">核心信息点 <span class="ai-chip">AI 提议 · 可勾选</span></div>
+    <div class="kps">${c.kp.map((k,i)=>`<label class="kp"><input type="checkbox" data-kp="${i}" ${en[i]?'checked':''}><span class="kp-box"></span><span class="kp-n">P${i+1}</span><span class="kp-t">${esc(k)}</span></label>`).join('')}</div>
+    <div class="run-row"><button class="btn btn-primary" id="runTest">运行测试</button><span class="meta">3 位虚拟读者 × 3 次采样 × 2 个版本<br>直译版 vs 当前档位 · 读者看不到信息点</span></div>
+    <div id="stale"></div><div id="results"></div>`;
+}
+function personaCards(c,lit,tr){
+  return c.personas.map((p,i)=>`<div class="p-card reading" id="pc-${i}" style="animation-delay:${i*0.1}s">
+    <div class="p-head"><div class="avatar" style="background:${AV[(c.id.charCodeAt(0)+i)%AV.length]}">${p.name[0]}</div><div><b>${p.name}</b><small>${esc(p.desc)}</small></div><span class="react-slot"></span></div>
+    <div class="p-line lit"><span class="vtag">直译</span><span class="rt">　</span></div>
+    <div class="p-line tr"><span class="vtag">转译</span><span class="rt">　</span></div>
+    <div class="imm-slot"></div></div>`).join('');
+}
+async function typeInto(el,text,rid){for(let i=0;i<=text.length;i+=3){if(rid!==state.runId)return;el.textContent=text.slice(0,i);await sleep(16);}el.textContent=text;}
+function misHTML(r){let h=esc(r.text);if(r.mis){const m=esc(r.mis);h=h.replace(m,`<mark class="mis">${m}</mark><span class="mis-tag">误解 · P${r.misP+1}</span>`);}return h;}
+async function runTest(){
+  if(!state.ready||state.testing)return;
+  const c=C(),rid=state.runId,lvl=state.level,g=grp(lvl);
+  state.testing=true;$('#runTest').disabled=true;$('#stale').innerHTML='';
+  spotlight(['pTest']);setStep(5);
+  $('#pTest').scrollIntoView({behavior:'smooth',block:'nearest'});
+  const lit=c.results.literal,tr=c.results[g];
+  $('#results').innerHTML=personaCards(c,lit,tr)+'<div id="scoreBox"></div>';
+  tlog('persona.retell',`fan-out 18 路并发 · 3 人设 × 3 采样 × 2 版本（直译 / 第 ${lvl} 档）`);
+  await sleep(1300);if(rid!==state.runId)return;
+  await Promise.all(c.personas.map(async(p,i)=>{
+    await sleep(i*220);if(rid!==state.runId)return;const card=$('#pc-'+i);if(!card)return;card.classList.remove('reading');
+    const [l1,l2]=card.querySelectorAll('.rt');
+    await Promise.all([typeInto(l1,lit[i].text,rid),typeInto(l2,tr[i].text,rid)]);
+    if(rid!==state.runId)return;
+    l1.innerHTML=misHTML(lit[i]);l2.innerHTML=misHTML(tr[i]);
+    card.querySelector('.react-slot').outerHTML=`<span class="react ${reactCls(tr[i].react)}">${tr[i].react}</span>`;
+    card.querySelector('.imm-slot').outerHTML=`<div class="imm">沉浸感（转译版）${[1,2,3,4,5].map(k=>`<i class="${k<=tr[i].imm?'on':''}"></i>`).join('')}</div>`;
+  }));
+  if(rid!==state.runId)return;
+  tlog('judge','独立评估：复述 × 信息点逐条比对 · 生成误解标注',null);
+  state.test={lvl,g};renderScores(true);
+  tlog('test.done',`信息还原度 直译 ${scores(lit).mean}% → 转译 ${scores(tr).mean}%（演示数据）`,'ok');
+  spotlight(null);state.testing=false;$('#runTest').disabled=false;
+}
+function scores(rs){
+  const en=state.kp[state.caseId];const n=en.filter(Boolean).length||1;
+  const per=rs.map(r=>{const h=r.hits.reduce((s,v,i)=>s+(en[i]?v:0),0);return{p:h/n,lo:Math.max(0,h-r.spread)/n,hi:Math.min(n,h+r.spread)/n};});
+  const avg=k=>Math.round(per.reduce((s,x)=>s+x[k],0)/per.length*100);
+  return{mean:avg('p'),lo:avg('lo'),hi:avg('hi')};
+}
+function countUp(el,to){const t0=performance.now();const f=t=>{const p=Math.min(1,(t-t0)/900),e=1-Math.pow(1-p,3);el.textContent=Math.round(to*e)+'%';if(p<1)requestAnimationFrame(f);};requestAnimationFrame(f);}
+function renderScores(anim){
+  if(!state.test)return;const c=C(),en=state.kp[c.id];
+  const lit=c.results.literal,tr=c.results[state.test.g];const a=scores(lit),b=scores(tr);
+  const head=c.kp.map((k,i)=>`<th class="${en[i]?'':'off'}" title="${esc(k)}">P${i+1}</th>`).join('');
+  const rows=c.personas.map((p,pi)=>`<tr><td>${p.name}</td>${c.kp.map((k,i)=>{const x=lit[pi].hits[i],y=tr[pi].hits[i];return `<td class="${en[i]?'':'off'}"><span class="mxc"><span class="${x?'y':'n'}" style="animation-delay:${anim?(pi*3+i)*0.05:0}s">${x?'✓':'✗'}</span><em>→</em><span class="${y?'y':'n'}" style="animation-delay:${anim?(pi*3+i)*0.05+0.25:0}s">${y?'✓':'✗'}</span></span></td>`;}).join('')}</tr>`).join('');
+  $('#scoreBox').innerHTML=`<div class="score">
+      <div class="s-col"><small>直译版 · 信息还原度</small><b id="sA">${a.mean}%</b><span>波动 ${a.lo}–${a.hi}%</span></div>
+      <div class="s-arrow">→</div>
+      <div class="s-col hi"><small>第 ${state.test.lvl} 档 · ${LEVELS[state.test.lvl].name}</small><b id="sB">${b.mean}%</b><span>波动 ${b.lo}–${b.hi}%</span></div></div>
+    <table class="mx"><thead><tr><th>读者</th>${head}</tr></thead><tbody>${rows}</tbody></table>
+    <div class="disclaimer">模拟评估，仅供参考。每位读者在隔离上下文中阅读并自由复述，由独立评估步骤与勾选的信息点逐条比对；波动范围来自 3 次采样。</div>`;
+  if(anim){countUp($('#sA'),a.mean);countUp($('#sB'),b.mean);}
+}
+function renderStale(){
+  if(!state.test||!$('#stale'))return;
+  $('#stale').innerHTML=state.test.lvl!==state.level?`<div class="stale"><span>结果对应第 ${state.test.lvl} 档，当前为第 ${state.level} 档</span><button id="rerun">重新测试</button></div>`:'';
+}
+
+/* ======================= DELIVERY ======================= */
+function plainText(){return segsFor(state.level).map(s=>s.t).join('');}
+function renderDelivery(glow){
+  const c=C(),d=c.delivery,ans=c.answerer,ev=c.evidence[ans.ev],ok=state.auth[c.id];
+  $('#delTitle').textContent=d.title;
+  let body='';
+  if(d.type==='video'){body=`<div class="video"><span class="tc">${d.tc}</span><div class="play"><svg width="16" height="16" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"/></svg></div><div class="sub-zh">${esc(c.source)}</div><div class="sub-en">${esc(plainText())}</div></div>`;}
+  else{const sentences=plainText().split(/(?<=\.)\s+/).filter(Boolean);body=`<div class="pcard" style="--c1:${d.c1};--c2:${d.c2}"><div class="img">${esc(d.name)}</div><div class="body">${c.id==='b'?`<ul>${sentences.map(s=>`<li>${esc(s)}</li>`).join('')}</ul>`:esc(plainText())}</div></div>`;}
+  $('#deliver').innerHTML=body+`<div class="attr ${glow?'glow':''}"><div class="avatar" style="background:var(--violet)">${ans.init}</div><div class="who"><b>${esc(ans.author)}</b><span>引用《${esc(ev.title)}》· 原文链接</span></div>${ok?'<span class="pill ok">✓ 已授权署名</span>':'<span class="pill pending">待授权</span>'}</div>
+    ${ok?'':'<div style="margin-top:10px;text-align:right"><button class="link-btn" id="reqAuth">去答主端请求授权 →</button></div>'}`;
+}
+
+/* ======================= ANSWERER SHEET ======================= */
+function openSheet(){
+  if(!state.ready||!state.caseId)return;state.sheet=true;renderSheet();
+  $('#sheet').classList.add('on');$('#backdrop').classList.add('on');syncTools();
+  setTimeout(()=>$$('#sheet .fill').forEach(f=>f.style.width=f.dataset.w),350);
+  tlog('view.switch','出海团队工作台 → 知乎答主共创中心');
+}
+function closeSheet(){state.sheet=false;$('#sheet').classList.remove('on');$('#backdrop').classList.remove('on');syncTools();}
+function renderSheet(){
+  const c=C(),a=c.answerer,ev=c.evidence[a.ev],ok=state.auth[c.id],max=Math.max(...a.dash.bars.map(b=>b[1]));
+  $('#sheet').innerHTML=`
+    <div class="sheet-top"><div class="seg"><button id="toWork">出海团队工作台</button><button class="on">知乎答主共创中心</button></div><h2 style="margin-left:6px">知乎答主共创中心</h2><span class="spacer"></span><span class="demo-tag">演示身份与数据均为虚构</span><button class="tool" id="closeSheet">关闭 <kbd>A</kbd></button></div>
+    <div class="sheet-body">
+      <div class="me full"><div class="avatar" style="background:var(--violet)">${a.init}</div><div><b>${esc(a.author)}</b><small>虚构演示身份 · 不代表任何真实答主</small></div></div>
+      <section class="panel"><div class="panel-h"><h3>引用授权请求</h3><span class="meta">${ok?'已处理':'1 条待处理'}</span></div>
+        <div class="req">
+          <div class="req-row"><span>请求方</span><b>${esc(a.team)}</b></div>
+          <div class="req-row"><span>使用场景</span><div>${esc(a.usage)}</div></div>
+          <div class="req-row"><span>目标市场</span><div>${esc(a.markets)}</div></div>
+          <div class="req-row"><span>引用回答</span><div>《${esc(ev.title)}》</div></div>
+          <div class="quote">${esc(ev.summary)}</div>
+          <div class="req-row"><span>你将获得</span><div>海外署名 + 原文链接 · 引用与传播数据回流到你的看板</div></div>
+          <div class="req-actions" id="reqActions">${ok?'<div class="approved">✓ 已授权，署名已在交付卡上展示</div>':'<button class="btn btn-primary" id="approve">授权引用</button><button class="btn btn-ghost" id="decline">暂不授权</button>'}</div>
+        </div></section>
+      <section class="panel"><div class="panel-h"><h3>跨文化影响力看板</h3><span class="demo-tag meta">演示数据</span></div>
+        <div class="kpis"><div class="kpi"><b>${a.dash.cited}</b><span>被出海卡片引用</span></div><div class="kpi"><b>${a.dash.markets}</b><span>覆盖海外市场</span></div><div class="kpi"><b>${a.dash.qs}</b><span>引出知乎新问题</span></div></div>
+        <div class="sub-h">按市场分布</div>
+        <div class="bars">${a.dash.bars.map(b=>`<div class="bar"><span>${b[0]}</span><div class="track"><div class="fill" data-w="${b[1]/max*100}%"></div></div><em>${b[1]}</em></div>`).join('')}</div></section>
+      <section class="panel full"><div class="panel-h"><h3>海外困惑认领池</h3><span class="meta">预置海外评论样本聚类 · 与知乎站内回答比对</span></div>
+        ${a.pool.map((p,i)=>`<div class="pool-item"><div><div class="pool-q">${esc(p.q)}</div><div class="pool-zh">${esc(p.zh)}</div><div class="pool-meta"><span>${esc(p.src)} · ${p.n} 条</span>${p.gap?'<span class="gap">● 知乎缺少通俗回答</span>':'<span class="has">● 知乎已有相关回答</span>'}</div></div>
+          ${p.gap?`<button class="btn btn-primary" data-draft="${i}">生成知乎提问草稿</button>`:'<button class="btn btn-ghost" disabled>已有回答</button>'}</div>`).join('')}
+      </section>
+    </div>`;
+}
+async function approve(){
+  const c=C(),rid=state.runId;state.auth[c.id]=true;
+  $('#reqActions').innerHTML='<div class="approved">✓ 已授权，正在返回工作台…</div>';
+  tlog('auth.approve',`${c.answerer.author} 授权引用 → 交付卡署名点亮`,'ok');
+  toast('已授权引用 · 署名将显示在交付卡上');
+  await sleep(1000);if(rid!==state.runId)return;closeSheet();await sleep(350);if(rid!==state.runId)return;
+  renderDelivery(true);$('#pDeliver').scrollIntoView({behavior:'smooth',block:'center'});
+}
+async function openDraft(i){
+  const p=C().answerer.pool[i],d=p.draft;
+  $('#modal').innerHTML=`<h3>知乎提问草稿</h3><div class="meta">根据海外评论样本自动生成 · 发布前可编辑</div>
+    <div class="draft"><div class="t">${esc(d.title)}</div><div class="b" id="draftBody"></div><div class="topics">${d.topics.map(t=>`<span>#${esc(t)}</span>`).join('')}</div></div>
+    <div class="meta" style="margin-bottom:14px">推荐邀请：${d.invite.map(esc).join('、')}</div>
+    <div class="modal-foot"><span class="meta">原型不跳转；实际以知乎开放能力为准</span><button class="btn btn-ghost" id="copyDraft">复制草稿</button><button class="btn btn-primary" id="closeModal">完成</button></div>`;
+  $('#modal').classList.add('on');
+  tlog('question.draft',`缺口「${p.zh}」→ 生成提问草稿 · 推荐 ${d.invite.length} 位答主`);
+  const el=$('#draftBody'),copy=$('#copyDraft');
+  copy.onclick=async()=>{try{await navigator.clipboard.writeText(d.title+'\n\n'+d.body);toast('已复制草稿');}catch{toast('复制失败，请手动选择文本');}};
+  for(let k=0;k<=d.body.length;k+=2){if(!el.isConnected||!$('#modal').classList.contains('on'))return;el.textContent=d.body.slice(0,k);await sleep(14);}el.textContent=d.body;
+}
+function closeModal(){$('#modal').classList.remove('on');}
+
+/* ======================= TOGGLES ======================= */
+function toggleDuel(){if(!state.ready)return;state.duel=!state.duel;if(state.duel)renderDuel();$('#pBridge').classList.toggle('duel-on',state.duel);syncTools();tlog('duel',state.duel?'开启：无约束大模型 vs 知乎循证约束（并发）':'关闭对照');if(state.duel)$('#pBridge').scrollIntoView({behavior:'smooth',block:'nearest'});}
+function toggleTrace(){if(state.phase!=='work')return;state.trace=!state.trace;$('#drawer').classList.toggle('on',state.trace);syncTools();}
+function toggleTheme(){const h=document.documentElement;h.dataset.theme=h.dataset.theme==='dark'?'light':'dark';try{localStorage.setItem('zb-theme',h.dataset.theme);}catch(e){}}
+
+/* ======================= EVENTS ======================= */
+buildChrome();
+const prototypeMode = new URLSearchParams(location.search).get('demo') === '1';
+let connectionMounted = prototypeMode;
+if(!prototypeMode){
+  $('#heroChips').style.display='none';
+  $('#startBtn').disabled=true;
+  $('.hero-foot span:last-child').textContent='正在连接服务…';
+}
+try{const t=localStorage.getItem('zb-theme');if(t)document.documentElement.dataset.theme=t;}catch(e){}
+syncTools();
+
+document.addEventListener('click',e=>{
+  const t=e.target;
+  if(!connectionMounted&&t.closest('[data-fill],[data-case],#startBtn'))return;
+  const fill=t.closest('[data-fill]');if(fill){$('#input').value=CASES[fill.dataset.fill].source;$('#input').focus();return;}
+  const cs=t.closest('[data-case]');if(cs){start(cs.dataset.case);return;}
+  if(t.closest('#startBtn')){const v=$('#input').value.trim();if(!v){toast('请输入一段文案，或选择一个案例');return;}const hit=Object.values(CASES).find(c=>c.source===v);start(hit?hit.id:null,v);return;}
+  if(t.closest('#brand')){reset();return;}
+  const ev=t.closest('.ev');if(ev){ev.classList.toggle('flipped');return;}
+  const gev=t.closest('.g-ev');if(gev){focusEvidence(+gev.dataset.ev);return;}
+  const stop=t.closest('#stops button');if(stop){setLevel(+stop.dataset.l);return;}
+  if(t.closest('#runTest')||t.closest('#rerun')){runTest();return;}
+  if(t.closest('#bApply')){const h=+$('#bH').value;if(!h||h<=0){toast('请填写续航小时数');return;}state.battery={h,c:$('#bC').value.trim()};updateBridge();renderTranslation('diff');renderGuard(true);renderDelivery();tlog('guard.data',`补充续航 ${h} h → 写入文案，待补充项清零`,'ok');toast('已写入文案');return;}
+  if(t.closest('#reqAuth')){openSheet();return;}
+  if(t.closest('#tDuel')){toggleDuel();return;}
+  if(t.closest('#tSheet')){state.sheet?closeSheet():openSheet();return;}
+  if(t.closest('#tTrace')){toggleTrace();return;}
+  if(t.closest('#tTheme')){toggleTheme();return;}
+  if(t.closest('#closeSheet')||t.closest('#toWork')||t===$('#backdrop')){closeSheet();closeModal();return;}
+  if(t.closest('#approve')){approve();return;}
+  if(t.closest('#decline')){$('#reqActions').innerHTML='<div class="meta">已暂不授权，交付卡将不展示署名。</div>';return;}
+  const dr=t.closest('[data-draft]');if(dr){openDraft(+dr.dataset.draft);return;}
+  if(t.closest('#closeModal')){closeModal();return;}
+});
+document.addEventListener('change',e=>{
+  const k=e.target.closest('[data-kp]');if(!k)return;const en=state.kp[state.caseId];const i=+k.dataset.kp;
+  if(!k.checked&&en.filter(Boolean).length<=1){k.checked=true;toast('至少保留一个信息点');return;}
+  en[i]=k.checked;renderScores(false);
+});
+$('#lvl').addEventListener('input',e=>setLevel(+e.target.value));
+
+let hlTerms=null;
+document.addEventListener('mouseover',e=>{
+  const el=e.target.closest('[data-terms]');const terms=el?el.dataset.terms.split(' '):null;
+  const key=terms?terms.join(' '):null;if(key===hlTerms)return;hlTerms=key;
+  $$('.hl').forEach(x=>x.classList.remove('hl'));
+  if(!terms||state.phase!=='work')return;
+  terms.forEach(t=>$$(`#wb [data-terms~="${t}"]`).forEach(x=>x.classList.add('hl')));
+});
+
+let stepLevel=null;
+document.addEventListener('keydown',e=>{
+  if(e.target.matches('textarea,select,input:not([type=range]):not([type=checkbox])')){if(e.key==='Escape')e.target.blur();if(e.key==='Enter'&&(e.metaKey||e.ctrlKey))$('#startBtn').click();return;}
+  if(e.metaKey||e.ctrlKey||e.altKey)return;
+  const k=e.key.toLowerCase();
+  if(k==='1'||k==='2'||k==='3'){if(connectionMounted)start(['a','b','c'][+k-1]);}
+  else if(k==='d'){if(prototypeMode)toggleDuel();}
+  else if(k==='a'){if(prototypeMode){state.sheet?closeSheet():openSheet();}}
+  else if(k==='t')toggleTrace();
+  else if(k==='r')reset();
+  else if(k==='escape'){closeModal();closeSheet();if(state.trace)toggleTrace();}
+  else if((k==='arrowleft'||k==='arrowright')&&e.target.id!=='lvl'){
+    if(prototypeMode&&state.ready){e.preventDefault();setLevel(state.level+(k==='arrowright'?1:-1));}
+    else if(!prototypeMode&&stepLevel&&state.phase==='work'){e.preventDefault();stepLevel(k==='arrowright'?1:-1);}
+  }
+});
+</script>
+<script type="module">
+  if (!prototypeMode) {
+    import('./src/connected.ts').then(({ mountConnected }) => {
+      const resetPrototype = reset;
+      mountConnected({
+        setStep, spotlight, tlog, toast, gItem, closeModal,
+        enter() {
+          if (state.phase === 'work') return;
+          state.phase = 'work';
+          document.body.classList.add('state-work');
+          const wb = $('#wb');
+          wb.classList.remove('enter');
+          void wb.offsetWidth;
+          wb.classList.add('enter');
+          window.scrollTo({top: 0});
+        },
+        traceStart() {
+          state.t0 = performance.now();
+          state.traceLines = [];
+          $('#traceBody').textContent = '';
+        },
+        reset: resetPrototype,
+        install(handlers) {
+          connectionMounted = true;
+          start = handlers.start;
+          setLevel = handlers.setLevel;
+          stepLevel = handlers.stepLevel ?? null;
+          runTest = handlers.runTest;
+          reset = handlers.reset;
+        }
+      });
+    }).catch(() => { $('.hero-foot span:last-child').textContent='工作台载入失败，请刷新页面重试。'; });
+  }
+</script>
+</body>
+</html>

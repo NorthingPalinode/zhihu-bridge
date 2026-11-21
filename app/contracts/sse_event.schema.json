@@ -1,0 +1,37 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "payload": {
+      "additionalProperties": true,
+      "title": "Payload",
+      "type": "object"
+    },
+    "runId": {
+      "title": "Runid",
+      "type": "string"
+    },
+    "seq": {
+      "title": "Seq",
+      "type": "integer"
+    },
+    "type": {
+      "enum": [
+        "started",
+        "terms",
+        "evidence",
+        "ready",
+        "error"
+      ],
+      "title": "Type",
+      "type": "string"
+    }
+  },
+  "required": [
+    "runId",
+    "seq",
+    "type",
+    "payload"
+  ],
+  "title": "SseEvent",
+  "type": "object"
+}

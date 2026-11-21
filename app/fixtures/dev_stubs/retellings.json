@@ -1,0 +1,36 @@
+{
+  "provenance": "dev_stub",
+  "note": "开发占位（非真实运行、非评测结果）。由开发者手写的模拟复述样例，只用于让本地流程可操作；fake 评判按 case 的 judgeRules 规则逐点判定。真实复述必须由真实模型产生。",
+  "case_a": {
+    "a_new_1": {
+      "literal": "Something about karma from heaven. If they can't get through some thunder thing, their soul flies away.",
+      "plain": "Heaven's law caused this. If he fails a ninefold lightning trial, his soul is destroyed.",
+      "genre": "The Heavenly Dao is judging him with a Thunder Tribulation, and his soul will scatter if he fails."
+    },
+    "a_new_2": {
+      "literal": "A huge thunderstorm is coming. If the hero can't survive the storm, he dies.",
+      "plain": "Heaven is punishing him with a ninefold lightning trial; failing means his soul is destroyed.",
+      "genre": "Some Dao reckoning. He has to pass a tribulation or his soul scatters."
+    },
+    "a_new_3": {
+      "literal": "It's fate. If he fails the nine-layer lightning test, he will be reborn later as someone else.",
+      "plain": "Because of heaven's law he faces a ninefold lightning trial, and if he fails his soul is destroyed.",
+      "genre": "The Heavenly Dao sends a ninefold thunder tribulation; failing it scatters his soul."
+    },
+    "a_genre_1": {
+      "literal": "Classic karmic reckoning from the heavens: fail the nine-layered thunder tribulation and the soul scatters.",
+      "plain": "Heaven's law brought this on; fail the ninefold lightning trial and the soul is destroyed.",
+      "genre": "Heavenly Dao's reckoning: fail the Ninefold Thunder Tribulation and your soul scatters."
+    },
+    "a_genre_2": {
+      "literal": "Heaven's karma; a nine-layer lightning tribulation; fail and your soul flies apart and scatters.",
+      "plain": "It's heaven's law. Fail the ninefold trial by lightning and your soul gets destroyed.",
+      "genre": "The Dao demands a reckoning, the ninefold tribulation, and failure means the soul scatters."
+    },
+    "a_genre_3": {
+      "literal": "The heavens demand it; if you can't withstand the thunder tribulation, your soul is scattered.",
+      "plain": "Heaven's law: a ninefold lightning trial, and failing destroys your soul.",
+      "genre": "By the Heavenly Dao's reckoning, failing the Ninefold Thunder Tribulation scatters the soul."
+    }
+  }
+}

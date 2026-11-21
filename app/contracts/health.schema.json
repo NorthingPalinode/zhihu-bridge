@@ -1,0 +1,75 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "generationMode": {
+      "enum": [
+        "live",
+        "replay",
+        "degraded",
+        "dev_stub"
+      ],
+      "title": "Generationmode",
+      "type": "string"
+    },
+    "llmBudgetLeft": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Llmbudgetleft"
+    },
+    "llmKeyConfigured": {
+      "title": "Llmkeyconfigured",
+      "type": "boolean"
+    },
+    "llmProvider": {
+      "title": "Llmprovider",
+      "type": "string"
+    },
+    "ok": {
+      "title": "Ok",
+      "type": "boolean"
+    },
+    "replayAvailable": {
+      "title": "Replayavailable",
+      "type": "boolean"
+    },
+    "replayCount": {
+      "title": "Replaycount",
+      "type": "integer"
+    },
+    "zhihuBudgetLeft": {
+      "additionalProperties": {
+        "type": "integer"
+      },
+      "title": "Zhihubudgetleft",
+      "type": "object"
+    },
+    "zhihuLive": {
+      "title": "Zhihulive",
+      "type": "boolean"
+    },
+    "zhihuSecretConfigured": {
+      "title": "Zhihusecretconfigured",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "ok",
+    "zhihuBudgetLeft",
+    "llmBudgetLeft",
+    "replayAvailable",
+    "replayCount",
+    "generationMode",
+    "llmProvider",
+    "zhihuLive",
+    "zhihuSecretConfigured",
+    "llmKeyConfigured"
+  ],
+  "title": "Health",
+  "type": "object"
+}

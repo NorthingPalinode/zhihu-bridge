@@ -1,0 +1,60 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "audienceId": {
+      "title": "Audienceid",
+      "type": "string"
+    },
+    "caseId": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Caseid"
+    },
+    "mode": {
+      "default": "auto",
+      "enum": [
+        "auto",
+        "replay"
+      ],
+      "title": "Mode",
+      "type": "string"
+    },
+    "targetLanguage": {
+      "default": "en",
+      "enum": [
+        "en",
+        "ja",
+        "ko",
+        "es",
+        "pt",
+        "id",
+        "th",
+        "vi",
+        "de",
+        "fr",
+        "ar",
+        "ru"
+      ],
+      "title": "Targetlanguage",
+      "type": "string"
+    },
+    "text": {
+      "maxLength": 4000,
+      "title": "Text",
+      "type": "string"
+    }
+  },
+  "required": [
+    "text",
+    "audienceId"
+  ],
+  "title": "RunRequest",
+  "type": "object"
+}

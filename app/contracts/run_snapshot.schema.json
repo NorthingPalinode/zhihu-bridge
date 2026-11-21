@@ -1,0 +1,804 @@
+{
+  "$defs": {
+    "Check": {
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "enum": [
+            "none",
+            "remove",
+            "rewrite",
+            "needs_data",
+            "review"
+          ],
+          "title": "Action",
+          "type": "string"
+        },
+        "evidenceIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Evidenceids",
+          "type": "array"
+        },
+        "finalText": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Finaltext"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "jurisdiction": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Jurisdiction"
+        },
+        "keyPointId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Keypointid"
+        },
+        "kind": {
+          "enum": [
+            "fidelity",
+            "claim"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "label": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Label"
+        },
+        "reason": {
+          "title": "Reason",
+          "type": "string"
+        },
+        "riskCategory": {
+          "anyOf": [
+            {
+              "enum": [
+                "legal",
+                "custom"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Riskcategory"
+        },
+        "rule": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Rule"
+        },
+        "span": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Span"
+        },
+        "status": {
+          "enum": [
+            "pass",
+            "warn",
+            "fail"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "suggestion": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Suggestion"
+        },
+        "termId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Termid"
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "status",
+        "action",
+        "reason"
+      ],
+      "title": "Check",
+      "type": "object"
+    },
+    "Decision": {
+      "additionalProperties": false,
+      "properties": {
+        "attribution": {
+          "enum": [
+            "zhihu",
+            "other",
+            "model",
+            "editor"
+          ],
+          "title": "Attribution",
+          "type": "string"
+        },
+        "choice": {
+          "title": "Choice",
+          "type": "string"
+        },
+        "evidenceIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Evidenceids",
+          "type": "array"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "levels": {
+          "items": {
+            "enum": [
+              "literal",
+              "plain",
+              "light",
+              "balanced",
+              "technical",
+              "genre",
+              "single"
+            ],
+            "type": "string"
+          },
+          "title": "Levels",
+          "type": "array"
+        },
+        "rationale": {
+          "title": "Rationale",
+          "type": "string"
+        },
+        "termId": {
+          "title": "Termid",
+          "type": "string"
+        },
+        "title": {
+          "default": "",
+          "title": "Title",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "termId",
+        "choice",
+        "rationale",
+        "evidenceIds",
+        "attribution"
+      ],
+      "title": "Decision",
+      "type": "object"
+    },
+    "Evidence": {
+      "additionalProperties": false,
+      "properties": {
+        "author": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Author"
+        },
+        "contentType": {
+          "enum": [
+            "answer",
+            "article",
+            "question",
+            "glossary",
+            "other"
+          ],
+          "title": "Contenttype",
+          "type": "string"
+        },
+        "fetchedAt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Fetchedat"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "limits": {
+          "title": "Limits",
+          "type": "string"
+        },
+        "provider": {
+          "enum": [
+            "zhihu",
+            "other"
+          ],
+          "title": "Provider",
+          "type": "string"
+        },
+        "role": {
+          "enum": [
+            "setting",
+            "context",
+            "usage",
+            "counterexample",
+            "audience_insight"
+          ],
+          "title": "Role",
+          "type": "string"
+        },
+        "sourceMode": {
+          "enum": [
+            "zhihu_live",
+            "zhihu_cached",
+            "zhihu_curated",
+            "other",
+            "none"
+          ],
+          "title": "Sourcemode",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "reviewed",
+            "candidate",
+            "rejected"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "summary": {
+          "title": "Summary",
+          "type": "string"
+        },
+        "supports": {
+          "title": "Supports",
+          "type": "string"
+        },
+        "termIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Termids",
+          "type": "array"
+        },
+        "title": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Title"
+        },
+        "url": {
+          "title": "Url",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "provider",
+        "sourceMode",
+        "contentType",
+        "url",
+        "summary",
+        "role",
+        "supports",
+        "limits",
+        "termIds",
+        "status"
+      ],
+      "title": "Evidence",
+      "type": "object"
+    },
+    "KeyPoint": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "short": {
+          "default": "",
+          "title": "Short",
+          "type": "string"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "text"
+      ],
+      "title": "KeyPoint",
+      "type": "object"
+    },
+    "Note": {
+      "additionalProperties": false,
+      "properties": {
+        "evidenceIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Evidenceids",
+          "type": "array"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "text"
+      ],
+      "title": "Note",
+      "type": "object"
+    },
+    "Segment": {
+      "additionalProperties": false,
+      "properties": {
+        "decisionId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Decisionid"
+        },
+        "evidenceIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Evidenceids",
+          "type": "array"
+        },
+        "termIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Termids",
+          "type": "array"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "text"
+      ],
+      "title": "Segment",
+      "type": "object"
+    },
+    "SourceSegment": {
+      "additionalProperties": false,
+      "properties": {
+        "termId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Termid"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "text"
+      ],
+      "title": "SourceSegment",
+      "type": "object"
+    },
+    "Term": {
+      "additionalProperties": false,
+      "properties": {
+        "end": {
+          "title": "End",
+          "type": "integer"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "keyPointIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Keypointids",
+          "type": "array"
+        },
+        "kind": {
+          "default": "culture",
+          "enum": [
+            "culture",
+            "claim",
+            "scene",
+            "context"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "start": {
+          "title": "Start",
+          "type": "integer"
+        },
+        "surface": {
+          "title": "Surface",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "surface",
+        "start",
+        "end",
+        "keyPointIds"
+      ],
+      "title": "Term",
+      "type": "object"
+    },
+    "Variant": {
+      "additionalProperties": false,
+      "properties": {
+        "candidateText": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Candidatetext"
+        },
+        "checks": {
+          "items": {
+            "$ref": "#/$defs/Check"
+          },
+          "title": "Checks",
+          "type": "array"
+        },
+        "exportState": {
+          "enum": [
+            "exportable",
+            "draft",
+            "needs_data"
+          ],
+          "title": "Exportstate",
+          "type": "string"
+        },
+        "level": {
+          "enum": [
+            "literal",
+            "plain",
+            "light",
+            "balanced",
+            "technical",
+            "genre",
+            "single"
+          ],
+          "title": "Level",
+          "type": "string"
+        },
+        "notes": {
+          "items": {
+            "$ref": "#/$defs/Note"
+          },
+          "title": "Notes",
+          "type": "array"
+        },
+        "segments": {
+          "items": {
+            "$ref": "#/$defs/Segment"
+          },
+          "title": "Segments",
+          "type": "array"
+        }
+      },
+      "required": [
+        "level",
+        "segments",
+        "exportState"
+      ],
+      "title": "Variant",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "audienceId": {
+      "title": "Audienceid",
+      "type": "string"
+    },
+    "caseId": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Caseid"
+    },
+    "corpusVersion": {
+      "title": "Corpusversion",
+      "type": "string"
+    },
+    "createdAt": {
+      "title": "Createdat",
+      "type": "string"
+    },
+    "decisions": {
+      "items": {
+        "$ref": "#/$defs/Decision"
+      },
+      "title": "Decisions",
+      "type": "array"
+    },
+    "degradedReason": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Degradedreason"
+    },
+    "evidence": {
+      "items": {
+        "$ref": "#/$defs/Evidence"
+      },
+      "title": "Evidence",
+      "type": "array"
+    },
+    "evidenceSource": {
+      "enum": [
+        "zhihu_live",
+        "zhihu_cached",
+        "zhihu_curated",
+        "other",
+        "none"
+      ],
+      "title": "Evidencesource",
+      "type": "string"
+    },
+    "frozenAt": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Frozenat"
+    },
+    "keyPoints": {
+      "items": {
+        "$ref": "#/$defs/KeyPoint"
+      },
+      "title": "Keypoints",
+      "type": "array"
+    },
+    "mode": {
+      "enum": [
+        "live",
+        "replay",
+        "degraded",
+        "dev_stub"
+      ],
+      "title": "Mode",
+      "type": "string"
+    },
+    "modelVersion": {
+      "title": "Modelversion",
+      "type": "string"
+    },
+    "notices": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Notices",
+      "type": "array"
+    },
+    "promptVersion": {
+      "title": "Promptversion",
+      "type": "string"
+    },
+    "provenance": {
+      "enum": [
+        "real_run",
+        "dev_stub"
+      ],
+      "title": "Provenance",
+      "type": "string"
+    },
+    "recommendationReason": {
+      "title": "Recommendationreason",
+      "type": "string"
+    },
+    "recommendedLevel": {
+      "enum": [
+        "literal",
+        "plain",
+        "light",
+        "balanced",
+        "technical",
+        "genre",
+        "single"
+      ],
+      "title": "Recommendedlevel",
+      "type": "string"
+    },
+    "revision": {
+      "title": "Revision",
+      "type": "integer"
+    },
+    "runId": {
+      "title": "Runid",
+      "type": "string"
+    },
+    "sourceSegments": {
+      "items": {
+        "$ref": "#/$defs/SourceSegment"
+      },
+      "title": "Sourcesegments",
+      "type": "array"
+    },
+    "targetLanguage": {
+      "default": "en",
+      "enum": [
+        "en",
+        "ja",
+        "ko",
+        "es",
+        "pt",
+        "id",
+        "th",
+        "vi",
+        "de",
+        "fr",
+        "ar",
+        "ru"
+      ],
+      "title": "Targetlanguage",
+      "type": "string"
+    },
+    "terms": {
+      "items": {
+        "$ref": "#/$defs/Term"
+      },
+      "title": "Terms",
+      "type": "array"
+    },
+    "variants": {
+      "items": {
+        "$ref": "#/$defs/Variant"
+      },
+      "title": "Variants",
+      "type": "array"
+    }
+  },
+  "required": [
+    "runId",
+    "revision",
+    "caseId",
+    "audienceId",
+    "mode",
+    "provenance",
+    "evidenceSource",
+    "sourceSegments",
+    "terms",
+    "keyPoints",
+    "evidence",
+    "decisions",
+    "recommendedLevel",
+    "recommendationReason",
+    "variants",
+    "modelVersion",
+    "promptVersion",
+    "corpusVersion",
+    "createdAt"
+  ],
+  "title": "RunSnapshot",
+  "type": "object"
+}

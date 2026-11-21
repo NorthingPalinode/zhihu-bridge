@@ -1,0 +1,78 @@
+{
+  "caseId": "case_c",
+  "label": "草本茶 · 岭南品牌",
+  "industry": "岭南大健康 · 品牌出海",
+  "scene": "岭南草本茶 / 凉茶品牌出海，把中文卖点完整转译为符合海外广告法与当地消费习惯的商品页文案。",
+  "text": "回南天祛湿茶，清热解毒，拯救熬夜上火。",
+  "searchQuery": "广东 回南天 成因",
+  "defaultAudienceId": "c_shopper",
+  "levels": ["single"],
+  "audiences": [
+    {
+      "id": "c_shopper",
+      "label": "海外英语商品页消费者",
+      "recommendedLevel": "single",
+      "constraint": "商品页短文案；完整传达卖点，采用符合海外广告法与当地文化的清爽体验表达，不作未经审批的医疗或排毒宣称",
+      "personaSetId": null
+    }
+  ],
+  "terms": [
+    {"id": "C1", "surface": "回南天", "kind": "context", "keyPointIds": ["KP1"]},
+    {"id": "C2", "surface": "祛湿", "kind": "scene", "keyPointIds": ["KP2"]},
+    {"id": "C3", "surface": "清热解毒", "kind": "culture", "keyPointIds": ["KP2"]},
+    {"id": "C4", "surface": "熬夜", "kind": "scene", "keyPointIds": ["KP3"]},
+    {"id": "C5", "surface": "上火", "kind": "culture", "keyPointIds": ["KP3"]}
+  ],
+  "keyPoints": [
+    {"id": "KP1", "text": "适用潮湿闷热的回南天天气场景", "short": "回南天潮湿场景"},
+    {"id": "KP2", "text": "传达草本茶清爽轻盈、清凉舒缓的饮用体验（避免违规医疗/排毒宣称）", "short": "清爽舒缓体验"},
+    {"id": "KP3", "text": "覆盖熬夜后疲惫燥热的日常焕活场景", "short": "熬夜焕活场景"}
+  ],
+  "knownMisreadings": [],
+  "forbiddenAdditions": [],
+  "decisions": [
+    {
+      "id": "DC1", "termId": "C1", "title": "回南天的英文落点",
+      "choice": "转译为潮湿闷热天气场景（humid days）",
+      "rationale": "知乎语境证据说明回南天是华南潮湿回潮天气，直接落为海外读者秒懂的 humid days",
+      "evidenceIds": ["C1#2", "C1#6"], "attribution": "zhihu", "levels": ["single"]
+    },
+    {
+      "id": "DC2", "termId": "C2", "title": "祛湿的合规广告表达",
+      "choice": "转译为清爽轻盈口感（light, refreshing）",
+      "rationale": "正常保留产品卖点但规避欧美广告法对“祛湿/排湿功效”的监管风险，改为饮用清爽体验",
+      "evidenceIds": ["C2_refined#1"], "attribution": "zhihu", "levels": ["single"]
+    },
+    {
+      "id": "DC3", "termId": "C3", "title": "清热解毒的合规广告表达",
+      "choice": "转译为清凉舒缓感受（cooling and soothing）",
+      "rationale": "完整传达广告语境，同时避开 FDA/FTC 与欧盟严查的 detox / 医疗解毒违法词",
+      "evidenceIds": ["C2_refined#1"], "attribution": "editor", "levels": ["single"]
+    },
+    {
+      "id": "DC4", "termId": "C4", "title": "熬夜场景保留",
+      "choice": "自然转译为熬夜场景（late-night）",
+      "rationale": "日常消费场景符合海外受众生活经验，无需删减",
+      "evidenceIds": [], "attribution": "editor", "levels": ["single"]
+    },
+    {
+      "id": "DC5", "termId": "C5", "title": "上火的文化转译",
+      "choice": "转译为熬夜后的倦怠燥热感（burnout）",
+      "rationale": "海外没有中医“上火”概念且直译 internal heat 易触发违规功效审查，落为 late-night burnout 自然且合规",
+      "evidenceIds": [], "attribution": "editor", "levels": ["single"]
+    }
+  ],
+  "claimPolicy": {},
+  "fidelityRules": {
+    "KP1": {"any": ["humid", "damp", "muggy"]},
+    "KP2": {"any": ["refresh", "cool", "sooth", "light", "herbal"]},
+    "KP3": {"any": ["late", "night", "burnout", "restless", "tired", "fatigue", "stress"]}
+  },
+  "forbiddenPatterns": [],
+  "judgeRules": {},
+  "flowbackQueries": {
+    "C1": "回南天 外国人 怎么理解"
+  },
+  "testEnabled": false,
+  "testDisabledReason": "案例 C 的 P0 范围不含模拟读者测试（V6 §3.1 P0-8、§5.3 C 路径）"
+}

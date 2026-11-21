@@ -1,0 +1,81 @@
+{
+  "provenance": "dev_stub",
+  "note": "开发占位（非真实运行）。英文取自 V6 §4.1.3 / §4.2 的“验收参考译稿”，它们是评判方向参考，不是模型输出。fake 适配器只在 LLM_PROVIDER=fake 时使用本文件；界面必须显示“开发占位 · 非真实运行”。本文件不得复制进 fixtures/replays/。",
+  "case_a": {
+    "recommendationReason": {
+      "a_new": "受众约束：短剧新观众没有仙侠背景，通俗版用剧情因果和明确代价表达。",
+      "a_genre": "受众约束：仙侠核心读者熟悉类型术语，类型版保留 Tribulation，释义放在字幕外注释。"
+    },
+    "literal": {
+      "segments": [
+        {"text": "This is the karmic law of Heaven", "termIds": ["T1"], "evidenceIds": []},
+        {"text": "; if you cannot withstand the ", "termIds": [], "evidenceIds": []},
+        {"text": "nine-layered thunder tribulation", "termIds": ["T2"], "evidenceIds": []},
+        {"text": ", ", "termIds": [], "evidenceIds": []},
+        {"text": "your soul will fly away and scatter", "termIds": ["T3"], "evidenceIds": []},
+        {"text": ".", "termIds": [], "evidenceIds": []}
+      ],
+      "notes": []
+    },
+    "plain": {
+      "segments": [
+        {"text": "Heaven's law has brought this upon you", "termIds": ["T1"], "evidenceIds": []},
+        {"text": ". Fail the ", "termIds": [], "evidenceIds": []},
+        {"text": "ninefold trial by lightning", "termIds": ["T2"], "evidenceIds": ["A1#1"], "decisionId": "D1"},
+        {"text": ", and ", "termIds": [], "evidenceIds": []},
+        {"text": "your soul will be destroyed", "termIds": ["T3"], "evidenceIds": ["A2_refined#1"], "decisionId": "D2"},
+        {"text": ".", "termIds": [], "evidenceIds": []}
+      ],
+      "notes": []
+    },
+    "genre": {
+      "segments": [
+        {"text": "This is the Heavenly Dao's reckoning", "termIds": ["T1"], "evidenceIds": []},
+        {"text": ". Fail the ", "termIds": [], "evidenceIds": []},
+        {"text": "Ninefold Thunder Tribulation", "termIds": ["T2"], "evidenceIds": ["A1#1", "WXW-GLOSSARY"], "decisionId": "D1"},
+        {"text": ", and ", "termIds": [], "evidenceIds": []},
+        {"text": "your soul will scatter", "termIds": ["T3"], "evidenceIds": ["A2_refined#1"], "decisionId": "D2"},
+        {"text": ".", "termIds": [], "evidenceIds": []}
+      ],
+      "notes": [
+        {"text": "Tribulation: in cultivation stories, a heaven-sent trial faced at a breakthrough or a karmic reckoning; survive it and you live, fail it and you are destroyed — even your soul.", "evidenceIds": ["A1#1", "A2_refined#1"]}
+      ]
+    }
+  },
+  "case_c": {
+    "recommendationReason": {
+      "c_shopper": "商品页短文案：完整保留中文广告卖点与节奏，转译为符合海外广告法与消费习惯的清爽草本体验表达。"
+    },
+    "literal": {
+      "segments": [
+        {"text": "Huinantian", "termIds": ["C1"], "evidenceIds": []},
+        {"text": " ", "termIds": [], "evidenceIds": []},
+        {"text": "dampness-removing", "termIds": ["C2"], "evidenceIds": []},
+        {"text": " tea: ", "termIds": [], "evidenceIds": []},
+        {"text": "clears heat and detoxifies", "termIds": ["C3"], "evidenceIds": []},
+        {"text": ", saves you from ", "termIds": [], "evidenceIds": []},
+        {"text": "staying-up", "termIds": ["C4"], "evidenceIds": []},
+        {"text": " ", "termIds": [], "evidenceIds": []},
+        {"text": "internal heat", "termIds": ["C5"], "evidenceIds": []},
+        {"text": ".", "termIds": [], "evidenceIds": []}
+      ],
+      "notes": []
+    },
+    "single": {
+      "segments": [
+        {"text": "A ", "termIds": [], "evidenceIds": []},
+        {"text": "light, refreshing", "termIds": ["C2"], "evidenceIds": ["C2_refined#1"], "decisionId": "DC2"},
+        {"text": " herbal tea for ", "termIds": [], "evidenceIds": []},
+        {"text": "humid days", "termIds": ["C1"], "evidenceIds": ["C1#2", "C1#6"], "decisionId": "DC1"},
+        {"text": " — ", "termIds": [], "evidenceIds": []},
+        {"text": "cooling and soothing", "termIds": ["C3"], "evidenceIds": ["C2_refined#1"], "decisionId": "DC3"},
+        {"text": " to rescue you from ", "termIds": [], "evidenceIds": []},
+        {"text": "late-night", "termIds": ["C4"], "evidenceIds": [], "decisionId": "DC4"},
+        {"text": " ", "termIds": [], "evidenceIds": []},
+        {"text": "burnout", "termIds": ["C5"], "evidenceIds": [], "decisionId": "DC5"},
+        {"text": ".", "termIds": [], "evidenceIds": []}
+      ],
+      "notes": []
+    }
+  }
+}

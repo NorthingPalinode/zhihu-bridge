@@ -1,0 +1,353 @@
+{
+  "version": "compliance-db-v1",
+  "note": "出海合规与文化风俗风险规则库（初始化写入 SQLite compliance_rules 表）。分两大类：legal（当地法律法规/广告法风险）与 custom（当地风俗习惯/宗教文化禁忌）。",
+  "rules": [
+    {
+      "ruleId": "LAW-MED-01",
+      "category": "legal",
+      "subcategory": "medical_claim",
+      "title": "未经审批的医疗与治病宣称",
+      "markets": ["*"],
+      "jurisdiction": "US FDA/FTC · EU EC 1924/2006 · UK ASA · 日本《药机法》",
+      "severity": "block",
+      "action": "rewrite",
+      "patterns": [
+        "\\bcures?\\b|\\bcuring\\b",
+        "\\btreat(s|ing|ment)?\\s+(disease|illness|infection|inflammation|pain|symptoms?|insomnia|fever)\\b",
+        "\\bheal(s|ing)?\\s+(disease|illness|wounds?|organs?|inflammation)\\b",
+        "\\bprevent(s|ing)?\\s+(cancer|disease|illness|infection|stroke|diabetes)\\b",
+        "\\banti-?inflammatory\\b",
+        "\\bboost(s|ing)?\\s+(your\\s+)?immunity\\b",
+        "治療|治癒|完治|病気を治|抗炎症|免疫力を高め",
+        "치료|완치|치유|질병\\s*예방|항염|면역력\\s*강화",
+        "\\bcura(r|s|ndo)?\\s+(enfermedad|dolor|inflamaci)",
+        "\\bantiinflamatori\\w*|fortalece\\w* el sistema inmune",
+        "\\banti-?inflamat[oó]ri\\w*|fortalece\\w* a imunidade",
+        "\\bheil(t|en|ung)?\\s+(krankheit|entzündung)|entzündungshemmend|stärkt das immunsystem",
+        "\\bgu[ée]ri(t|r|sson)?\\b|anti-?inflammatoire|renforce\\w* l'immunit[ée]",
+        "\\bлеч(ит|ить|ение)\\b|исцел\\w*|противовоспалительн\\w*|укрепл\\w* иммунитет"
+      ],
+      "zhCues": ["包治百病", "根治", "特效药", "预防癌症", "抗癌", "消炎杀菌", "治疗疾病"],
+      "reason": "普通食品、饮品及日用品在欧美、日韩等海外市场严禁宣称治疗、治愈、预防疾病或抗炎等医疗功效，违反当地食药与广告法规。",
+      "suggestion": "改写为口感、香气或日常舒缓体验描述，保留完整广告语境，不宣称医疗或治病效果。"
+    },
+    {
+      "ruleId": "LAW-DETOX-01",
+      "category": "legal",
+      "subcategory": "detox_health_claim",
+      "title": "食品饮品“排毒 / 解毒”违规健康宣称",
+      "markets": ["en", "de", "fr", "es", "pt", "ja", "ko", "ru"],
+      "jurisdiction": "EU Reg 1924/2006 · US FTC Health Products · UK ASA · 日本《景品表示法》",
+      "severity": "block",
+      "action": "rewrite",
+      "patterns": [
+        "\\bdetox\\w*",
+        "\\b(flushes?|clears?|removes?)\\s+(out\\s+)?toxins?\\b",
+        "\\bclears?\\s+(away\\s+)?(internal\\s+)?heat\\b|\\bheat-clearing\\b",
+        "\\b(remov\\w*|expel\\w*|clear\\w*)\\s+dampness\\b|\\bdampness-(removing|clearing|expelling)\\b",
+        "\\binternal\\s+heat\\b",
+        "デトックス|解毒|排毒|清熱|除湿効果",
+        "디톡스|해독|독소\\s*배출|청열|속열",
+        "\\bdesintoxic\\w*|elimina\\w* el calor interno|elimina\\w* la humedad",
+        "elimina\\w* o calor interno|elimina\\w* a umidade",
+        "\\bentgift\\w*|leitet hitze ab|entfernt feuchtigkeit",
+        "\\bd[ée]tox\\w*|\\bd[ée]sintox\\w*|chasse\\w* la chaleur|chasse\\w* l'humidit[ée]",
+        "детокс\\w*|вывод\\w* токсин\\w*|внутренний жар|вывод\\w* сырость"
+      ],
+      "zhCues": [],
+      "reason": "欧美、欧盟及日韩广告监管机构明确将未经 EFSA/FDA 批准的“detox（排毒）”“clears internal heat（清热解毒）”直译认定为违规健康宣称。",
+      "suggestion": "切勿直接删减或掐断文案，请改写为“light, refreshing / cooling and soothing（清爽轻盈、清凉舒缓）”等合规的饮用体验表达。"
+    },
+    {
+      "ruleId": "LAW-CERT-01",
+      "category": "legal",
+      "subcategory": "false_endorsement",
+      "title": "未经核验的官方审批或临床背书",
+      "markets": ["*"],
+      "jurisdiction": "US FTC 16 CFR 255 · EU UCPD · UK CAP Code · 日本《景品表示法》",
+      "severity": "block",
+      "action": "rewrite",
+      "patterns": [
+        "\\bfda\\s+(approved|certified|cleared)\\b",
+        "\\b(clinically|medically|scientifically)\\s+proven\\b",
+        "\\bdoctor\\s+(recommended|approved)\\b",
+        "\\bmedical[- ]grade\\b",
+        "厚生労働省認可|医師推奨|臨床試験で実証",
+        "식약처\\s*인증|의사\\s*추천|임상\\s*입증",
+        "aprobado por la fda|cl[íi]nicamente probado",
+        "aprovado pela fda|clinicamente comprovado",
+        "klinisch erwiesen|ärztlich empfohlen",
+        "cliniquement prouv[ée]|approuv[ée] par la fda",
+        "معتمد من هيئة الغذاء|مثبت سريرياً",
+        "одобрено fda|клинически доказано"
+      ],
+      "zhCues": ["FDA认证", "临床证明", "权威医院推荐", "国家免检"],
+      "reason": "在缺乏公开可核验资质文件的情况下宣称 FDA 批准、临床证明或医生推荐，在海外属于典型虚假宣传违法行为。",
+      "suggestion": "删除未经证实的官方审批或临床背书措辞；若确有合规认证，请在核验后注明具体证书编号与适用范围。"
+    },
+    {
+      "ruleId": "LAW-ABS-01",
+      "category": "legal",
+      "subcategory": "absolute_claim",
+      "title": "绝对化功效承诺与保证见效词",
+      "markets": ["*"],
+      "jurisdiction": "US FTC Deceptive Ad Policy · 德国 UWG · 法国消费法典 · 日本《景品表示法》",
+      "severity": "block",
+      "action": "rewrite",
+      "patterns": [
+        "\\b100%\\s+(effective|guaranteed|safe|cure|success)\\b",
+        "\\bguaranteed\\s+(results?|cure|relief|weight\\s+loss)\\b",
+        "\\bmiracle\\s+(cure|tea|formula|product|results?)\\b",
+        "\\binstant\\s+permanent\\s+results?\\b|\\bzero\\s+side\\s+effects?\\b",
+        "100%効果|絶対効く|副作用ゼロ|即効で完治",
+        "100%\\s*효과|부작용\\s*제로|즉각\\s*완치",
+        "100%\\s*(efectivo|garantizado|seguro)|resultados\\s+garantizados",
+        "100%\\s*(eficaz|garantido)|resultados\\s+garantidos",
+        "100%\\s*(wirksam|garantiert|sicher)|keine\\s+nebenwirkungen",
+        "100%\\s*(efficace|garanti|s[ûu]r)|r[ée]sultats\\s+garantis",
+        "مضمون\\s*100%|فعالية\\s*100%|بدون أي آثار جانبية",
+        "100%\\s*(эффективн|гарант)|без побочных эффектов"
+      ],
+      "zhCues": ["100%有效", "绝对安全", "零副作用", "立竿见影", "无效退款包治"],
+      "reason": "海外广告法严禁无充分科学依据的“100% 有效”“保证见效”“零副作用”等绝对化功效承诺。",
+      "suggestion": "替换为克制、客观的体验描述或工艺特点，避免使用 100%、保证、奇迹等绝对化字眼。"
+    },
+    {
+      "ruleId": "LAW-SUPER-01",
+      "category": "legal",
+      "subcategory": "unsubstantiated_superlative",
+      "title": "无出处的最高级与比较广告词",
+      "markets": ["en", "de", "fr", "ja", "ko", "es", "pt"],
+      "jurisdiction": "US FTC Substantiation · EU 2006/114/EC · 日本《景品表示法》优良误认",
+      "severity": "warn",
+      "action": "review",
+      "patterns": [
+        "\\bworld'?s\\s+(#1|no\\.?\\s*1|best)\\b",
+        "\\b(best|strongest|fastest)\\s+in\\s+the\\s+(world|market|industry)\\b",
+        "\\boutperforms\\s+all\\s+(competitors|others)\\b",
+        "世界No\\.?1|日本一|業界最高峰|他社を圧倒",
+        "세계\\s*1위|업계\\s*최초|타사\\s*대비\\s*최고",
+        "el mejor del mundo|n[úu]mero\\s*1\\s*mundial",
+        "weltweit\\s+(die\\s+)?nr\\.?\\s*1|marktf[üu]hrer",
+        "n°\\s*1\\s*(mondial|du march[ée])|le meilleur au monde"
+      ],
+      "zhCues": ["全球第一", "全网最强", "行业第一", "吊打友商"],
+      "reason": "“全球第一”“行业最佳”等最高级或拉踩式比较广告在欧美及日韩需提供独立第三方调研口径，否则易构成误导性广告。",
+      "suggestion": "如无权威调研报告支撑，建议改写为具体的差异化工艺或体验亮点。"
+    },
+    {
+      "ruleId": "LAW-GREEN-01",
+      "category": "legal",
+      "subcategory": "greenwashing",
+      "title": "泛化环保与“零碳”宣称（漂绿风险）",
+      "markets": ["en", "de", "fr", "es", "pt"],
+      "jurisdiction": "EU Green Claims Directive · US FTC Green Guides · UK CMA",
+      "severity": "warn",
+      "action": "review",
+      "patterns": [
+        "\\b100%\\s+(eco-?friendly|green|sustainable|biodegradable)\\b",
+        "\\b(carbon\\s+neutral|net\\s+zero|zero\\s+environmental\\s+impact)\\b",
+        "\\bklimaneutral\\b|100%\\s+umweltfreundlich",
+        "\\bneutre\\s+en\\s+carbone\\b|100%\\s+[ée]cologique",
+        "100%\\s+ecol[óo]gico|carbono\\s+neutro"
+      ],
+      "zhCues": ["100%环保", "零碳排放", "绝对绿色无污染"],
+      "reason": "欧盟、英国及美国监管部门重点查处未经全生命周期认证的“100% 环保 / 碳中和”等宽泛绿色宣称。",
+      "suggestion": "改写为具体、可核验的环保事实（如包装材质、回收比例或具体认证机构名称）。"
+    },
+    {
+      "ruleId": "LAW-FIN-01",
+      "category": "legal",
+      "subcategory": "financial_guarantee",
+      "title": "保本保收益与违规金融承诺",
+      "markets": ["*"],
+      "jurisdiction": "US SEC/FTC · UK FCA · EU MiFID · 新加坡 MAS",
+      "severity": "block",
+      "action": "rewrite",
+      "patterns": [
+        "\\bguaranteed\\s+(profit|returns?|income)\\b",
+        "\\brisk-?free\\s+(returns?|investment|profit)\\b",
+        "\\bget\\s+rich\\s+quick\\b",
+        "元本保証|必ず儲かる|リスクゼロで稼ぐ",
+        "원금\\s*보장|무조건\\s*수익"
+      ],
+      "zhCues": ["稳赚不赔", "保本保息", "零风险高回报", "躺赚暴富"],
+      "reason": "主要出海市场金融广告法均严禁承诺保本、零风险或确定性投资收益。",
+      "suggestion": "删除收益保证承诺，客观说明产品功能或服务边界。"
+    },
+    {
+      "ruleId": "LAW-SEA-FOOD-01",
+      "category": "legal",
+      "subcategory": "sea_food_drug_claim",
+      "title": "东南亚食药广告功效红线",
+      "markets": ["id", "th", "vi"],
+      "jurisdiction": "印尼 BPOM · 泰国 FDA · 越南《广告法》",
+      "severity": "block",
+      "action": "rewrite",
+      "patterns": [
+        "\\bdetoks\\w*|\\bdetox\\w*|menetralisir racun|membuang racun|\\bmenyembuhkan\\b|\\bmengobati\\b|\\banti-?inflamasi\\b|meredakan panas dalam",
+        "ดีท็อกซ์|ล้างพิษ|ขับสารพิษ|แก้ร้อนใน|รักษาโรค|บำบัดโรค|ต้านการอักเสบ",
+        "giải độc|thải độc|thanh nhiệt|trừ thấp|chữa bệnh|điều trị|kháng viêm"
+      ],
+      "zhCues": [],
+      "reason": "印尼 BPOM、泰国 FDA 及越南食药广告法规均禁止普通食品与草本饮品宣称排毒、降火治病或抗炎疗效。",
+      "suggestion": "请改为清爽解渴、轻盈口感与日常舒缓饮用体验，完整保留广告情绪而不做疗效承诺。"
+    },
+    {
+      "ruleId": "LAW-MENA-MED-01",
+      "category": "legal",
+      "subcategory": "mena_health_claim",
+      "title": "中东海湾食药与医疗宣称红线",
+      "markets": ["ar"],
+      "jurisdiction": "沙特 SFDA · 阿联酋 MoHAP 广告合规规范",
+      "severity": "block",
+      "action": "rewrite",
+      "patterns": [
+        "إزالة السموم|تنظيف السموم|ديتوكس|يعالج|علاج\\s+الأمراض|يشفي|شفاء|مضاد للالتهاب|يعزز المناعة|يخفض الحرارة الداخلية|يزيل الرطوبة"
+      ],
+      "zhCues": [],
+      "reason": "沙特 SFDA 及阿联酋卫生监管机构严禁普通草本饮品宣称排毒、治疗疾病或提升免疫力等未经注册的医疗功效。",
+      "suggestion": "改写为天然草本风味、清爽舒缓口感及日常放松陪伴体验。"
+    },
+    {
+      "ruleId": "CUS-HALAL-01",
+      "category": "custom",
+      "subcategory": "halal_dietary_taboo",
+      "title": "清真饮食禁忌（猪肉及猪源元素）",
+      "markets": ["ar", "id"],
+      "jurisdiction": "中东海湾与印尼伊斯兰清真风俗（Halal）",
+      "severity": "block",
+      "action": "rewrite",
+      "patterns": [
+        "\\b(pork|bacon|ham|lard|swine|piglet)\\b",
+        "خنزير|لحم الخنزير|دهن الخنزير",
+        "\\bbabi\\b|minyak babi|daging babi"
+      ],
+      "zhCues": ["猪肉", "猪油", "火腿", "培根", "猪蹄"],
+      "reason": "中东阿拉伯市场与印度尼西亚以穆斯林受众为主，猪肉、猪油及相关动物元素属于严格宗教与饮食禁忌。",
+      "suggestion": "彻底移除猪肉及猪源意象，替换为当地文化接受的清真友好食材或比喻。"
+    },
+    {
+      "ruleId": "CUS-ALC-01",
+      "category": "custom",
+      "subcategory": "alcohol_taboo",
+      "title": "禁酒风俗与酒精营销禁忌",
+      "markets": ["ar", "id"],
+      "jurisdiction": "沙特 / 阿联酋 / 印尼宗教风俗与当地广告规范",
+      "severity": "block",
+      "action": "rewrite",
+      "patterns": [
+        "\\b(alcohol|alcoholic|whiskey|whisky|vodka|beer|wine|drunk|booze|tipsy|champagne|cocktail)\\b",
+        "كحول|خمر|نبيذ|بيرة|مسكر",
+        "\\balkohol\\b|minuman keras|\\bmabuk\\b|\\bbir\\b"
+      ],
+      "zhCues": ["微醺", "醉酒", "白酒", "啤酒", "红酒", "酒精", "买醉"],
+      "reason": "在沙特、阿联酋及印尼大众消费市场，使用酒精、微醺、饮酒作乐等比喻触犯当地禁酒风俗与宗教禁忌。",
+      "suggestion": "将“微醺/解酒/欢饮”类意象替换为“轻松惬意、清爽提神、聚会茶饮”等无酒精日常场景。"
+    },
+    {
+      "ruleId": "CUS-THAI-01",
+      "category": "custom",
+      "subcategory": "thai_royal_buddhist_taboo",
+      "title": "泰国王室与佛教神圣符号禁忌",
+      "markets": ["th"],
+      "jurisdiction": "泰国王室礼仪规范与佛教文化习俗",
+      "severity": "block",
+      "action": "rewrite",
+      "patterns": [
+        "กษัตริย์|ราชวงศ์|พระพุทธ|พระพุทธรูป",
+        "\\bbuddha\\s+(print|pattern|shoe|mat|decor|statue\\s+sale)\\b",
+        "\\broyal\\s+(endorsement|approved|grade)\\b"
+      ],
+      "zhCues": ["佛像印花", "皇室御用", "国王同款", "脚踩头部"],
+      "reason": "泰国社会对王室与佛教符号抱有极高敬意，严禁将王室或佛像用作商业促销噱头，同时忌讳贬损头部或用脚指向的比喻。",
+      "suggestion": "删去王室或宗教借喻，改用礼貌、温馨的现代生活化表达。"
+    },
+    {
+      "ruleId": "CUS-DE-HIST-01",
+      "category": "custom",
+      "subcategory": "german_historical_taboo",
+      "title": "德语区极端历史与战争符号红线",
+      "markets": ["de"],
+      "jurisdiction": "德语区社会公序良俗（兼涉德国《刑法典》§86a）",
+      "severity": "block",
+      "action": "rewrite",
+      "patterns": [
+        "\\b(nazi|hitler|swastika|gestapo|blitzkrieg)\\b",
+        "\\b(hakenkreuz|f[üu]hrer|drittes\\s+reich)\\b"
+      ],
+      "zhCues": ["纳粹", "闪电战", "元首"],
+      "reason": "德国、奥地利及瑞士市场对任何纳粹、极端历史或战争隐喻零容忍，极易引发严重舆论反感与法律后果。",
+      "suggestion": "立即删除历史/战争梗，替换为中性、清晰的现代营销表达。"
+    },
+    {
+      "ruleId": "CUS-SKIN-01",
+      "category": "custom",
+      "subcategory": "appearance_skin_sensitivity",
+      "title": "肤色敏感词与外貌/身材羞辱风险",
+      "markets": ["en", "fr", "de", "es", "pt"],
+      "jurisdiction": "欧美多元文化惯例与反歧视自律规范（UK ASA / NAD）",
+      "severity": "warn",
+      "action": "review",
+      "patterns": [
+        "\\b(skin\\s+whitening|whitening\\s+cream|bleaching\\s+skin)\\b",
+        "\\b(fat-?shaming|ugly\\s+skin|get\\s+skinny\\s+fast|fix\\s+your\\s+ugly)\\b",
+        "blanchiment\\s+de\\s+la\\s+peau|hautaufhellung"
+      ],
+      "zhCues": ["美白换肤", "告别丑陋", "拯救肥脸", "暴瘦"],
+      "reason": "欧美与拉美主流市场对“whitening（漂白/美白）”以及制造外貌、身材焦虑的广告词高度敏感，易触发文化抵制与平台下架。",
+      "suggestion": "建议将“美白”转译为 brightening / radiant / even skin tone（提亮匀净），用积极赋能语气替代外貌焦虑措辞。"
+    },
+    {
+      "ruleId": "CUS-RELIGION-01",
+      "category": "custom",
+      "subcategory": "religious_profanity_drug_metaphor",
+      "title": "宗教不敬与毒品/赌博成瘾类轻佻比喻",
+      "markets": ["en", "es", "pt", "fr", "de", "ar", "id", "ru"],
+      "jurisdiction": "海外主流公共道德与宗教尊重规范",
+      "severity": "warn",
+      "action": "review",
+      "patterns": [
+        "\\b(goddamn|holy\\s+shit|addictive\\s+as\\s+(a\\s+)?drug|like\\s+crack|like\\s+cocaine)\\b",
+        "قمار|مقامرة"
+      ],
+      "zhCues": ["上瘾如毒", "像吸毒一样", "亵渎神明"],
+      "reason": "海外消费广告忌讳轻佻使用宗教亵渎语或将商品口感/体验比喻为毒品成瘾、赌博沉迷。",
+      "suggestion": "改用“令人回味、爱不释手（irresistibly smooth / hard to put down）”等健康积极的表达。"
+    },
+    {
+      "ruleId": "CUS-JP-KR-01",
+      "category": "custom",
+      "subcategory": "east_asia_disaster_etiquette",
+      "title": "日韩自然灾害噱头与忌讳字眼",
+      "markets": ["ja", "ko"],
+      "jurisdiction": "日韩公共情绪与礼俗规范",
+      "severity": "warn",
+      "action": "review",
+      "patterns": [
+        "地震級|津波級|死ぬほどお得",
+        "지진급|쓰나미급|죽을\\s*만큼\\s*싼"
+      ],
+      "zhCues": ["地震级降价", "海啸级优惠", "血亏到死"],
+      "reason": "日韩公众对地震、海啸等灾害记忆敏感，将灾害或死亡字眼用作促销夸张词容易引发品牌反感。",
+      "suggestion": "改用“重磅诚意回馈、限时特惠”等得体稳重的促销表达。"
+    },
+    {
+      "ruleId": "CUS-AR-ETIQUETTE-01",
+      "category": "custom",
+      "subcategory": "mena_modesty_etiquette",
+      "title": "中东端庄礼仪与家庭友好表述规范",
+      "markets": ["ar"],
+      "jurisdiction": "中东海湾社交礼仪与家庭文化规范",
+      "severity": "warn",
+      "action": "review",
+      "patterns": [
+        "\\b(sexy|provocative|seductive|sole\\s+of\\s+(your\\s+)?foot)\\b",
+        "مثير\\s+جنسياً|إغراء\\s+جنسي"
+      ],
+      "zhCues": ["性感撩人", "诱惑挑逗", "左手送礼"],
+      "reason": "中东大众传播强调家庭友好与端庄得体，过度性感挑逗或冒犯传统礼仪（如左手递物、脚底意象）的表述不符合当地风俗。",
+      "suggestion": "改用“优雅迷人、精致格调、待客臻选”等符合当地审美的礼貌表达。"
+    }
+  ]
+}

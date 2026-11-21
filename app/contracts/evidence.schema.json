@@ -1,0 +1,133 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "author": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Author"
+    },
+    "contentType": {
+      "enum": [
+        "answer",
+        "article",
+        "question",
+        "glossary",
+        "other"
+      ],
+      "title": "Contenttype",
+      "type": "string"
+    },
+    "fetchedAt": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Fetchedat"
+    },
+    "id": {
+      "title": "Id",
+      "type": "string"
+    },
+    "limits": {
+      "title": "Limits",
+      "type": "string"
+    },
+    "provider": {
+      "enum": [
+        "zhihu",
+        "other"
+      ],
+      "title": "Provider",
+      "type": "string"
+    },
+    "role": {
+      "enum": [
+        "setting",
+        "context",
+        "usage",
+        "counterexample",
+        "audience_insight"
+      ],
+      "title": "Role",
+      "type": "string"
+    },
+    "sourceMode": {
+      "enum": [
+        "zhihu_live",
+        "zhihu_cached",
+        "zhihu_curated",
+        "other",
+        "none"
+      ],
+      "title": "Sourcemode",
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "reviewed",
+        "candidate",
+        "rejected"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "summary": {
+      "title": "Summary",
+      "type": "string"
+    },
+    "supports": {
+      "title": "Supports",
+      "type": "string"
+    },
+    "termIds": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Termids",
+      "type": "array"
+    },
+    "title": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Title"
+    },
+    "url": {
+      "title": "Url",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "provider",
+    "sourceMode",
+    "contentType",
+    "url",
+    "summary",
+    "role",
+    "supports",
+    "limits",
+    "termIds",
+    "status"
+  ],
+  "title": "Evidence",
+  "type": "object"
+}

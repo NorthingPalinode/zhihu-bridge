@@ -1,0 +1,95 @@
+{
+  "caseId": "case_a",
+  "label": "仙侠字幕 · 广深短剧",
+  "industry": "广州 / 深圳数字文娱 · 短剧出海",
+  "scene": "短剧出海团队的编辑在定英文预告片字幕，需要判断英文观众能不能读懂“为什么要渡劫、失败会怎样”，以及类型术语保留到什么程度。",
+  "text": "此乃天道因果，若扛不过九重雷劫，便只能魂飞魄散。",
+  "searchQuery": "仙侠小说 渡雷劫 设定",
+  "defaultAudienceId": "a_new",
+  "levels": ["plain", "genre"],
+  "audiences": [
+    {
+      "id": "a_new",
+      "label": "北美 · 短剧新观众",
+      "recommendedLevel": "plain",
+      "constraint": "少用类型词，用剧情因果和明确代价表达",
+      "personaSetId": "a_new"
+    },
+    {
+      "id": "a_genre",
+      "label": "北美 · 仙侠核心读者",
+      "recommendedLevel": "genre",
+      "constraint": "保留类型术语，释义放在字幕外的注释",
+      "personaSetId": "a_genre"
+    }
+  ],
+  "terms": [
+    {"id": "T1", "surface": "天道因果", "kind": "culture", "keyPointIds": ["KP1"]},
+    {"id": "T2", "surface": "九重雷劫", "kind": "culture", "keyPointIds": ["KP2"]},
+    {"id": "T3", "surface": "魂飞魄散", "kind": "culture", "keyPointIds": ["KP3"]}
+  ],
+  "keyPoints": [
+    {"id": "KP1", "text": "世界规则（天道因果）导致这场试炼", "short": "天道因果引发试炼"},
+    {"id": "KP2", "text": "试炼是“九重”雷劫", "short": "九重雷劫"},
+    {"id": "KP3", "text": "失败的后果是魂魄消散", "short": "失败则魂魄消散"}
+  ],
+  "knownMisreadings": [
+    {"text": "失败后会重生", "type": "改写", "violates": ["KP3"]},
+    {"text": "普通暴雨或雷雨", "type": "误读", "violates": ["KP1", "KP2"]}
+  ],
+  "forbiddenAdditions": ["永久无法复活", "所有修行者必经", "九次独立试炼"],
+  "decisions": [
+    {
+      "id": "D1", "termId": "T2", "title": "雷劫的性质",
+      "choice": "译为试炼（trial / Tribulation），不用“灾难”或“暴雨”",
+      "rationale": "渡劫是境界突破或业力清算时的考验，渡得过活、渡不过灭",
+      "evidenceIds": ["A1#1"], "attribution": "zhihu", "levels": ["plain", "genre"]
+    },
+    {
+      "id": "D4", "termId": "T2", "title": "“九重”的表达",
+      "choice": "ninefold，不展开成九次独立试炼",
+      "rationale": "原句只说“九重”，没有交代是九次独立试炼",
+      "evidenceIds": [], "attribution": "editor", "levels": ["plain", "genre"]
+    },
+    {
+      "id": "D3", "termId": "T2", "title": "类型版保留 Tribulation 术语",
+      "choice": "保留",
+      "rationale": "仙侠核心读者熟悉英译社区的 Tribulation 用法",
+      "evidenceIds": ["WXW-GLOSSARY"], "attribution": "other", "levels": ["genre"]
+    },
+    {
+      "id": "D5", "termId": "T2", "title": "类型版注释内容",
+      "choice": "用一句话解释天劫与失败代价",
+      "rationale": "注释放在字幕外，内容只取自证据卡",
+      "evidenceIds": ["A1#1", "A2_refined#1"], "attribution": "zhihu", "levels": ["genre"]
+    },
+    {
+      "id": "D2", "termId": "T3", "title": "失败后果的程度",
+      "choice": "soul destroyed / scatter，不用 die",
+      "rationale": "失败者境界跌落甚至神魂湮灭，比“死亡”更重",
+      "evidenceIds": ["A2_refined#1"], "attribution": "zhihu", "levels": ["plain", "genre"]
+    }
+  ],
+  "fidelityRules": {
+    "KP1": {"any": ["heaven", "dao"]},
+    "KP2": {"any": ["nine", "ninefold"]},
+    "KP3": {"all": [["soul"], ["destroy", "scatter"]]}
+  },
+  "forbiddenPatterns": [
+    {"pattern": "\\breborn\\b|\\bresurrect|\\bcome back\\b", "violates": "KP3", "reason": "“失败后会重生”属于改写，违反 KP3"},
+    {"pattern": "\\bforever\\b|\\bnever be revived\\b", "violates": null, "reason": "“永久无法复活”是原句没有交代的额外设定"},
+    {"pattern": "every cultivator|all cultivators", "violates": null, "reason": "“所有修行者必经”是原句没有交代的额外设定"},
+    {"pattern": "nine separate|nine (?:different|individual) trials", "violates": "KP2", "reason": "“九次独立试炼”是原句没有交代的额外设定"}
+  ],
+  "judgeRules": {
+    "KP1": {"hit": ["heaven", "dao", "fate", "karma"], "contradicted": ["storm", "rain", "weather"]},
+    "KP2": {"hit": ["nine"], "contradicted": ["storm", "rain", "weather"]},
+    "KP3": {"hitAll": [["soul"], ["destroy", "scatter"]], "contradicted": ["reborn", "come back", "resurrect"]}
+  },
+  "flowbackQueries": {
+    "T2": "仙侠 渡劫 雷劫 翻译 英文",
+    "T1": "天道因果 英文 怎么翻译",
+    "T3": "魂飞魄散 英文 怎么翻译"
+  },
+  "testEnabled": true
+}

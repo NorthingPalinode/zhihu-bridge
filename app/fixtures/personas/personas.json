@@ -1,0 +1,20 @@
+{
+  "note": "人设定义属于团队配置（V6 §4.1.3）。复述结果始终标“模拟读者”，不代表真实用户。",
+  "sets": {
+    "a_new": [
+      {"id": "a_new_1", "label": "短剧新观众 · 常看都市爱情短剧", "brief": "North American short-drama viewer, mostly watches romance; never read xianxia."},
+      {"id": "a_new_2", "label": "短剧新观众 · 常看欧美奇幻影视", "brief": "Watches Western fantasy shows; no exposure to Chinese cultivation stories."},
+      {"id": "a_new_3", "label": "短剧新观众 · 英语为第二语言", "brief": "Casual viewer, English as a second language, skims subtitles quickly."}
+    ],
+    "a_genre": [
+      {"id": "a_genre_1", "label": "仙侠核心读者 · 追更英译网文多年", "brief": "Long-time reader of translated web novels in English."},
+      {"id": "a_genre_2", "label": "仙侠核心读者 · 刚入坑", "brief": "Started reading translated cultivation novels this year."},
+      {"id": "a_genre_3", "label": "仙侠核心读者 · 同时看日式奇幻", "brief": "Reads translated xianxia and Japanese light novels."}
+    ],
+    "b_backer": [
+      {"id": "b_backer_1", "label": "硬件众筹支持者", "brief": "An English-speaking hardware crowdfunding backer who is sensitive to battery-life and performance claims."},
+      {"id": "b_backer_2", "label": "嵌入式硬件玩家", "brief": "An embedded hardware hobbyist who distinguishes protocol debugging from access to the full product source code."},
+      {"id": "b_backer_3", "label": "普通科技消费者", "brief": "A consumer who reads product pages quickly and has little background in PCB design or protocol debugging."}
+    ]
+  }
+}

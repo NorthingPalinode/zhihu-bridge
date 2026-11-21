@@ -1,0 +1,3851 @@
+{
+ "provenance": "dev_stub",
+ "generatedAt": "2026-11-21T19:05:12Z",
+ "note": "离线包：fake 适配器产出的开发占位数据，非真实运行、非评测结果；不得当作回放展示。",
+ "cases": [
+  {
+   "caseId": "case_a",
+   "label": "仙侠字幕 · 广深短剧",
+   "industry": "广州 / 深圳数字文娱 · 短剧出海",
+   "scene": "短剧出海团队的编辑在定英文预告片字幕，需要判断英文观众能不能读懂“为什么要渡劫、失败会怎样”，以及类型术语保留到什么程度。",
+   "text": "此乃天道因果，若扛不过九重雷劫，便只能魂飞魄散。",
+   "defaultAudienceId": "a_new",
+   "levels": [
+    "plain",
+    "genre"
+   ],
+   "audiences": [
+    {
+     "id": "a_new",
+     "label": "北美 · 短剧新观众",
+     "recommendedLevel": "plain",
+     "constraint": "少用类型词，用剧情因果和明确代价表达",
+     "personaSetId": "a_new"
+    },
+    {
+     "id": "a_genre",
+     "label": "北美 · 仙侠核心读者",
+     "recommendedLevel": "genre",
+     "constraint": "保留类型术语，释义放在字幕外的注释",
+     "personaSetId": "a_genre"
+    }
+   ],
+   "testEnabled": true,
+   "testDisabledReason": null
+  },
+  {
+   "caseId": "case_c",
+   "label": "草本茶 · 岭南品牌",
+   "industry": "岭南大健康 · 品牌出海",
+   "scene": "岭南草本茶 / 凉茶品牌出海，把中文卖点完整转译为符合海外广告法与当地消费习惯的商品页文案。",
+   "text": "回南天祛湿茶，清热解毒，拯救熬夜上火。",
+   "defaultAudienceId": "c_shopper",
+   "levels": [
+    "single"
+   ],
+   "audiences": [
+    {
+     "id": "c_shopper",
+     "label": "海外英语商品页消费者",
+     "recommendedLevel": "single",
+     "constraint": "商品页短文案；完整传达卖点，采用符合海外广告法与当地文化的清爽体验表达，不作未经审批的医疗或排毒宣称",
+     "personaSetId": null
+    }
+   ],
+   "testEnabled": false,
+   "testDisabledReason": "案例 C 的 P0 范围不含模拟读者测试（V6 §3.1 P0-8、§5.3 C 路径）"
+  }
+ ],
+ "complianceRules": [
+  {
+   "ruleId": "LAW-ABS-01",
+   "category": "legal",
+   "subcategory": "absolute_claim",
+   "title": "绝对化功效承诺与保证见效词",
+   "markets": [
+    "*"
+   ],
+   "jurisdiction": "US FTC Deceptive Ad Policy · 德国 UWG · 法国消费法典 · 日本《景品表示法》",
+   "severity": "block",
+   "action": "rewrite",
+   "patterns": [
+    "\\b100%\\s+(effective|guaranteed|safe|cure|success)\\b",
+    "\\bguaranteed\\s+(results?|cure|relief|weight\\s+loss)\\b",
+    "\\bmiracle\\s+(cure|tea|formula|product|results?)\\b",
+    "\\binstant\\s+permanent\\s+results?\\b|\\bzero\\s+side\\s+effects?\\b",
+    "100%効果|絶対効く|副作用ゼロ|即効で完治",
+    "100%\\s*효과|부작용\\s*제로|즉각\\s*완치",
+    "100%\\s*(efectivo|garantizado|seguro)|resultados\\s+garantizados",
+    "100%\\s*(eficaz|garantido)|resultados\\s+garantidos",
+    "100%\\s*(wirksam|garantiert|sicher)|keine\\s+nebenwirkungen",
+    "100%\\s*(efficace|garanti|s[ûu]r)|r[ée]sultats\\s+garantis",
+    "مضمون\\s*100%|فعالية\\s*100%|بدون أي آثار جانبية",
+    "100%\\s*(эффективн|гарант)|без побочных эффектов"
+   ],
+   "zhCues": [
+    "100%有效",
+    "绝对安全",
+    "零副作用",
+    "立竿见影",
+    "无效退款包治"
+   ],
+   "reason": "海外广告法严禁无充分科学依据的“100% 有效”“保证见效”“零副作用”等绝对化功效承诺。",
+   "suggestion": "替换为克制、客观的体验描述或工艺特点，避免使用 100%、保证、奇迹等绝对化字眼。",
+   "enabled": true,
+   "builtin": true
+  },
+  {
+   "ruleId": "LAW-CERT-01",
+   "category": "legal",
+   "subcategory": "false_endorsement",
+   "title": "未经核验的官方审批或临床背书",
+   "markets": [
+    "*"
+   ],
+   "jurisdiction": "US FTC 16 CFR 255 · EU UCPD · UK CAP Code · 日本《景品表示法》",
+   "severity": "block",
+   "action": "rewrite",
+   "patterns": [
+    "\\bfda\\s+(approved|certified|cleared)\\b",
+    "\\b(clinically|medically|scientifically)\\s+proven\\b",
+    "\\bdoctor\\s+(recommended|approved)\\b",
+    "\\bmedical[- ]grade\\b",
+    "厚生労働省認可|医師推奨|臨床試験で実証",
+    "식약처\\s*인증|의사\\s*추천|임상\\s*입증",
+    "aprobado por la fda|cl[íi]nicamente probado",
+    "aprovado pela fda|clinicamente comprovado",
+    "klinisch erwiesen|ärztlich empfohlen",
+    "cliniquement prouv[ée]|approuv[ée] par la fda",
+    "معتمد من هيئة الغذاء|مثبت سريرياً",
+    "одобрено fda|клинически доказано"
+   ],
+   "zhCues": [
+    "FDA认证",
+    "临床证明",
+    "权威医院推荐",
+    "国家免检"
+   ],
+   "reason": "在缺乏公开可核验资质文件的情况下宣称 FDA 批准、临床证明或医生推荐，在海外属于典型虚假宣传违法行为。",
+   "suggestion": "删除未经证实的官方审批或临床背书措辞；若确有合规认证，请在核验后注明具体证书编号与适用范围。",
+   "enabled": true,
+   "builtin": true
+  },
+  {
+   "ruleId": "LAW-DETOX-01",
+   "category": "legal",
+   "subcategory": "detox_health_claim",
+   "title": "食品饮品“排毒 / 解毒”违规健康宣称",
+   "markets": [
+    "en",
+    "de",
+    "fr",
+    "es",
+    "pt",
+    "ja",
+    "ko",
+    "ru"
+   ],
+   "jurisdiction": "EU Reg 1924/2006 · US FTC Health Products · UK ASA · 日本《景品表示法》",
+   "severity": "block",
+   "action": "rewrite",
+   "patterns": [
+    "\\bdetox\\w*",
+    "\\b(flushes?|clears?|removes?)\\s+(out\\s+)?toxins?\\b",
+    "\\bclears?\\s+(away\\s+)?(internal\\s+)?heat\\b|\\bheat-clearing\\b",
+    "\\b(remov\\w*|expel\\w*|clear\\w*)\\s+dampness\\b|\\bdampness-(removing|clearing|expelling)\\b",
+    "\\binternal\\s+heat\\b",
+    "デトックス|解毒|排毒|清熱|除湿効果",
+    "디톡스|해독|독소\\s*배출|청열|속열",
+    "\\bdesintoxic\\w*|elimina\\w* el calor interno|elimina\\w* la humedad",
+    "elimina\\w* o calor interno|elimina\\w* a umidade",
+    "\\bentgift\\w*|leitet hitze ab|entfernt feuchtigkeit",
+    "\\bd[ée]tox\\w*|\\bd[ée]sintox\\w*|chasse\\w* la chaleur|chasse\\w* l'humidit[ée]",
+    "детокс\\w*|вывод\\w* токсин\\w*|внутренний жар|вывод\\w* сырость"
+   ],
+   "zhCues": [],
+   "reason": "欧美、欧盟及日韩广告监管机构明确将未经 EFSA/FDA 批准的“detox（排毒）”“clears internal heat（清热解毒）”直译认定为违规健康宣称。",
+   "suggestion": "切勿直接删减或掐断文案，请改写为“light, refreshing / cooling and soothing（清爽轻盈、清凉舒缓）”等合规的饮用体验表达。",
+   "enabled": true,
+   "builtin": true
+  },
+  {
+   "ruleId": "LAW-FIN-01",
+   "category": "legal",
+   "subcategory": "financial_guarantee",
+   "title": "保本保收益与违规金融承诺",
+   "markets": [
+    "*"
+   ],
+   "jurisdiction": "US SEC/FTC · UK FCA · EU MiFID · 新加坡 MAS",
+   "severity": "block",
+   "action": "rewrite",
+   "patterns": [
+    "\\bguaranteed\\s+(profit|returns?|income)\\b",
+    "\\brisk-?free\\s+(returns?|investment|profit)\\b",
+    "\\bget\\s+rich\\s+quick\\b",
+    "元本保証|必ず儲かる|リスクゼロで稼ぐ",
+    "원금\\s*보장|무조건\\s*수익"
+   ],
+   "zhCues": [
+    "稳赚不赔",
+    "保本保息",
+    "零风险高回报",
+    "躺赚暴富"
+   ],
+   "reason": "主要出海市场金融广告法均严禁承诺保本、零风险或确定性投资收益。",
+   "suggestion": "删除收益保证承诺，客观说明产品功能或服务边界。",
+   "enabled": true,
+   "builtin": true
+  },
+  {
+   "ruleId": "LAW-GREEN-01",
+   "category": "legal",
+   "subcategory": "greenwashing",
+   "title": "泛化环保与“零碳”宣称（漂绿风险）",
+   "markets": [
+    "en",
+    "de",
+    "fr",
+    "es",
+    "pt"
+   ],
+   "jurisdiction": "EU Green Claims Directive · US FTC Green Guides · UK CMA",
+   "severity": "warn",
+   "action": "review",
+   "patterns": [
+    "\\b100%\\s+(eco-?friendly|green|sustainable|biodegradable)\\b",
+    "\\b(carbon\\s+neutral|net\\s+zero|zero\\s+environmental\\s+impact)\\b",
+    "\\bklimaneutral\\b|100%\\s+umweltfreundlich",
+    "\\bneutre\\s+en\\s+carbone\\b|100%\\s+[ée]cologique",
+    "100%\\s+ecol[óo]gico|carbono\\s+neutro"
+   ],
+   "zhCues": [
+    "100%环保",
+    "零碳排放",
+    "绝对绿色无污染"
+   ],
+   "reason": "欧盟、英国及美国监管部门重点查处未经全生命周期认证的“100% 环保 / 碳中和”等宽泛绿色宣称。",
+   "suggestion": "改写为具体、可核验的环保事实（如包装材质、回收比例或具体认证机构名称）。",
+   "enabled": true,
+   "builtin": true
+  },
+  {
+   "ruleId": "LAW-MED-01",
+   "category": "legal",
+   "subcategory": "medical_claim",
+   "title": "未经审批的医疗与治病宣称",
+   "markets": [
+    "*"
+   ],
+   "jurisdiction": "US FDA/FTC · EU EC 1924/2006 · UK ASA · 日本《药机法》",
+   "severity": "block",
+   "action": "rewrite",
+   "patterns": [
+    "\\bcures?\\b|\\bcuring\\b",
+    "\\btreat(s|ing|ment)?\\s+(disease|illness|infection|inflammation|pain|symptoms?|insomnia|fever)\\b",
+    "\\bheal(s|ing)?\\s+(disease|illness|wounds?|organs?|inflammation)\\b",
+    "\\bprevent(s|ing)?\\s+(cancer|disease|illness|infection|stroke|diabetes)\\b",
+    "\\banti-?inflammatory\\b",
+    "\\bboost(s|ing)?\\s+(your\\s+)?immunity\\b",
+    "治療|治癒|完治|病気を治|抗炎症|免疫力を高め",
+    "치료|완치|치유|질병\\s*예방|항염|면역력\\s*강화",
+    "\\bcura(r|s|ndo)?\\s+(enfermedad|dolor|inflamaci)",
+    "\\bantiinflamatori\\w*|fortalece\\w* el sistema inmune",
+    "\\banti-?inflamat[oó]ri\\w*|fortalece\\w* a imunidade",
+    "\\bheil(t|en|ung)?\\s+(krankheit|entzündung)|entzündungshemmend|stärkt das immunsystem",
+    "\\bgu[ée]ri(t|r|sson)?\\b|anti-?inflammatoire|renforce\\w* l'immunit[ée]",
+    "\\bлеч(ит|ить|ение)\\b|исцел\\w*|противовоспалительн\\w*|укрепл\\w* иммунитет"
+   ],
+   "zhCues": [
+    "包治百病",
+    "根治",
+    "特效药",
+    "预防癌症",
+    "抗癌",
+    "消炎杀菌",
+    "治疗疾病"
+   ],
+   "reason": "普通食品、饮品及日用品在欧美、日韩等海外市场严禁宣称治疗、治愈、预防疾病或抗炎等医疗功效，违反当地食药与广告法规。",
+   "suggestion": "改写为口感、香气或日常舒缓体验描述，保留完整广告语境，不宣称医疗或治病效果。",
+   "enabled": true,
+   "builtin": true
+  },
+  {
+   "ruleId": "LAW-MENA-MED-01",
+   "category": "legal",
+   "subcategory": "mena_health_claim",
+   "title": "中东海湾食药与医疗宣称红线",
+   "markets": [
+    "ar"
+   ],
+   "jurisdiction": "沙特 SFDA · 阿联酋 MoHAP 广告合规规范",
+   "severity": "block",
+   "action": "rewrite",
+   "patterns": [
+    "إزالة السموم|تنظيف السموم|ديتوكس|يعالج|علاج\\s+الأمراض|يشفي|شفاء|مضاد للالتهاب|يعزز المناعة|يخفض الحرارة الداخلية|يزيل الرطوبة"
+   ],
+   "zhCues": [],
+   "reason": "沙特 SFDA 及阿联酋卫生监管机构严禁普通草本饮品宣称排毒、治疗疾病或提升免疫力等未经注册的医疗功效。",
+   "suggestion": "改写为天然草本风味、清爽舒缓口感及日常放松陪伴体验。",
+   "enabled": true,
+   "builtin": true
+  },
+  {
+   "ruleId": "LAW-SEA-FOOD-01",
+   "category": "legal",
+   "subcategory": "sea_food_drug_claim",
+   "title": "东南亚食药广告功效红线",
+   "markets": [
+    "id",
+    "th",
+    "vi"
+   ],
+   "jurisdiction": "印尼 BPOM · 泰国 FDA · 越南《广告法》",
+   "severity": "block",
+   "action": "rewrite",
+   "patterns": [
+    "\\bdetoks\\w*|\\bdetox\\w*|menetralisir racun|membuang racun|\\bmenyembuhkan\\b|\\bmengobati\\b|\\banti-?inflamasi\\b|meredakan panas dalam",
+    "ดีท็อกซ์|ล้างพิษ|ขับสารพิษ|แก้ร้อนใน|รักษาโรค|บำบัดโรค|ต้านการอักเสบ",
+    "giải độc|thải độc|thanh nhiệt|trừ thấp|chữa bệnh|điều trị|kháng viêm"
+   ],
+   "zhCues": [],
+   "reason": "印尼 BPOM、泰国 FDA 及越南食药广告法规均禁止普通食品与草本饮品宣称排毒、降火治病或抗炎疗效。",
+   "suggestion": "请改为清爽解渴、轻盈口感与日常舒缓饮用体验，完整保留广告情绪而不做疗效承诺。",
+   "enabled": true,
+   "builtin": true
+  },
+  {
+   "ruleId": "LAW-SUPER-01",
+   "category": "legal",
+   "subcategory": "unsubstantiated_superlative",
+   "title": "无出处的最高级与比较广告词",
+   "markets": [
+    "en",
+    "de",
+    "fr",
+    "ja",
+    "ko",
+    "es",
+    "pt"
+   ],
+   "jurisdiction": "US FTC Substantiation · EU 2006/114/EC · 日本《景品表示法》优良误认",
+   "severity": "warn",
+   "action": "review",
+   "patterns": [
+    "\\bworld'?s\\s+(#1|no\\.?\\s*1|best)\\b",
+    "\\b(best|strongest|fastest)\\s+in\\s+the\\s+(world|market|industry)\\b",
+    "\\boutperforms\\s+all\\s+(competitors|others)\\b",
+    "世界No\\.?1|日本一|業界最高峰|他社を圧倒",
+    "세계\\s*1위|업계\\s*최초|타사\\s*대비\\s*최고",
+    "el mejor del mundo|n[úu]mero\\s*1\\s*mundial",
+    "weltweit\\s+(die\\s+)?nr\\.?\\s*1|marktf[üu]hrer",
+    "n°\\s*1\\s*(mondial|du march[ée])|le meilleur au monde"
+   ],
+   "zhCues": [
+    "全球第一",
+    "全网最强",
+    "行业第一",
+    "吊打友商"
+   ],
+   "reason": "“全球第一”“行业最佳”等最高级或拉踩式比较广告在欧美及日韩需提供独立第三方调研口径，否则易构成误导性广告。",
+   "suggestion": "如无权威调研报告支撑，建议改写为具体的差异化工艺或体验亮点。",
+   "enabled": true,
+   "builtin": true
+  },
+  {
+   "ruleId": "CUS-ALC-01",
+   "category": "custom",
+   "subcategory": "alcohol_taboo",
+   "title": "禁酒风俗与酒精营销禁忌",
+   "markets": [
+    "ar",
+    "id"
+   ],
+   "jurisdiction": "沙特 / 阿联酋 / 印尼宗教风俗与当地广告规范",
+   "severity": "block",
+   "action": "rewrite",
+   "patterns": [
+    "\\b(alcohol|alcoholic|whiskey|whisky|vodka|beer|wine|drunk|booze|tipsy|champagne|cocktail)\\b",
+    "كحول|خمر|نبيذ|بيرة|مسكر",
+    "\\balkohol\\b|minuman keras|\\bmabuk\\b|\\bbir\\b"
+   ],
+   "zhCues": [
+    "微醺",
+    "醉酒",
+    "白酒",
+    "啤酒",
+    "红酒",
+    "酒精",
+    "买醉"
+   ],
+   "reason": "在沙特、阿联酋及印尼大众消费市场，使用酒精、微醺、饮酒作乐等比喻触犯当地禁酒风俗与宗教禁忌。",
+   "suggestion": "将“微醺/解酒/欢饮”类意象替换为“轻松惬意、清爽提神、聚会茶饮”等无酒精日常场景。",
+   "enabled": true,
+   "builtin": true
+  },
+  {
+   "ruleId": "CUS-AR-ETIQUETTE-01",
+   "category": "custom",
+   "subcategory": "mena_modesty_etiquette",
+   "title": "中东端庄礼仪与家庭友好表述规范",
+   "markets": [
+    "ar"
+   ],
+   "jurisdiction": "中东海湾社交礼仪与家庭文化规范",
+   "severity": "warn",
+   "action": "review",
+   "patterns": [
+    "\\b(sexy|provocative|seductive|sole\\s+of\\s+(your\\s+)?foot)\\b",
+    "مثير\\s+جنسياً|إغراء\\s+جنسي"
+   ],
+   "zhCues": [
+    "性感撩人",
+    "诱惑挑逗",
+    "左手送礼"
+   ],
+   "reason": "中东大众传播强调家庭友好与端庄得体，过度性感挑逗或冒犯传统礼仪（如左手递物、脚底意象）的表述不符合当地风俗。",
+   "suggestion": "改用“优雅迷人、精致格调、待客臻选”等符合当地审美的礼貌表达。",
+   "enabled": true,
+   "builtin": true
+  },
+  {
+   "ruleId": "CUS-DE-HIST-01",
+   "category": "custom",
+   "subcategory": "german_historical_taboo",
+   "title": "德语区极端历史与战争符号红线",
+   "markets": [
+    "de"
+   ],
+   "jurisdiction": "德语区社会公序良俗（兼涉德国《刑法典》§86a）",
+   "severity": "block",
+   "action": "rewrite",
+   "patterns": [
+    "\\b(nazi|hitler|swastika|gestapo|blitzkrieg)\\b",
+    "\\b(hakenkreuz|f[üu]hrer|drittes\\s+reich)\\b"
+   ],
+   "zhCues": [
+    "纳粹",
+    "闪电战",
+    "元首"
+   ],
+   "reason": "德国、奥地利及瑞士市场对任何纳粹、极端历史或战争隐喻零容忍，极易引发严重舆论反感与法律后果。",
+   "suggestion": "立即删除历史/战争梗，替换为中性、清晰的现代营销表达。",
+   "enabled": true,
+   "builtin": true
+  },
+  {
+   "ruleId": "CUS-HALAL-01",
+   "category": "custom",
+   "subcategory": "halal_dietary_taboo",
+   "title": "清真饮食禁忌（猪肉及猪源元素）",
+   "markets": [
+    "ar",
+    "id"
+   ],
+   "jurisdiction": "中东海湾与印尼伊斯兰清真风俗（Halal）",
+   "severity": "block",
+   "action": "rewrite",
+   "patterns": [
+    "\\b(pork|bacon|ham|lard|swine|piglet)\\b",
+    "خنزير|لحم الخنزير|دهن الخنزير",
+    "\\bbabi\\b|minyak babi|daging babi"
+   ],
+   "zhCues": [
+    "猪肉",
+    "猪油",
+    "火腿",
+    "培根",
+    "猪蹄"
+   ],
+   "reason": "中东阿拉伯市场与印度尼西亚以穆斯林受众为主，猪肉、猪油及相关动物元素属于严格宗教与饮食禁忌。",
+   "suggestion": "彻底移除猪肉及猪源意象，替换为当地文化接受的清真友好食材或比喻。",
+   "enabled": true,
+   "builtin": true
+  },
+  {
+   "ruleId": "CUS-JP-KR-01",
+   "category": "custom",
+   "subcategory": "east_asia_disaster_etiquette",
+   "title": "日韩自然灾害噱头与忌讳字眼",
+   "markets": [
+    "ja",
+    "ko"
+   ],
+   "jurisdiction": "日韩公共情绪与礼俗规范",
+   "severity": "warn",
+   "action": "review",
+   "patterns": [
+    "地震級|津波級|死ぬほどお得",
+    "지진급|쓰나미급|죽을\\s*만큼\\s*싼"
+   ],
+   "zhCues": [
+    "地震级降价",
+    "海啸级优惠",
+    "血亏到死"
+   ],
+   "reason": "日韩公众对地震、海啸等灾害记忆敏感，将灾害或死亡字眼用作促销夸张词容易引发品牌反感。",
+   "suggestion": "改用“重磅诚意回馈、限时特惠”等得体稳重的促销表达。",
+   "enabled": true,
+   "builtin": true
+  },
+  {
+   "ruleId": "CUS-RELIGION-01",
+   "category": "custom",
+   "subcategory": "religious_profanity_drug_metaphor",
+   "title": "宗教不敬与毒品/赌博成瘾类轻佻比喻",
+   "markets": [
+    "en",
+    "es",
+    "pt",
+    "fr",
+    "de",
+    "ar",
+    "id",
+    "ru"
+   ],
+   "jurisdiction": "海外主流公共道德与宗教尊重规范",
+   "severity": "warn",
+   "action": "review",
+   "patterns": [
+    "\\b(goddamn|holy\\s+shit|addictive\\s+as\\s+(a\\s+)?drug|like\\s+crack|like\\s+cocaine)\\b",
+    "قمار|مقامرة"
+   ],
+   "zhCues": [
+    "上瘾如毒",
+    "像吸毒一样",
+    "亵渎神明"
+   ],
+   "reason": "海外消费广告忌讳轻佻使用宗教亵渎语或将商品口感/体验比喻为毒品成瘾、赌博沉迷。",
+   "suggestion": "改用“令人回味、爱不释手（irresistibly smooth / hard to put down）”等健康积极的表达。",
+   "enabled": true,
+   "builtin": true
+  },
+  {
+   "ruleId": "CUS-SKIN-01",
+   "category": "custom",
+   "subcategory": "appearance_skin_sensitivity",
+   "title": "肤色敏感词与外貌/身材羞辱风险",
+   "markets": [
+    "en",
+    "fr",
+    "de",
+    "es",
+    "pt"
+   ],
+   "jurisdiction": "欧美多元文化惯例与反歧视自律规范（UK ASA / NAD）",
+   "severity": "warn",
+   "action": "review",
+   "patterns": [
+    "\\b(skin\\s+whitening|whitening\\s+cream|bleaching\\s+skin)\\b",
+    "\\b(fat-?shaming|ugly\\s+skin|get\\s+skinny\\s+fast|fix\\s+your\\s+ugly)\\b",
+    "blanchiment\\s+de\\s+la\\s+peau|hautaufhellung"
+   ],
+   "zhCues": [
+    "美白换肤",
+    "告别丑陋",
+    "拯救肥脸",
+    "暴瘦"
+   ],
+   "reason": "欧美与拉美主流市场对“whitening（漂白/美白）”以及制造外貌、身材焦虑的广告词高度敏感，易触发文化抵制与平台下架。",
+   "suggestion": "建议将“美白”转译为 brightening / radiant / even skin tone（提亮匀净），用积极赋能语气替代外貌焦虑措辞。",
+   "enabled": true,
+   "builtin": true
+  },
+  {
+   "ruleId": "CUS-THAI-01",
+   "category": "custom",
+   "subcategory": "thai_royal_buddhist_taboo",
+   "title": "泰国王室与佛教神圣符号禁忌",
+   "markets": [
+    "th"
+   ],
+   "jurisdiction": "泰国王室礼仪规范与佛教文化习俗",
+   "severity": "block",
+   "action": "rewrite",
+   "patterns": [
+    "กษัตริย์|ราชวงศ์|พระพุทธ|พระพุทธรูป",
+    "\\bbuddha\\s+(print|pattern|shoe|mat|decor|statue\\s+sale)\\b",
+    "\\broyal\\s+(endorsement|approved|grade)\\b"
+   ],
+   "zhCues": [
+    "佛像印花",
+    "皇室御用",
+    "国王同款",
+    "脚踩头部"
+   ],
+   "reason": "泰国社会对王室与佛教符号抱有极高敬意，严禁将王室或佛像用作商业促销噱头，同时忌讳贬损头部或用脚指向的比喻。",
+   "suggestion": "删去王室或宗教借喻，改用礼貌、温馨的现代生活化表达。",
+   "enabled": true,
+   "builtin": true
+  }
+ ],
+ "runs": {
+  "case_a|a_new": [
+   {
+    "runId": "r_46dba2999b15",
+    "seq": 1,
+    "type": "started",
+    "payload": {
+     "audienceId": "a_new",
+     "audienceLabel": "北美 · 短剧新观众",
+     "caseId": "case_a",
+     "targetLanguage": "en",
+     "mode": "dev_stub"
+    }
+   },
+   {
+    "runId": "r_46dba2999b15",
+    "seq": 2,
+    "type": "terms",
+    "payload": {
+     "sourceSegments": [
+      {
+       "text": "此乃",
+       "termId": null
+      },
+      {
+       "text": "天道因果",
+       "termId": "T1"
+      },
+      {
+       "text": "，若扛不过",
+       "termId": null
+      },
+      {
+       "text": "九重雷劫",
+       "termId": "T2"
+      },
+      {
+       "text": "，便只能",
+       "termId": null
+      },
+      {
+       "text": "魂飞魄散",
+       "termId": "T3"
+      },
+      {
+       "text": "。",
+       "termId": null
+      }
+     ],
+     "terms": [
+      {
+       "id": "T1",
+       "surface": "天道因果",
+       "start": 2,
+       "end": 6,
+       "keyPointIds": [
+        "KP1"
+       ],
+       "kind": "culture"
+      },
+      {
+       "id": "T2",
+       "surface": "九重雷劫",
+       "start": 11,
+       "end": 15,
+       "keyPointIds": [
+        "KP2"
+       ],
+       "kind": "culture"
+      },
+      {
+       "id": "T3",
+       "surface": "魂飞魄散",
+       "start": 19,
+       "end": 23,
+       "keyPointIds": [
+        "KP3"
+       ],
+       "kind": "culture"
+      }
+     ],
+     "keyPoints": [
+      {
+       "id": "KP1",
+       "text": "世界规则（天道因果）导致这场试炼",
+       "short": "天道因果引发试炼"
+      },
+      {
+       "id": "KP2",
+       "text": "试炼是“九重”雷劫",
+       "short": "九重雷劫"
+      },
+      {
+       "id": "KP3",
+       "text": "失败的后果是魂魄消散",
+       "short": "失败则魂魄消散"
+      }
+     ]
+    }
+   },
+   {
+    "runId": "r_46dba2999b15",
+    "seq": 3,
+    "type": "evidence",
+    "payload": {
+     "evidence": [
+      {
+       "id": "A1#1",
+       "provider": "zhihu",
+       "sourceMode": "zhihu_curated",
+       "contentType": "article",
+       "title": "修真小说设定知识点随笔",
+       "author": null,
+       "url": "https://zhuanlan.zhihu.com/p/721900687",
+       "summary": "专栏把渡劫描述为境界突破或业力清算时的天灾，并写到“渡得过就活，渡不过就灭”。",
+       "role": "setting",
+       "supports": "渡劫是突破或清算时的考验，失败即毁灭",
+       "limits": "本剧的具体设定",
+       "termIds": [
+        "T2"
+       ],
+       "fetchedAt": "2026-11-19T13:32:20.975Z",
+       "status": "candidate"
+      },
+      {
+       "id": "A2_refined#1",
+       "provider": "zhihu",
+       "sourceMode": "zhihu_curated",
+       "contentType": "article",
+       "title": "修仙之人为何都要渡劫?资深修仙迷:这也许是仙界的阴谋!",
+       "author": "以仙之名小师妹",
+       "url": "https://zhuanlan.zhihu.com/p/356126365",
+       "summary": "专栏概括多数修仙世界观：修为晋升时迎来雷劫，成功者继续修行，失败者境界跌落，甚至神魂湮灭。",
+       "role": "context",
+       "supports": "失败可致神魂湮灭",
+       "limits": "本剧角色的结局",
+       "termIds": [
+        "T2",
+        "T3"
+       ],
+       "fetchedAt": "2026-11-19T13:35:24.562Z",
+       "status": "candidate"
+      },
+      {
+       "id": "A1#9",
+       "provider": "zhihu",
+       "sourceMode": "zhihu_curated",
+       "contentType": "answer",
+       "title": "小说里修仙渡雷劫的说法来源于哪里?",
+       "author": null,
+       "url": "https://www.zhihu.com/question/660654857/answer/3557939752",
+       "summary": "回答把小说中的雷劫、天劫设定追溯到还珠楼主《蜀山剑侠传》等作品。",
+       "role": "context",
+       "supports": "渡劫母题的源流",
+       "limits": "译法选择",
+       "termIds": [
+        "T2"
+       ],
+       "fetchedAt": "2026-11-19T13:32:20.975Z",
+       "status": "candidate"
+      },
+      {
+       "id": "WXW-GLOSSARY",
+       "provider": "other",
+       "sourceMode": "other",
+       "contentType": "glossary",
+       "title": "Wuxiaworld 术语表",
+       "author": null,
+       "url": "https://www.wuxiaworld.com/page/general-glossary-of-terms",
+       "summary": "V5 记录的英译仙侠社区术语表，用于核对 Tribulation 类术语的既有用法（内容待复核）。",
+       "role": "usage",
+       "supports": "Heavenly Tribulation 在英译社区的用法",
+       "limits": "任何知乎来源主张",
+       "termIds": [
+        "T2"
+       ],
+       "fetchedAt": null,
+       "status": "candidate"
+      }
+     ],
+     "evidenceSource": "zhihu_curated",
+     "notices": []
+    }
+   },
+   {
+    "runId": "r_46dba2999b15",
+    "seq": 4,
+    "type": "ready",
+    "payload": {
+     "runId": "r_46dba2999b15",
+     "revision": 1,
+     "caseId": "case_a",
+     "audienceId": "a_new",
+     "targetLanguage": "en",
+     "mode": "dev_stub",
+     "provenance": "dev_stub",
+     "degradedReason": null,
+     "evidenceSource": "zhihu_curated",
+     "sourceSegments": [
+      {
+       "text": "此乃",
+       "termId": null
+      },
+      {
+       "text": "天道因果",
+       "termId": "T1"
+      },
+      {
+       "text": "，若扛不过",
+       "termId": null
+      },
+      {
+       "text": "九重雷劫",
+       "termId": "T2"
+      },
+      {
+       "text": "，便只能",
+       "termId": null
+      },
+      {
+       "text": "魂飞魄散",
+       "termId": "T3"
+      },
+      {
+       "text": "。",
+       "termId": null
+      }
+     ],
+     "terms": [
+      {
+       "id": "T1",
+       "surface": "天道因果",
+       "start": 2,
+       "end": 6,
+       "keyPointIds": [
+        "KP1"
+       ],
+       "kind": "culture"
+      },
+      {
+       "id": "T2",
+       "surface": "九重雷劫",
+       "start": 11,
+       "end": 15,
+       "keyPointIds": [
+        "KP2"
+       ],
+       "kind": "culture"
+      },
+      {
+       "id": "T3",
+       "surface": "魂飞魄散",
+       "start": 19,
+       "end": 23,
+       "keyPointIds": [
+        "KP3"
+       ],
+       "kind": "culture"
+      }
+     ],
+     "keyPoints": [
+      {
+       "id": "KP1",
+       "text": "世界规则（天道因果）导致这场试炼",
+       "short": "天道因果引发试炼"
+      },
+      {
+       "id": "KP2",
+       "text": "试炼是“九重”雷劫",
+       "short": "九重雷劫"
+      },
+      {
+       "id": "KP3",
+       "text": "失败的后果是魂魄消散",
+       "short": "失败则魂魄消散"
+      }
+     ],
+     "evidence": [
+      {
+       "id": "A1#1",
+       "provider": "zhihu",
+       "sourceMode": "zhihu_curated",
+       "contentType": "article",
+       "title": "修真小说设定知识点随笔",
+       "author": null,
+       "url": "https://zhuanlan.zhihu.com/p/721900687",
+       "summary": "专栏把渡劫描述为境界突破或业力清算时的天灾，并写到“渡得过就活，渡不过就灭”。",
+       "role": "setting",
+       "supports": "渡劫是突破或清算时的考验，失败即毁灭",
+       "limits": "本剧的具体设定",
+       "termIds": [
+        "T2"
+       ],
+       "fetchedAt": "2026-11-19T13:32:20.975Z",
+       "status": "candidate"
+      },
+      {
+       "id": "A2_refined#1",
+       "provider": "zhihu",
+       "sourceMode": "zhihu_curated",
+       "contentType": "article",
+       "title": "修仙之人为何都要渡劫?资深修仙迷:这也许是仙界的阴谋!",
+       "author": "以仙之名小师妹",
+       "url": "https://zhuanlan.zhihu.com/p/356126365",
+       "summary": "专栏概括多数修仙世界观：修为晋升时迎来雷劫，成功者继续修行，失败者境界跌落，甚至神魂湮灭。",
+       "role": "context",
+       "supports": "失败可致神魂湮灭",
+       "limits": "本剧角色的结局",
+       "termIds": [
+        "T2",
+        "T3"
+       ],
+       "fetchedAt": "2026-11-19T13:35:24.562Z",
+       "status": "candidate"
+      },
+      {
+       "id": "A1#9",
+       "provider": "zhihu",
+       "sourceMode": "zhihu_curated",
+       "contentType": "answer",
+       "title": "小说里修仙渡雷劫的说法来源于哪里?",
+       "author": null,
+       "url": "https://www.zhihu.com/question/660654857/answer/3557939752",
+       "summary": "回答把小说中的雷劫、天劫设定追溯到还珠楼主《蜀山剑侠传》等作品。",
+       "role": "context",
+       "supports": "渡劫母题的源流",
+       "limits": "译法选择",
+       "termIds": [
+        "T2"
+       ],
+       "fetchedAt": "2026-11-19T13:32:20.975Z",
+       "status": "candidate"
+      },
+      {
+       "id": "WXW-GLOSSARY",
+       "provider": "other",
+       "sourceMode": "other",
+       "contentType": "glossary",
+       "title": "Wuxiaworld 术语表",
+       "author": null,
+       "url": "https://www.wuxiaworld.com/page/general-glossary-of-terms",
+       "summary": "V5 记录的英译仙侠社区术语表，用于核对 Tribulation 类术语的既有用法（内容待复核）。",
+       "role": "usage",
+       "supports": "Heavenly Tribulation 在英译社区的用法",
+       "limits": "任何知乎来源主张",
+       "termIds": [
+        "T2"
+       ],
+       "fetchedAt": null,
+       "status": "candidate"
+      }
+     ],
+     "decisions": [
+      {
+       "id": "D1",
+       "termId": "T2",
+       "title": "雷劫的性质",
+       "choice": "译为试炼（trial / Tribulation），不用“灾难”或“暴雨”",
+       "rationale": "渡劫是境界突破或业力清算时的考验，渡得过活、渡不过灭",
+       "evidenceIds": [
+        "A1#1"
+       ],
+       "attribution": "zhihu",
+       "levels": [
+        "plain",
+        "genre"
+       ]
+      },
+      {
+       "id": "D4",
+       "termId": "T2",
+       "title": "“九重”的表达",
+       "choice": "ninefold，不展开成九次独立试炼",
+       "rationale": "原句只说“九重”，没有交代是九次独立试炼",
+       "evidenceIds": [],
+       "attribution": "editor",
+       "levels": [
+        "plain",
+        "genre"
+       ]
+      },
+      {
+       "id": "D3",
+       "termId": "T2",
+       "title": "类型版保留 Tribulation 术语",
+       "choice": "保留",
+       "rationale": "仙侠核心读者熟悉英译社区的 Tribulation 用法",
+       "evidenceIds": [
+        "WXW-GLOSSARY"
+       ],
+       "attribution": "other",
+       "levels": [
+        "genre"
+       ]
+      },
+      {
+       "id": "D5",
+       "termId": "T2",
+       "title": "类型版注释内容",
+       "choice": "用一句话解释天劫与失败代价",
+       "rationale": "注释放在字幕外，内容只取自证据卡",
+       "evidenceIds": [
+        "A1#1",
+        "A2_refined#1"
+       ],
+       "attribution": "zhihu",
+       "levels": [
+        "genre"
+       ]
+      },
+      {
+       "id": "D2",
+       "termId": "T3",
+       "title": "失败后果的程度",
+       "choice": "soul destroyed / scatter，不用 die",
+       "rationale": "失败者境界跌落甚至神魂湮灭，比“死亡”更重",
+       "evidenceIds": [
+        "A2_refined#1"
+       ],
+       "attribution": "zhihu",
+       "levels": [
+        "plain",
+        "genre"
+       ]
+      }
+     ],
+     "recommendedLevel": "plain",
+     "recommendationReason": "受众约束：短剧新观众没有仙侠背景，通俗版用剧情因果和明确代价表达。",
+     "variants": [
+      {
+       "level": "literal",
+       "segments": [
+        {
+         "text": "This is the karmic law of Heaven",
+         "termIds": [
+          "T1"
+         ],
+         "evidenceIds": [],
+         "decisionId": null
+        },
+        {
+         "text": "; if you cannot withstand the ",
+         "termIds": [],
+         "evidenceIds": [],
+         "decisionId": null
+        },
+        {
+         "text": "nine-layered thunder tribulation",
+         "termIds": [
+          "T2"
+         ],
+         "evidenceIds": [],
+         "decisionId": null
+        },
+        {
+         "text": ", ",
+         "termIds": [],
+         "evidenceIds": [],
+         "decisionId": null
+        },
+        {
+         "text": "your soul will fly away and scatter",
+         "termIds": [
+          "T3"
+         ],
+         "evidenceIds": [],
+         "decisionId": null
+        },
+        {
+         "text": ".",
+         "termIds": [],
+         "evidenceIds": [],
+         "decisionId": null
+        }
+       ],
+       "notes": [],
+       "checks": [],
+       "exportState": "draft",
+       "candidateText": null
+      },
+      {
+       "level": "plain",
+       "segments": [
+        {
+         "text": "Heaven's law has brought this upon you",
+         "termIds": [
+          "T1"
+         ],
+         "evidenceIds": [],
+         "decisionId": null
+        },
+        {
+         "text": ". Fail the ",
+         "termIds": [],
+         "evidenceIds": [],
+         "decisionId": null
+        },
+        {
+         "text": "ninefold trial by lightning",
+         "termIds": [
+          "T2"
+         ],
+         "evidenceIds": [
+          "A1#1"
+         ],
+         "decisionId": "D1"
+        },
+        {
+         "text": ", and ",
+         "termIds": [],
+         "evidenceIds": [],
+         "decisionId": null
+        },
+        {
+         "text": "your soul will be destroyed",
+         "termIds": [
+          "T3"
+         ],
+         "evidenceIds": [
+          "A2_refined#1"
+         ],
+         "decisionId": "D2"
+        },
+        {
+         "text": ".",
+         "termIds": [],
+         "evidenceIds": [],
+         "decisionId": null
+        }
+       ],
+       "notes": [],
+       "checks": [
+        {
+         "id": "F-KP1",
+         "kind": "fidelity",
+         "label": "KP1",
+         "keyPointId": "KP1",
+         "termId": null,
+         "rule": "信息点保真（确定性）",
+         "span": null,
+         "status": "pass",
+         "action": "none",
+         "reason": "已保留",
+         "evidenceIds": [],
+         "finalText": null,
+         "riskCategory": null,
+         "jurisdiction": null,
+         "suggestion": null
+        },
+        {
+         "id": "F-KP2",
+         "kind": "fidelity",
+         "label": "KP2",
+         "keyPointId": "KP2",
+         "termId": null,
+         "rule": "信息点保真（确定性）",
+         "span": null,
+         "status": "pass",
+         "action": "none",
+         "reason": "已保留",
+         "evidenceIds": [],
+         "finalText": null,
+         "riskCategory": null,
+         "jurisdiction": null,
+         "suggestion": null
+        },
+        {
+         "id": "F-KP3",
+         "kind": "fidelity",
+         "label": "KP3",
+         "keyPointId": "KP3",
+         "termId": null,
+         "rule": "信息点保真（确定性）",
+         "span": null,
+         "status": "pass",
+         "action": "none",
+         "reason": "已保留",
+         "evidenceIds": [],
+         "finalText": null,
+         "riskCategory": null,
+         "jurisdiction": null,
+         "suggestion": null
+        },
+        {
+         "id": "L0",
+         "kind": "claim",
+         "label": "当地广告法排查",
+         "keyPointId": null,
+         "termId": null,
+         "rule": "法律法规库（7 条规则）",
+         "span": null,
+         "status": "pass",
+         "action": "none",
+         "reason": "已比对 美 / 英 / 加 / 澳 / 新 广告法与功效监管规则，未检出违法风险词",
+         "evidenceIds": [],
+         "finalText": null,
+         "riskCategory": "legal",
+         "jurisdiction": "美 / 英 / 加 / 澳 / 新 广告法与监管规则",
+         "suggestion": null
+        },
+        {
+         "id": "C0",
+         "kind": "claim",
+         "label": "当地风俗习惯排查",
+         "keyPointId": null,
+         "termId": null,
+         "rule": "风俗禁忌库（2 条规则）",
+         "span": null,
+         "status": "pass",
+         "action": "none",
+         "reason": "已比对 美 / 英 / 加 / 澳 / 新 宗教、礼仪与文化禁忌规则，未检出冒犯表述",
+         "evidenceIds": [],
+         "finalText": null,
+         "riskCategory": "custom",
+         "jurisdiction": "美 / 英 / 加 / 澳 / 新 文化与风俗规范",
+         "suggestion": null
+        }
+       ],
+       "exportState": "exportable",
+       "candidateText": null
+      },
+      {
+       "level": "genre",
+       "segments": [
+        {
+         "text": "This is the Heavenly Dao's reckoning",
+         "termIds": [
+          "T1"
+         ],
+         "evidenceIds": [],
+         "decisionId": null
+        },
+        {
+         "text": ". Fail the ",
+         "termIds": [],
+         "evidenceIds": [],
+         "decisionId": null
+        },
+        {
+         "text": "Ninefold Thunder Tribulation",
+         "termIds": [
+          "T2"
+         ],
+         "evidenceIds": [
+          "A1#1",
+          "WXW-GLOSSARY"
+         ],
+         "decisionId": "D1"
+        },
+        {
+         "text": ", and ",
+         "termIds": [],
+         "evidenceIds": [],
+         "decisionId": null
+        },
+        {
+         "text": "your soul will scatter",
+         "termIds": [
+          "T3"
+         ],
+         "evidenceIds": [
+          "A2_refined#1"
+         ],
+         "decisionId": "D2"
+        },
+        {
+         "text": ".",
+         "termIds": [],
+         "evidenceIds": [],
+         "decisionId": null
+        }
+       ],
+       "notes": [
+        {
+         "text": "Tribulation: in cultivation stories, a heaven-sent trial faced at a breakthrough or a karmic reckoning; survive it and you live, fail it and you are destroyed — even your soul.",
+         "evidenceIds": [
+          "A1#1",
+          "A2_refined#1"
+         ]
+        }
+       ],
+       "checks": [
+        {
+         "id": "F-KP1",
+         "kind": "fidelity",
+         "label": "KP1",
+         "keyPointId": "KP1",
+         "termId": null,
+         "rule": "信息点保真（确定性）",
+         "span": null,
+         "status": "pass",
+         "action": "none",
+         "reason": "已保留",
+         "evidenceIds": [],
+         "finalText": null,
+         "riskCategory": null,
+         "jurisdiction": null,
+         "suggestion": null
+        },
+        {
+         "id": "F-KP2",
+         "kind": "fidelity",
+         "label": "KP2",
+         "keyPointId": "KP2",
+         "termId": null,
+         "rule": "信息点保真（确定性）",
+         "span": null,
+         "status": "pass",
+         "action": "none",
+         "reason": "已保留",
+         "evidenceIds": [],
+         "finalText": null,
+         "riskCategory": null,
+         "jurisdiction": null,
+         "suggestion": null
+        },
+        {
+         "id": "F-KP3",
+         "kind": "fidelity",
+         "label": "KP3",
+         "keyPointId": "KP3",
+         "termId": null,
+         "rule": "信息点保真（确定性）",
+         "span": null,
+         "status": "pass",
+         "action": "none",
+         "reason": "已保留",
+         "evidenceIds": [],
+         "finalText": null,
+         "riskCategory": null,
+         "jurisdiction": null,
+         "suggestion": null
+        },
+        {
+         "id": "L0",
+         "kind": "claim",
+         "label": "当地广告法排查",
+         "keyPointId": null,
+         "termId": null,
+         "rule": "法律法规库（7 条规则）",
+         "span": null,
+         "status": "pass",
+         "action": "none",
+         "reason": "已比对 美 / 英 / 加 / 澳 / 新 广告法与功效监管规则，未检出违法风险词",
+         "evidenceIds": [],
+         "finalText": null,
+         "riskCategory": "legal",
+         "jurisdiction": "美 / 英 / 加 / 澳 / 新 广告法与监管规则",
+         "suggestion": null
+        },
+        {
+         "id": "C0",
+         "kind": "claim",
+         "label": "当地风俗习惯排查",
+         "keyPointId": null,
+         "termId": null,
+         "rule": "风俗禁忌库（2 条规则）",
+         "span": null,
+         "status": "pass",
+         "action": "none",
+         "reason": "已比对 美 / 英 / 加 / 澳 / 新 宗教、礼仪与文化禁忌规则，未检出冒犯表述",
+         "evidenceIds": [],
+         "finalText": null,
+         "riskCategory": "custom",
+         "jurisdiction": "美 / 英 / 加 / 澳 / 新 文化与风俗规范",
+         "suggestion": null
+        }
+       ],
+       "exportState": "exportable",
+       "candidateText": null
+      }
+     ],
+     "modelVersion": "fake-dev-stub-v1",
+     "promptVersion": "prompt-v3",
+     "corpusVersion": "corpus-2026-11-20-seed1",
+     "createdAt": "2026-11-21T19:05:12Z",
+     "frozenAt": null,
+     "notices": []
+    }
+   }
+  ],
+  "case_a|a_genre": [
+   {
+    "runId": "r_9170f4040d84",
+    "seq": 1,
+    "type": "started",
+    "payload": {
+     "audienceId": "a_genre",
+     "audienceLabel": "北美 · 仙侠核心读者",
+     "caseId": "case_a",
+     "targetLanguage": "en",
+     "mode": "dev_stub"
+    }
+   },
+   {
+    "runId": "r_9170f4040d84",
+    "seq": 2,
+    "type": "terms",
+    "payload": {
+     "sourceSegments": [
+      {
+       "text": "此乃",
+       "termId": null
+      },
+      {
+       "text": "天道因果",
+       "termId": "T1"
+      },
+      {
+       "text": "，若扛不过",
+       "termId": null
+      },
+      {
+       "text": "九重雷劫",
+       "termId": "T2"
+      },
+      {
+       "text": "，便只能",
+       "termId": null
+      },
+      {
+       "text": "魂飞魄散",
+       "termId": "T3"
+      },
+      {
+       "text": "。",
+       "termId": null
+      }
+     ],
+     "terms": [
+      {
+       "id": "T1",
+       "surface": "天道因果",
+       "start": 2,
+       "end": 6,
+       "keyPointIds": [
+        "KP1"
+       ],
+       "kind": "culture"
+      },
+      {
+       "id": "T2",
+       "surface": "九重雷劫",
+       "start": 11,
+       "end": 15,
+       "keyPointIds": [
+        "KP2"
+       ],
+       "kind": "culture"
+      },
+      {
+       "id": "T3",
+       "surface": "魂飞魄散",
+       "start": 19,
+       "end": 23,
+       "keyPointIds": [
+        "KP3"
+       ],
+       "kind": "culture"
+      }
+     ],
+     "keyPoints": [
+      {
+       "id": "KP1",
+       "text": "世界规则（天道因果）导致这场试炼",
+       "short": "天道因果引发试炼"
+      },
+      {
+       "id": "KP2",
+       "text": "试炼是“九重”雷劫",
+       "short": "九重雷劫"
+      },
+      {
+       "id": "KP3",
+       "text": "失败的后果是魂魄消散",
+       "short": "失败则魂魄消散"
+      }
+     ]
+    }
+   },
+   {
+    "runId": "r_9170f4040d84",
+    "seq": 3,
+    "type": "evidence",
+    "payload": {
+     "evidence": [
+      {
+       "id": "A1#1",
+       "provider": "zhihu",
+       "sourceMode": "zhihu_curated",
+       "contentType": "article",
+       "title": "修真小说设定知识点随笔",
+       "author": null,
+       "url": "https://zhuanlan.zhihu.com/p/721900687",
+       "summary": "专栏把渡劫描述为境界突破或业力清算时的天灾，并写到“渡得过就活，渡不过就灭”。",
+       "role": "setting",
+       "supports": "渡劫是突破或清算时的考验，失败即毁灭",
+       "limits": "本剧的具体设定",
+       "termIds": [
+        "T2"
+       ],
+       "fetchedAt": "2026-11-19T13:32:20.975Z",
+       "status": "candidate"
+      },
+      {
+       "id": "A2_refined#1",
+       "provider": "zhihu",
+       "sourceMode": "zhihu_curated",
+       "contentType": "article",
+       "title": "修仙之人为何都要渡劫?资深修仙迷:这也许是仙界的阴谋!",
+       "author": "以仙之名小师妹",
+       "url": "https://zhuanlan.zhihu.com/p/356126365",
+       "summary": "专栏概括多数修仙世界观：修为晋升时迎来雷劫，成功者继续修行，失败者境界跌落，甚至神魂湮灭。",
+       "role": "context",
+       "supports": "失败可致神魂湮灭",
+       "limits": "本剧角色的结局",
+       "termIds": [
+        "T2",
+        "T3"
+       ],
+       "fetchedAt": "2026-11-19T13:35:24.562Z",
+       "status": "candidate"
+      },
+      {
+       "id": "A1#9",
+       "provider": "zhihu",
+       "sourceMode": "zhihu_curated",
+       "contentType": "answer",
+       "title": "小说里修仙渡雷劫的说法来源于哪里?",
+       "author": null,
+       "url": "https://www.zhihu.com/question/660654857/answer/3557939752",
+       "summary": "回答把小说中的雷劫、天劫设定追溯到还珠楼主《蜀山剑侠传》等作品。",
+       "role": "context",
+       "supports": "渡劫母题的源流",
+       "limits": "译法选择",
+       "termIds": [
+        "T2"
+       ],
+       "fetchedAt": "2026-11-19T13:32:20.975Z",
+       "status": "candidate"
+      },
+      {
+       "id": "WXW-GLOSSARY",
+       "provider": "other",
+       "sourceMode": "other",
+       "contentType": "glossary",
+       "title": "Wuxiaworld 术语表",
+       "author": null,
+       "url": "https://www.wuxiaworld.com/page/general-glossary-of-terms",
+       "summary": "V5 记录的英译仙侠社区术语表，用于核对 Tribulation 类术语的既有用法（内容待复核）。",
+       "role": "usage",
+       "supports": "Heavenly Tribulation 在英译社区的用法",
+       "limits": "任何知乎来源主张",
+       "termIds": [
+        "T2"
+       ],
+       "fetchedAt": null,
+       "status": "candidate"
+      }
+     ],
+     "evidenceSource": "zhihu_curated",
+     "notices": []
+    }
+   },
+   {
+    "runId": "r_9170f4040d84",
+    "seq": 4,
+    "type": "ready",
+    "payload": {
+     "runId": "r_9170f4040d84",
+     "revision": 1,
+     "caseId": "case_a",
+     "audienceId": "a_genre",
+     "targetLanguage": "en",
+     "mode": "dev_stub",
+     "provenance": "dev_stub",
+     "degradedReason": null,
+     "evidenceSource": "zhihu_curated",
+     "sourceSegments": [
+      {
+       "text": "此乃",
+       "termId": null
+      },
+      {
+       "text": "天道因果",
+       "termId": "T1"
+      },
+      {
+       "text": "，若扛不过",
+       "termId": null
+      },
+      {
+       "text": "九重雷劫",
+       "termId": "T2"
+      },
+      {
+       "text": "，便只能",
+       "termId": null
+      },
+      {
+       "text": "魂飞魄散",
+       "termId": "T3"
+      },
+      {
+       "text": "。",
+       "termId": null
+      }
+     ],
+     "terms": [
+      {
+       "id": "T1",
+       "surface": "天道因果",
+       "start": 2,
+       "end": 6,
+       "keyPointIds": [
+        "KP1"
+       ],
+       "kind": "culture"
+      },
+      {
+       "id": "T2",
+       "surface": "九重雷劫",
+       "start": 11,
+       "end": 15,
+       "keyPointIds": [
+        "KP2"
+       ],
+       "kind": "culture"
+      },
+      {
+       "id": "T3",
+       "surface": "魂飞魄散",
+       "start": 19,
+       "end": 23,
+       "keyPointIds": [
+        "KP3"
+       ],
+       "kind": "culture"
+      }
+     ],
+     "keyPoints": [
+      {
+       "id": "KP1",
+       "text": "世界规则（天道因果）导致这场试炼",
+       "short": "天道因果引发试炼"
+      },
+      {
+       "id": "KP2",
+       "text": "试炼是“九重”雷劫",
+       "short": "九重雷劫"
+      },
+      {
+       "id": "KP3",
+       "text": "失败的后果是魂魄消散",
+       "short": "失败则魂魄消散"
+      }
+     ],
+     "evidence": [
+      {
+       "id": "A1#1",
+       "provider": "zhihu",
+       "sourceMode": "zhihu_curated",
+       "contentType": "article",
+       "title": "修真小说设定知识点随笔",
+       "author": null,
+       "url": "https://zhuanlan.zhihu.com/p/721900687",
+       "summary": "专栏把渡劫描述为境界突破或业力清算时的天灾，并写到“渡得过就活，渡不过就灭”。",
+       "role": "setting",
+       "supports": "渡劫是突破或清算时的考验，失败即毁灭",
+       "limits": "本剧的具体设定",
+       "termIds": [
+        "T2"
+       ],
+       "fetchedAt": "2026-11-19T13:32:20.975Z",
+       "status": "candidate"
+      },
+      {
+       "id": "A2_refined#1",
+       "provider": "zhihu",
+       "sourceMode": "zhihu_curated",
+       "contentType": "article",
+       "title": "修仙之人为何都要渡劫?资深修仙迷:这也许是仙界的阴谋!",
+       "author": "以仙之名小师妹",
+       "url": "https://zhuanlan.zhihu.com/p/356126365",
+       "summary": "专栏概括多数修仙世界观：修为晋升时迎来雷劫，成功者继续修行，失败者境界跌落，甚至神魂湮灭。",
+       "role": "context",
+       "supports": "失败可致神魂湮灭",
+       "limits": "本剧角色的结局",
+       "termIds": [
+        "T2",
+        "T3"
+       ],
+       "fetchedAt": "2026-11-19T13:35:24.562Z",
+       "status": "candidate"
+      },
+      {
+       "id": "A1#9",
+       "provider": "zhihu",
+       "sourceMode": "zhihu_curated",
+       "contentType": "answer",
+       "title": "小说里修仙渡雷劫的说法来源于哪里?",
+       "author": null,
+       "url": "https://www.zhihu.com/question/660654857/answer/3557939752",
+       "summary": "回答把小说中的雷劫、天劫设定追溯到还珠楼主《蜀山剑侠传》等作品。",
+       "role": "context",
+       "supports": "渡劫母题的源流",
+       "limits": "译法选择",
+       "termIds": [
+        "T2"
+       ],
+       "fetchedAt": "2026-11-19T13:32:20.975Z",
+       "status": "candidate"
+      },
+      {
+       "id": "WXW-GLOSSARY",
+       "provider": "other",
+       "sourceMode": "other",
+       "contentType": "glossary",
+       "title": "Wuxiaworld 术语表",
+       "author": null,
+       "url": "https://www.wuxiaworld.com/page/general-glossary-of-terms",
+       "summary": "V5 记录的英译仙侠社区术语表，用于核对 Tribulation 类术语的既有用法（内容待复核）。",
+       "role": "usage",
+       "supports": "Heavenly Tribulation 在英译社区的用法",
+       "limits": "任何知乎来源主张",
+       "termIds": [
+        "T2"
+       ],
+       "fetchedAt": null,
+       "status": "candidate"
+      }
+     ],
+     "decisions": [
+      {
+       "id": "D1",
+       "termId": "T2",
+       "title": "雷劫的性质",
+       "choice": "译为试炼（trial / Tribulation），不用“灾难”或“暴雨”",
+       "rationale": "渡劫是境界突破或业力清算时的考验，渡得过活、渡不过灭",
+       "evidenceIds": [
+        "A1#1"
+       ],
+       "attribution": "zhihu",
+       "levels": [
+        "plain",
+        "genre"
+       ]
+      },
+      {
+       "id": "D4",
+       "termId": "T2",
+       "title": "“九重”的表达",
+       "choice": "ninefold，不展开成九次独立试炼",
+       "rationale": "原句只说“九重”，没有交代是九次独立试炼",
+       "evidenceIds": [],
+       "attribution": "editor",
+       "levels": [
+        "plain",
+        "genre"
+       ]
+      },
+      {
+       "id": "D3",
+       "termId": "T2",
+       "title": "类型版保留 Tribulation 术语",
+       "choice": "保留",
+       "rationale": "仙侠核心读者熟悉英译社区的 Tribulation 用法",
+       "evidenceIds": [
+        "WXW-GLOSSARY"
+       ],
+       "attribution": "other",
+       "levels": [
+        "genre"
+       ]
+      },
+      {
+       "id": "D5",
+       "termId": "T2",
+       "title": "类型版注释内容",
+       "choice": "用一句话解释天劫与失败代价",
+       "rationale": "注释放在字幕外，内容只取自证据卡",
+       "evidenceIds": [
+        "A1#1",
+        "A2_refined#1"
+       ],
+       "attribution": "zhihu",
+       "levels": [
+        "genre"
+       ]
+      },
+      {
+       "id": "D2",
+       "termId": "T3",
+       "title": "失败后果的程度",
+       "choice": "soul destroyed / scatter，不用 die",
+       "rationale": "失败者境界跌落甚至神魂湮灭，比“死亡”更重",
+       "evidenceIds": [
+        "A2_refined#1"
+       ],
+       "attribution": "zhihu",
+       "levels": [
+        "plain",
+        "genre"
+       ]
+      }
+     ],
+     "recommendedLevel": "genre",
+     "recommendationReason": "受众约束：仙侠核心读者熟悉类型术语，类型版保留 Tribulation，释义放在字幕外注释。",
+     "variants": [
+      {
+       "level": "literal",
+       "segments": [
+        {
+         "text": "This is the karmic law of Heaven",
+         "termIds": [
+          "T1"
+         ],
+         "evidenceIds": [],
+         "decisionId": null
+        },
+        {
+         "text": "; if you cannot withstand the ",
+         "termIds": [],
+         "evidenceIds": [],
+         "decisionId": null
+        },
+        {
+         "text": "nine-layered thunder tribulation",
+         "termIds": [
+          "T2"
+         ],
+         "evidenceIds": [],
+         "decisionId": null
+        },
+        {
+         "text": ", ",
+         "termIds": [],
+         "evidenceIds": [],
+         "decisionId": null
+        },
+        {
+         "text": "your soul will fly away and scatter",
+         "termIds": [
+          "T3"
+         ],
+         "evidenceIds": [],
+         "decisionId": null
+        },
+        {
+         "text": ".",
+         "termIds": [],
+         "evidenceIds": [],
+         "decisionId": null
+        }
+       ],
+       "notes": [],
+       "checks": [],
+       "exportState": "draft",
+       "candidateText": null
+      },
+      {
+       "level": "plain",
+       "segments": [
+        {
+         "text": "Heaven's law has brought this upon you",
+         "termIds": [
+          "T1"
+         ],
+         "evidenceIds": [],
+         "decisionId": null
+        },
+        {
+         "text": ". Fail the ",
+         "termIds": [],
+         "evidenceIds": [],
+         "decisionId": null
+        },
+        {
+         "text": "ninefold trial by lightning",
+         "termIds": [
+          "T2"
+         ],
+         "evidenceIds": [
+          "A1#1"
+         ],
+         "decisionId": "D1"
+        },
+        {
+         "text": ", and ",
+         "termIds": [],
+         "evidenceIds": [],
+         "decisionId": null
+        },
+        {
+         "text": "your soul will be destroyed",
+         "termIds": [
+          "T3"
+         ],
+         "evidenceIds": [
+          "A2_refined#1"
+         ],
+         "decisionId": "D2"
+        },
+        {
+         "text": ".",
+         "termIds": [],
+         "evidenceIds": [],
+         "decisionId": null
+        }
+       ],
+       "notes": [],
+       "checks": [
+        {
+         "id": "F-KP1",
+         "kind": "fidelity",
+         "label": "KP1",
+         "keyPointId": "KP1",
+         "termId": null,
+         "rule": "信息点保真（确定性）",
+         "span": null,
+         "status": "pass",
+         "action": "none",
+         "reason": "已保留",
+         "evidenceIds": [],
+         "finalText": null,
+         "riskCategory": null,
+         "jurisdiction": null,
+         "suggestion": null
+        },
+        {
+         "id": "F-KP2",
+         "kind": "fidelity",
+         "label": "KP2",
+         "keyPointId": "KP2",
+         "termId": null,
+         "rule": "信息点保真（确定性）",
+         "span": null,
+         "status": "pass",
+         "action": "none",
+         "reason": "已保留",
+         "evidenceIds": [],
+         "finalText": null,
+         "riskCategory": null,
+         "jurisdiction": null,
+         "suggestion": null
+        },
+        {
+         "id": "F-KP3",
+         "kind": "fidelity",
+         "label": "KP3",
+         "keyPointId": "KP3",
+         "termId": null,
+         "rule": "信息点保真（确定性）",
+         "span": null,
+         "status": "pass",
+         "action": "none",
+         "reason": "已保留",
+         "evidenceIds": [],
+         "finalText": null,
+         "riskCategory": null,
+         "jurisdiction": null,
+         "suggestion": null
+        },
+        {
+         "id": "L0",
+         "kind": "claim",
+         "label": "当地广告法排查",
+         "keyPointId": null,
+         "termId": null,
+         "rule": "法律法规库（7 条规则）",
+         "span": null,
+         "status": "pass",
+         "action": "none",
+         "reason": "已比对 美 / 英 / 加 / 澳 / 新 广告法与功效监管规则，未检出违法风险词",
+         "evidenceIds": [],
+         "finalText": null,
+         "riskCategory": "legal",
+         "jurisdiction": "美 / 英 / 加 / 澳 / 新 广告法与监管规则",
+         "suggestion": null
+        },
+        {
+         "id": "C0",
+         "kind": "claim",
+         "label": "当地风俗习惯排查",
+         "keyPointId": null,
+         "termId": null,
+         "rule": "风俗禁忌库（2 条规则）",
+         "span": null,
+         "status": "pass",
+         "action": "none",
+         "reason": "已比对 美 / 英 / 加 / 澳 / 新 宗教、礼仪与文化禁忌规则，未检出冒犯表述",
+         "evidenceIds": [],
+         "finalText": null,
+         "riskCategory": "custom",
+         "jurisdiction": "美 / 英 / 加 / 澳 / 新 文化与风俗规范",
+         "suggestion": null
+        }
+       ],
+       "exportState": "exportable",
+       "candidateText": null
+      },
+      {
+       "level": "genre",
+       "segments": [
+        {
+         "text": "This is the Heavenly Dao's reckoning",
+         "termIds": [
+          "T1"
+         ],
+         "evidenceIds": [],
+         "decisionId": null
+        },
+        {
+         "text": ". Fail the ",
+         "termIds": [],
+         "evidenceIds": [],
+         "decisionId": null
+        },
+        {
+         "text": "Ninefold Thunder Tribulation",
+         "termIds": [
+          "T2"
+         ],
+         "evidenceIds": [
+          "A1#1",
+          "WXW-GLOSSARY"
+         ],
+         "decisionId": "D1"
+        },
+        {
+         "text": ", and ",
+         "termIds": [],
+         "evidenceIds": [],
+         "decisionId": null
+        },
+        {
+         "text": "your soul will scatter",
+         "termIds": [
+          "T3"
+         ],
+         "evidenceIds": [
+          "A2_refined#1"
+         ],
+         "decisionId": "D2"
+        },
+        {
+         "text": ".",
+         "termIds": [],
+         "evidenceIds": [],
+         "decisionId": null
+        }
+       ],
+       "notes": [
+        {
+         "text": "Tribulation: in cultivation stories, a heaven-sent trial faced at a breakthrough or a karmic reckoning; survive it and you live, fail it and you are destroyed — even your soul.",
+         "evidenceIds": [
+          "A1#1",
+          "A2_refined#1"
+         ]
+        }
+       ],
+       "checks": [
+        {
+         "id": "F-KP1",
+         "kind": "fidelity",
+         "label": "KP1",
+         "keyPointId": "KP1",
+         "termId": null,
+         "rule": "信息点保真（确定性）",
+         "span": null,
+         "status": "pass",
+         "action": "none",
+         "reason": "已保留",
+         "evidenceIds": [],
+         "finalText": null,
+         "riskCategory": null,
+         "jurisdiction": null,
+         "suggestion": null
+        },
+        {
+         "id": "F-KP2",
+         "kind": "fidelity",
+         "label": "KP2",
+         "keyPointId": "KP2",
+         "termId": null,
+         "rule": "信息点保真（确定性）",
+         "span": null,
+         "status": "pass",
+         "action": "none",
+         "reason": "已保留",
+         "evidenceIds": [],
+         "finalText": null,
+         "riskCategory": null,
+         "jurisdiction": null,
+         "suggestion": null
+        },
+        {
+         "id": "F-KP3",
+         "kind": "fidelity",
+         "label": "KP3",
+         "keyPointId": "KP3",
+         "termId": null,
+         "rule": "信息点保真（确定性）",
+         "span": null,
+         "status": "pass",
+         "action": "none",
+         "reason": "已保留",
+         "evidenceIds": [],
+         "finalText": null,
+         "riskCategory": null,
+         "jurisdiction": null,
+         "suggestion": null
+        },
+        {
+         "id": "L0",
+         "kind": "claim",
+         "label": "当地广告法排查",
+         "keyPointId": null,
+         "termId": null,
+         "rule": "法律法规库（7 条规则）",
+         "span": null,
+         "status": "pass",
+         "action": "none",
+         "reason": "已比对 美 / 英 / 加 / 澳 / 新 广告法与功效监管规则，未检出违法风险词",
+         "evidenceIds": [],
+         "finalText": null,
+         "riskCategory": "legal",
+         "jurisdiction": "美 / 英 / 加 / 澳 / 新 广告法与监管规则",
+         "suggestion": null
+        },
+        {
+         "id": "C0",
+         "kind": "claim",
+         "label": "当地风俗习惯排查",
+         "keyPointId": null,
+         "termId": null,
+         "rule": "风俗禁忌库（2 条规则）",
+         "span": null,
+         "status": "pass",
+         "action": "none",
+         "reason": "已比对 美 / 英 / 加 / 澳 / 新 宗教、礼仪与文化禁忌规则，未检出冒犯表述",
+         "evidenceIds": [],
+         "finalText": null,
+         "riskCategory": "custom",
+         "jurisdiction": "美 / 英 / 加 / 澳 / 新 文化与风俗规范",
+         "suggestion": null
+        }
+       ],
+       "exportState": "exportable",
+       "candidateText": null
+      }
+     ],
+     "modelVersion": "fake-dev-stub-v1",
+     "promptVersion": "prompt-v3",
+     "corpusVersion": "corpus-2026-11-20-seed1",
+     "createdAt": "2026-11-21T19:05:12Z",
+     "frozenAt": null,
+     "notices": []
+    }
+   }
+  ],
+  "case_c|c_shopper": [
+   {
+    "runId": "r_fe3bf1bc23ad",
+    "seq": 1,
+    "type": "started",
+    "payload": {
+     "audienceId": "c_shopper",
+     "audienceLabel": "海外英语商品页消费者",
+     "caseId": "case_c",
+     "targetLanguage": "en",
+     "mode": "dev_stub"
+    }
+   },
+   {
+    "runId": "r_fe3bf1bc23ad",
+    "seq": 2,
+    "type": "terms",
+    "payload": {
+     "sourceSegments": [
+      {
+       "text": "回南天",
+       "termId": "C1"
+      },
+      {
+       "text": "祛湿",
+       "termId": "C2"
+      },
+      {
+       "text": "茶，",
+       "termId": null
+      },
+      {
+       "text": "清热解毒",
+       "termId": "C3"
+      },
+      {
+       "text": "，拯救",
+       "termId": null
+      },
+      {
+       "text": "熬夜",
+       "termId": "C4"
+      },
+      {
+       "text": "上火",
+       "termId": "C5"
+      },
+      {
+       "text": "。",
+       "termId": null
+      }
+     ],
+     "terms": [
+      {
+       "id": "C1",
+       "surface": "回南天",
+       "start": 0,
+       "end": 3,
+       "keyPointIds": [
+        "KP1"
+       ],
+       "kind": "context"
+      },
+      {
+       "id": "C2",
+       "surface": "祛湿",
+       "start": 3,
+       "end": 5,
+       "keyPointIds": [
+        "KP2"
+       ],
+       "kind": "scene"
+      },
+      {
+       "id": "C3",
+       "surface": "清热解毒",
+       "start": 7,
+       "end": 11,
+       "keyPointIds": [
+        "KP2"
+       ],
+       "kind": "culture"
+      },
+      {
+       "id": "C4",
+       "surface": "熬夜",
+       "start": 14,
+       "end": 16,
+       "keyPointIds": [
+        "KP3"
+       ],
+       "kind": "scene"
+      },
+      {
+       "id": "C5",
+       "surface": "上火",
+       "start": 16,
+       "end": 18,
+       "keyPointIds": [
+        "KP3"
+       ],
+       "kind": "culture"
+      }
+     ],
+     "keyPoints": [
+      {
+       "id": "KP1",
+       "text": "适用潮湿闷热的回南天天气场景",
+       "short": "回南天潮湿场景"
+      },
+      {
+       "id": "KP2",
+       "text": "传达草本茶清爽轻盈、清凉舒缓的饮用体验（避免违规医疗/排毒宣称）",
+       "short": "清爽舒缓体验"
+      },
+      {
+       "id": "KP3",
+       "text": "覆盖熬夜后疲惫燥热的日常焕活场景",
+       "short": "熬夜焕活场景"
+      }
+     ]
+    }
+   },
+   {
+    "runId": "r_fe3bf1bc23ad",
+    "seq": 3,
+    "type": "evidence",
+    "payload": {
+     "evidence": [
+      {
+       "id": "C1#2",
+       "provider": "zhihu",
+       "sourceMode": "zhihu_curated",
+       "contentType": "answer",
+       "title": "为什么广东会有回南天?",
+       "author": "上上签",
+       "url": "https://www.zhihu.com/question/12738104656/answer/1890340978193314383",
+       "summary": "回答解释回南天时空气湿度接近饱和，墙壁、地面“冒水”，物品容易受潮霉变。",
+       "role": "context",
+       "supports": "回南天的成因（暖湿气流、结露）",
+       "limits": "产品功效",
+       "termIds": [
+        "C1"
+       ],
+       "fetchedAt": "2026-11-19T13:32:27.786Z",
+       "status": "candidate"
+      },
+      {
+       "id": "C1#5",
+       "provider": "zhihu",
+       "sourceMode": "zhihu_curated",
+       "contentType": "answer",
+       "title": "为什么广东会有回南天?",
+       "author": "出类拔萃",
+       "url": "https://www.zhihu.com/question/12738104656/answer/108928148431",
+       "summary": "广东本地答主说明回南天是冬春交替冷暖气团博弈的产物，表现为墙壁地面冒水、衣物发霉。",
+       "role": "context",
+       "supports": "冷饮瓶结露类比、衣物发霉的体验",
+       "limits": "产品功效",
+       "termIds": [
+        "C1"
+       ],
+       "fetchedAt": "2026-11-19T13:32:27.786Z",
+       "status": "candidate"
+      },
+      {
+       "id": "C1#6",
+       "provider": "zhihu",
+       "sourceMode": "zhihu_curated",
+       "contentType": "answer",
+       "title": "为什么南方春天会有「回南天」?",
+       "author": "蔡蔡",
+       "url": "https://www.zhihu.com/question/1888635188642284168/answer/1893768016933663132",
+       "summary": "回答指出“回南天”不是气象观测上的科学术语，而是民间说法，指南方暖湿空气返回、墙面地面出现水珠的天气。",
+       "role": "context",
+       "supports": "“回南天是民间说法”，类似眼镜起雾",
+       "limits": "产品功效",
+       "termIds": [
+        "C1"
+       ],
+       "fetchedAt": "2026-11-19T13:32:27.786Z",
+       "status": "candidate"
+      },
+      {
+       "id": "C2_refined#1",
+       "provider": "zhihu",
+       "sourceMode": "zhihu_curated",
+       "contentType": "answer",
+       "title": "中医所说的湿气到底靠不靠谱?还是只是一种吸引人的“噱头”?",
+       "author": "日常药学堂",
+       "url": "https://www.zhihu.com/question/656480787/answer/2056415269065643594",
+       "summary": "回答主张把中医湿气理论与泛滥的“祛湿营销”分开看待。仅作复核提示。",
+       "role": "counterexample",
+       "supports": "“祛湿营销”需要复核的提示",
+       "limits": "认定某产品违法",
+       "termIds": [
+        "C2",
+        "C3",
+        "C5"
+       ],
+       "fetchedAt": "2026-11-19T13:35:26.196Z",
+       "status": "candidate"
+      }
+     ],
+     "evidenceSource": "zhihu_curated",
+     "notices": []
+    }
+   },
+   {
+    "runId": "r_fe3bf1bc23ad",
+    "seq": 4,
+    "type": "ready",
+    "payload": {
+     "runId": "r_fe3bf1bc23ad",
+     "revision": 1,
+     "caseId": "case_c",
+     "audienceId": "c_shopper",
+     "targetLanguage": "en",
+     "mode": "dev_stub",
+     "provenance": "dev_stub",
+     "degradedReason": null,
+     "evidenceSource": "zhihu_curated",
+     "sourceSegments": [
+      {
+       "text": "回南天",
+       "termId": "C1"
+      },
+      {
+       "text": "祛湿",
+       "termId": "C2"
+      },
+      {
+       "text": "茶，",
+       "termId": null
+      },
+      {
+       "text": "清热解毒",
+       "termId": "C3"
+      },
+      {
+       "text": "，拯救",
+       "termId": null
+      },
+      {
+       "text": "熬夜",
+       "termId": "C4"
+      },
+      {
+       "text": "上火",
+       "termId": "C5"
+      },
+      {
+       "text": "。",
+       "termId": null
+      }
+     ],
+     "terms": [
+      {
+       "id": "C1",
+       "surface": "回南天",
+       "start": 0,
+       "end": 3,
+       "keyPointIds": [
+        "KP1"
+       ],
+       "kind": "context"
+      },
+      {
+       "id": "C2",
+       "surface": "祛湿",
+       "start": 3,
+       "end": 5,
+       "keyPointIds": [
+        "KP2"
+       ],
+       "kind": "scene"
+      },
+      {
+       "id": "C3",
+       "surface": "清热解毒",
+       "start": 7,
+       "end": 11,
+       "keyPointIds": [
+        "KP2"
+       ],
+       "kind": "culture"
+      },
+      {
+       "id": "C4",
+       "surface": "熬夜",
+       "start": 14,
+       "end": 16,
+       "keyPointIds": [
+        "KP3"
+       ],
+       "kind": "scene"
+      },
+      {
+       "id": "C5",
+       "surface": "上火",
+       "start": 16,
+       "end": 18,
+       "keyPointIds": [
+        "KP3"
+       ],
+       "kind": "culture"
+      }
+     ],
+     "keyPoints": [
+      {
+       "id": "KP1",
+       "text": "适用潮湿闷热的回南天天气场景",
+       "short": "回南天潮湿场景"
+      },
+      {
+       "id": "KP2",
+       "text": "传达草本茶清爽轻盈、清凉舒缓的饮用体验（避免违规医疗/排毒宣称）",
+       "short": "清爽舒缓体验"
+      },
+      {
+       "id": "KP3",
+       "text": "覆盖熬夜后疲惫燥热的日常焕活场景",
+       "short": "熬夜焕活场景"
+      }
+     ],
+     "evidence": [
+      {
+       "id": "C1#2",
+       "provider": "zhihu",
+       "sourceMode": "zhihu_curated",
+       "contentType": "answer",
+       "title": "为什么广东会有回南天?",
+       "author": "上上签",
+       "url": "https://www.zhihu.com/question/12738104656/answer/1890340978193314383",
+       "summary": "回答解释回南天时空气湿度接近饱和，墙壁、地面“冒水”，物品容易受潮霉变。",
+       "role": "context",
+       "supports": "回南天的成因（暖湿气流、结露）",
+       "limits": "产品功效",
+       "termIds": [
+        "C1"
+       ],
+       "fetchedAt": "2026-11-19T13:32:27.786Z",
+       "status": "candidate"
+      },
+      {
+       "id": "C1#5",
+       "provider": "zhihu",
+       "sourceMode": "zhihu_curated",
+       "contentType": "answer",
+       "title": "为什么广东会有回南天?",
+       "author": "出类拔萃",
+       "url": "https://www.zhihu.com/question/12738104656/answer/108928148431",
+       "summary": "广东本地答主说明回南天是冬春交替冷暖气团博弈的产物，表现为墙壁地面冒水、衣物发霉。",
+       "role": "context",
+       "supports": "冷饮瓶结露类比、衣物发霉的体验",
+       "limits": "产品功效",
+       "termIds": [
+        "C1"
+       ],
+       "fetchedAt": "2026-11-19T13:32:27.786Z",
+       "status": "candidate"
+      },
+      {
+       "id": "C1#6",
+       "provider": "zhihu",
+       "sourceMode": "zhihu_curated",
+       "contentType": "answer",
+       "title": "为什么南方春天会有「回南天」?",
+       "author": "蔡蔡",
+       "url": "https://www.zhihu.com/question/1888635188642284168/answer/1893768016933663132",
+       "summary": "回答指出“回南天”不是气象观测上的科学术语，而是民间说法，指南方暖湿空气返回、墙面地面出现水珠的天气。",
+       "role": "context",
+       "supports": "“回南天是民间说法”，类似眼镜起雾",
+       "limits": "产品功效",
+       "termIds": [
+        "C1"
+       ],
+       "fetchedAt": "2026-11-19T13:32:27.786Z",
+       "status": "candidate"
+      },
+      {
+       "id": "C2_refined#1",
+       "provider": "zhihu",
+       "sourceMode": "zhihu_curated",
+       "contentType": "answer",
+       "title": "中医所说的湿气到底靠不靠谱?还是只是一种吸引人的“噱头”?",
+       "author": "日常药学堂",
+       "url": "https://www.zhihu.com/question/656480787/answer/2056415269065643594",
+       "summary": "回答主张把中医湿气理论与泛滥的“祛湿营销”分开看待。仅作复核提示。",
+       "role": "counterexample",
+       "supports": "“祛湿营销”需要复核的提示",
+       "limits": "认定某产品违法",
+       "termIds": [
+        "C2",
+        "C3",
+        "C5"
+       ],
+       "fetchedAt": "2026-11-19T13:35:26.196Z",
+       "status": "candidate"
+      }
+     ],
+     "decisions": [
+      {
+       "id": "DC1",
+       "termId": "C1",
+       "title": "回南天的英文落点",
+       "choice": "转译为潮湿闷热天气场景（humid days）",
+       "rationale": "知乎语境证据说明回南天是华南潮湿回潮天气，直接落为海外读者秒懂的 humid days",
+       "evidenceIds": [
+        "C1#2",
+        "C1#6"
+       ],
+       "attribution": "zhihu",
+       "levels": [
+        "single"
+       ]
+      },
+      {
+       "id": "DC2",
+       "termId": "C2",
+       "title": "祛湿的合规广告表达",
+       "choice": "转译为清爽轻盈口感（light, refreshing）",
+       "rationale": "正常保留产品卖点但规避欧美广告法对“祛湿/排湿功效”的监管风险，改为饮用清爽体验",
+       "evidenceIds": [
+        "C2_refined#1"
+       ],
+       "attribution": "zhihu",
+       "levels": [
+        "single"
+       ]
+      },
+      {
+       "id": "DC3",
+       "termId": "C3",
+       "title": "清热解毒的合规广告表达",
+       "choice": "转译为清凉舒缓感受（cooling and soothing）",
+       "rationale": "完整传达广告语境，同时避开 FDA/FTC 与欧盟严查的 detox / 医疗解毒违法词",
+       "evidenceIds": [
+        "C2_refined#1"
+       ],
+       "attribution": "editor",
+       "levels": [
+        "single"
+       ]
+      },
+      {
+       "id": "DC4",
+       "termId": "C4",
+       "title": "熬夜场景保留",
+       "choice": "自然转译为熬夜场景（late-night）",
+       "rationale": "日常消费场景符合海外受众生活经验，无需删减",
+       "evidenceIds": [],
+       "attribution": "editor",
+       "levels": [
+        "single"
+       ]
+      },
+      {
+       "id": "DC5",
+       "termId": "C5",
+       "title": "上火的文化转译",
+       "choice": "转译为熬夜后的倦怠燥热感（burnout）",
+       "rationale": "海外没有中医“上火”概念且直译 internal heat 易触发违规功效审查，落为 late-night burnout 自然且合规",
+       "evidenceIds": [],
+       "attribution": "editor",
+       "levels": [
+        "single"
+       ]
+      }
+     ],
+     "recommendedLevel": "single",
+     "recommendationReason": "商品页短文案：完整保留中文广告卖点与节奏，转译为符合海外广告法与消费习惯的清爽草本体验表达。",
+     "variants": [
+      {
+       "level": "literal",
+       "segments": [
+        {
+         "text": "Huinantian",
+         "termIds": [
+          "C1"
+         ],
+         "evidenceIds": [],
+         "decisionId": null
+        },
+        {
+         "text": " ",
+         "termIds": [],
+         "evidenceIds": [],
+         "decisionId": null
+        },
+        {
+         "text": "dampness-removing",
+         "termIds": [
+          "C2"
+         ],
+         "evidenceIds": [],
+         "decisionId": null
+        },
+        {
+         "text": " tea: ",
+         "termIds": [],
+         "evidenceIds": [],
+         "decisionId": null
+        },
+        {
+         "text": "clears heat and detoxifies",
+         "termIds": [
+          "C3"
+         ],
+         "evidenceIds": [],
+         "decisionId": null
+        },
+        {
+         "text": ", saves you from ",
+         "termIds": [],
+         "evidenceIds": [],
+         "decisionId": null
+        },
+        {
+         "text": "staying-up",
+         "termIds": [
+          "C4"
+         ],
+         "evidenceIds": [],
+         "decisionId": null
+        },
+        {
+         "text": " ",
+         "termIds": [],
+         "evidenceIds": [],
+         "decisionId": null
+        },
+        {
+         "text": "internal heat",
+         "termIds": [
+          "C5"
+         ],
+         "evidenceIds": [],
+         "decisionId": null
+        },
+        {
+         "text": ".",
+         "termIds": [],
+         "evidenceIds": [],
+         "decisionId": null
+        }
+       ],
+       "notes": [],
+       "checks": [],
+       "exportState": "draft",
+       "candidateText": null
+      },
+      {
+       "level": "single",
+       "segments": [
+        {
+         "text": "A ",
+         "termIds": [],
+         "evidenceIds": [],
+         "decisionId": null
+        },
+        {
+         "text": "light, refreshing",
+         "termIds": [
+          "C2"
+         ],
+         "evidenceIds": [
+          "C2_refined#1"
+         ],
+         "decisionId": "DC2"
+        },
+        {
+         "text": " herbal tea for ",
+         "termIds": [],
+         "evidenceIds": [],
+         "decisionId": null
+        },
+        {
+         "text": "humid days",
+         "termIds": [
+          "C1"
+         ],
+         "evidenceIds": [
+          "C1#2",
+          "C1#6"
+         ],
+         "decisionId": "DC1"
+        },
+        {
+         "text": " — ",
+         "termIds": [],
+         "evidenceIds": [],
+         "decisionId": null
+        },
+        {
+         "text": "cooling and soothing",
+         "termIds": [
+          "C3"
+         ],
+         "evidenceIds": [
+          "C2_refined#1"
+         ],
+         "decisionId": "DC3"
+        },
+        {
+         "text": " to rescue you from ",
+         "termIds": [],
+         "evidenceIds": [],
+         "decisionId": null
+        },
+        {
+         "text": "late-night",
+         "termIds": [
+          "C4"
+         ],
+         "evidenceIds": [],
+         "decisionId": "DC4"
+        },
+        {
+         "text": " ",
+         "termIds": [],
+         "evidenceIds": [],
+         "decisionId": null
+        },
+        {
+         "text": "burnout",
+         "termIds": [
+          "C5"
+         ],
+         "evidenceIds": [],
+         "decisionId": "DC5"
+        },
+        {
+         "text": ".",
+         "termIds": [],
+         "evidenceIds": [],
+         "decisionId": null
+        }
+       ],
+       "notes": [],
+       "checks": [
+        {
+         "id": "F-KP1",
+         "kind": "fidelity",
+         "label": "KP1",
+         "keyPointId": "KP1",
+         "termId": null,
+         "rule": "信息点保真（确定性）",
+         "span": null,
+         "status": "pass",
+         "action": "none",
+         "reason": "已保留",
+         "evidenceIds": [],
+         "finalText": null,
+         "riskCategory": null,
+         "jurisdiction": null,
+         "suggestion": null
+        },
+        {
+         "id": "F-KP2",
+         "kind": "fidelity",
+         "label": "KP2",
+         "keyPointId": "KP2",
+         "termId": null,
+         "rule": "信息点保真（确定性）",
+         "span": null,
+         "status": "pass",
+         "action": "none",
+         "reason": "已保留",
+         "evidenceIds": [],
+         "finalText": null,
+         "riskCategory": null,
+         "jurisdiction": null,
+         "suggestion": null
+        },
+        {
+         "id": "F-KP3",
+         "kind": "fidelity",
+         "label": "KP3",
+         "keyPointId": "KP3",
+         "termId": null,
+         "rule": "信息点保真（确定性）",
+         "span": null,
+         "status": "pass",
+         "action": "none",
+         "reason": "已保留",
+         "evidenceIds": [],
+         "finalText": null,
+         "riskCategory": null,
+         "jurisdiction": null,
+         "suggestion": null
+        },
+        {
+         "id": "L0",
+         "kind": "claim",
+         "label": "当地广告法排查",
+         "keyPointId": null,
+         "termId": null,
+         "rule": "法律法规库（7 条规则）",
+         "span": null,
+         "status": "pass",
+         "action": "none",
+         "reason": "已比对 美 / 英 / 加 / 澳 / 新 广告法与功效监管规则，未检出违法风险词",
+         "evidenceIds": [],
+         "finalText": null,
+         "riskCategory": "legal",
+         "jurisdiction": "美 / 英 / 加 / 澳 / 新 广告法与监管规则",
+         "suggestion": null
+        },
+        {
+         "id": "C0",
+         "kind": "claim",
+         "label": "当地风俗习惯排查",
+         "keyPointId": null,
+         "termId": null,
+         "rule": "风俗禁忌库（2 条规则）",
+         "span": null,
+         "status": "pass",
+         "action": "none",
+         "reason": "已比对 美 / 英 / 加 / 澳 / 新 宗教、礼仪与文化禁忌规则，未检出冒犯表述",
+         "evidenceIds": [],
+         "finalText": null,
+         "riskCategory": "custom",
+         "jurisdiction": "美 / 英 / 加 / 澳 / 新 文化与风俗规范",
+         "suggestion": null
+        }
+       ],
+       "exportState": "exportable",
+       "candidateText": null
+      }
+     ],
+     "modelVersion": "fake-dev-stub-v1",
+     "promptVersion": "prompt-v3",
+     "corpusVersion": "corpus-2026-11-20-seed1",
+     "createdAt": "2026-11-21T19:05:12Z",
+     "frozenAt": null,
+     "notices": []
+    }
+   }
+  ]
+ },
+ "tests": {
+  "case_a|a_new|plain": {
+   "testId": "t_0265bf2bb6",
+   "runId": "r_46dba2999b15",
+   "revision": 1,
+   "level": "plain",
+   "keyPointIds": [
+    "KP1",
+    "KP2",
+    "KP3"
+   ],
+   "expected": 6,
+   "completed": 6,
+   "readers": [
+    {
+     "personaId": "a_new_1",
+     "personaLabel": "短剧新观众 · 常看都市爱情短剧",
+     "simulated": true,
+     "version": "literal",
+     "status": "ok",
+     "retelling": "Something about karma from heaven. If they can't get through some thunder thing, their soul flies away.",
+     "judgments": [
+      {
+       "keyPointId": "KP1",
+       "verdict": "hit",
+       "quote": "Something about karma from heaven."
+      },
+      {
+       "keyPointId": "KP2",
+       "verdict": "missing",
+       "quote": "Something about karma from heaven. If they can't get through some thunder thing, their soul flies away."
+      },
+      {
+       "keyPointId": "KP3",
+       "verdict": "missing",
+       "quote": "Something about karma from heaven. If they can't get through some thunder thing, their soul flies away."
+      }
+     ]
+    },
+    {
+     "personaId": "a_new_1",
+     "personaLabel": "短剧新观众 · 常看都市爱情短剧",
+     "simulated": true,
+     "version": "selected",
+     "status": "ok",
+     "retelling": "Heaven's law caused this. If he fails a ninefold lightning trial, his soul is destroyed.",
+     "judgments": [
+      {
+       "keyPointId": "KP1",
+       "verdict": "hit",
+       "quote": "Heaven's law caused this."
+      },
+      {
+       "keyPointId": "KP2",
+       "verdict": "hit",
+       "quote": "If he fails a ninefold lightning trial, his soul is destroyed."
+      },
+      {
+       "keyPointId": "KP3",
+       "verdict": "hit",
+       "quote": "If he fails a ninefold lightning trial, his soul is destroyed."
+      }
+     ]
+    },
+    {
+     "personaId": "a_new_2",
+     "personaLabel": "短剧新观众 · 常看欧美奇幻影视",
+     "simulated": true,
+     "version": "literal",
+     "status": "ok",
+     "retelling": "A huge thunderstorm is coming. If the hero can't survive the storm, he dies.",
+     "judgments": [
+      {
+       "keyPointId": "KP1",
+       "verdict": "contradicted",
+       "quote": "A huge thunderstorm is coming."
+      },
+      {
+       "keyPointId": "KP2",
+       "verdict": "contradicted",
+       "quote": "A huge thunderstorm is coming."
+      },
+      {
+       "keyPointId": "KP3",
+       "verdict": "missing",
+       "quote": "A huge thunderstorm is coming. If the hero can't survive the storm, he dies."
+      }
+     ]
+    },
+    {
+     "personaId": "a_new_2",
+     "personaLabel": "短剧新观众 · 常看欧美奇幻影视",
+     "simulated": true,
+     "version": "selected",
+     "status": "ok",
+     "retelling": "Heaven is punishing him with a ninefold lightning trial; failing means his soul is destroyed.",
+     "judgments": [
+      {
+       "keyPointId": "KP1",
+       "verdict": "hit",
+       "quote": "Heaven is punishing him with a ninefold lightning trial;"
+      },
+      {
+       "keyPointId": "KP2",
+       "verdict": "hit",
+       "quote": "Heaven is punishing him with a ninefold lightning trial;"
+      },
+      {
+       "keyPointId": "KP3",
+       "verdict": "hit",
+       "quote": "failing means his soul is destroyed."
+      }
+     ]
+    },
+    {
+     "personaId": "a_new_3",
+     "personaLabel": "短剧新观众 · 英语为第二语言",
+     "simulated": true,
+     "version": "literal",
+     "status": "ok",
+     "retelling": "It's fate. If he fails the nine-layer lightning test, he will be reborn later as someone else.",
+     "judgments": [
+      {
+       "keyPointId": "KP1",
+       "verdict": "hit",
+       "quote": "It's fate."
+      },
+      {
+       "keyPointId": "KP2",
+       "verdict": "hit",
+       "quote": "If he fails the nine-layer lightning test, he will be reborn later as someone else."
+      },
+      {
+       "keyPointId": "KP3",
+       "verdict": "contradicted",
+       "quote": "If he fails the nine-layer lightning test, he will be reborn later as someone else."
+      }
+     ]
+    },
+    {
+     "personaId": "a_new_3",
+     "personaLabel": "短剧新观众 · 英语为第二语言",
+     "simulated": true,
+     "version": "selected",
+     "status": "ok",
+     "retelling": "Because of heaven's law he faces a ninefold lightning trial, and if he fails his soul is destroyed.",
+     "judgments": [
+      {
+       "keyPointId": "KP1",
+       "verdict": "hit",
+       "quote": "Because of heaven's law he faces a ninefold lightning trial, and if he fails his soul is destroyed."
+      },
+      {
+       "keyPointId": "KP2",
+       "verdict": "hit",
+       "quote": "Because of heaven's law he faces a ninefold lightning trial, and if he fails his soul is destroyed."
+      },
+      {
+       "keyPointId": "KP3",
+       "verdict": "hit",
+       "quote": "Because of heaven's law he faces a ninefold lightning trial, and if he fails his soul is destroyed."
+      }
+     ]
+    }
+   ],
+   "summary": {
+    "literal": {
+     "hit": 3,
+     "valid": 9
+    },
+    "selected": {
+     "hit": 9,
+     "valid": 9
+    }
+   },
+   "mode": "dev_stub",
+   "provenance": "dev_stub",
+   "judgeError": null
+  },
+  "case_a|a_new|genre": {
+   "testId": "t_4eee7f00f6",
+   "runId": "r_46dba2999b15",
+   "revision": 1,
+   "level": "genre",
+   "keyPointIds": [
+    "KP1",
+    "KP2",
+    "KP3"
+   ],
+   "expected": 6,
+   "completed": 6,
+   "readers": [
+    {
+     "personaId": "a_new_1",
+     "personaLabel": "短剧新观众 · 常看都市爱情短剧",
+     "simulated": true,
+     "version": "literal",
+     "status": "ok",
+     "retelling": "Something about karma from heaven. If they can't get through some thunder thing, their soul flies away.",
+     "judgments": [
+      {
+       "keyPointId": "KP1",
+       "verdict": "hit",
+       "quote": "Something about karma from heaven."
+      },
+      {
+       "keyPointId": "KP2",
+       "verdict": "missing",
+       "quote": "Something about karma from heaven. If they can't get through some thunder thing, their soul flies away."
+      },
+      {
+       "keyPointId": "KP3",
+       "verdict": "missing",
+       "quote": "Something about karma from heaven. If they can't get through some thunder thing, their soul flies away."
+      }
+     ]
+    },
+    {
+     "personaId": "a_new_1",
+     "personaLabel": "短剧新观众 · 常看都市爱情短剧",
+     "simulated": true,
+     "version": "selected",
+     "status": "ok",
+     "retelling": "The Heavenly Dao is judging him with a Thunder Tribulation, and his soul will scatter if he fails.",
+     "judgments": [
+      {
+       "keyPointId": "KP1",
+       "verdict": "hit",
+       "quote": "The Heavenly Dao is judging him with a Thunder Tribulation, and his soul will scatter if he fails."
+      },
+      {
+       "keyPointId": "KP2",
+       "verdict": "missing",
+       "quote": "The Heavenly Dao is judging him with a Thunder Tribulation, and his soul will scatter if he fails."
+      },
+      {
+       "keyPointId": "KP3",
+       "verdict": "hit",
+       "quote": "The Heavenly Dao is judging him with a Thunder Tribulation, and his soul will scatter if he fails."
+      }
+     ]
+    },
+    {
+     "personaId": "a_new_2",
+     "personaLabel": "短剧新观众 · 常看欧美奇幻影视",
+     "simulated": true,
+     "version": "literal",
+     "status": "ok",
+     "retelling": "A huge thunderstorm is coming. If the hero can't survive the storm, he dies.",
+     "judgments": [
+      {
+       "keyPointId": "KP1",
+       "verdict": "contradicted",
+       "quote": "A huge thunderstorm is coming."
+      },
+      {
+       "keyPointId": "KP2",
+       "verdict": "contradicted",
+       "quote": "A huge thunderstorm is coming."
+      },
+      {
+       "keyPointId": "KP3",
+       "verdict": "missing",
+       "quote": "A huge thunderstorm is coming. If the hero can't survive the storm, he dies."
+      }
+     ]
+    },
+    {
+     "personaId": "a_new_2",
+     "personaLabel": "短剧新观众 · 常看欧美奇幻影视",
+     "simulated": true,
+     "version": "selected",
+     "status": "ok",
+     "retelling": "Some Dao reckoning. He has to pass a tribulation or his soul scatters.",
+     "judgments": [
+      {
+       "keyPointId": "KP1",
+       "verdict": "hit",
+       "quote": "Some Dao reckoning."
+      },
+      {
+       "keyPointId": "KP2",
+       "verdict": "missing",
+       "quote": "Some Dao reckoning. He has to pass a tribulation or his soul scatters."
+      },
+      {
+       "keyPointId": "KP3",
+       "verdict": "hit",
+       "quote": "He has to pass a tribulation or his soul scatters."
+      }
+     ]
+    },
+    {
+     "personaId": "a_new_3",
+     "personaLabel": "短剧新观众 · 英语为第二语言",
+     "simulated": true,
+     "version": "literal",
+     "status": "ok",
+     "retelling": "It's fate. If he fails the nine-layer lightning test, he will be reborn later as someone else.",
+     "judgments": [
+      {
+       "keyPointId": "KP1",
+       "verdict": "hit",
+       "quote": "It's fate."
+      },
+      {
+       "keyPointId": "KP2",
+       "verdict": "hit",
+       "quote": "If he fails the nine-layer lightning test, he will be reborn later as someone else."
+      },
+      {
+       "keyPointId": "KP3",
+       "verdict": "contradicted",
+       "quote": "If he fails the nine-layer lightning test, he will be reborn later as someone else."
+      }
+     ]
+    },
+    {
+     "personaId": "a_new_3",
+     "personaLabel": "短剧新观众 · 英语为第二语言",
+     "simulated": true,
+     "version": "selected",
+     "status": "ok",
+     "retelling": "The Heavenly Dao sends a ninefold thunder tribulation; failing it scatters his soul.",
+     "judgments": [
+      {
+       "keyPointId": "KP1",
+       "verdict": "hit",
+       "quote": "The Heavenly Dao sends a ninefold thunder tribulation;"
+      },
+      {
+       "keyPointId": "KP2",
+       "verdict": "hit",
+       "quote": "The Heavenly Dao sends a ninefold thunder tribulation;"
+      },
+      {
+       "keyPointId": "KP3",
+       "verdict": "hit",
+       "quote": "failing it scatters his soul."
+      }
+     ]
+    }
+   ],
+   "summary": {
+    "literal": {
+     "hit": 3,
+     "valid": 9
+    },
+    "selected": {
+     "hit": 7,
+     "valid": 9
+    }
+   },
+   "mode": "dev_stub",
+   "provenance": "dev_stub",
+   "judgeError": null
+  },
+  "case_a|a_genre|plain": {
+   "testId": "t_7fa960b047",
+   "runId": "r_9170f4040d84",
+   "revision": 1,
+   "level": "plain",
+   "keyPointIds": [
+    "KP1",
+    "KP2",
+    "KP3"
+   ],
+   "expected": 6,
+   "completed": 6,
+   "readers": [
+    {
+     "personaId": "a_genre_1",
+     "personaLabel": "仙侠核心读者 · 追更英译网文多年",
+     "simulated": true,
+     "version": "literal",
+     "status": "ok",
+     "retelling": "Classic karmic reckoning from the heavens: fail the nine-layered thunder tribulation and the soul scatters.",
+     "judgments": [
+      {
+       "keyPointId": "KP1",
+       "verdict": "hit",
+       "quote": "Classic karmic reckoning from the heavens: fail the nine-layered thunder tribulation and the soul scatters."
+      },
+      {
+       "keyPointId": "KP2",
+       "verdict": "hit",
+       "quote": "Classic karmic reckoning from the heavens: fail the nine-layered thunder tribulation and the soul scatters."
+      },
+      {
+       "keyPointId": "KP3",
+       "verdict": "hit",
+       "quote": "Classic karmic reckoning from the heavens: fail the nine-layered thunder tribulation and the soul scatters."
+      }
+     ]
+    },
+    {
+     "personaId": "a_genre_1",
+     "personaLabel": "仙侠核心读者 · 追更英译网文多年",
+     "simulated": true,
+     "version": "selected",
+     "status": "ok",
+     "retelling": "Heaven's law brought this on; fail the ninefold lightning trial and the soul is destroyed.",
+     "judgments": [
+      {
+       "keyPointId": "KP1",
+       "verdict": "hit",
+       "quote": "Heaven's law brought this on;"
+      },
+      {
+       "keyPointId": "KP2",
+       "verdict": "hit",
+       "quote": "fail the ninefold lightning trial and the soul is destroyed."
+      },
+      {
+       "keyPointId": "KP3",
+       "verdict": "hit",
+       "quote": "fail the ninefold lightning trial and the soul is destroyed."
+      }
+     ]
+    },
+    {
+     "personaId": "a_genre_2",
+     "personaLabel": "仙侠核心读者 · 刚入坑",
+     "simulated": true,
+     "version": "literal",
+     "status": "ok",
+     "retelling": "Heaven's karma; a nine-layer lightning tribulation; fail and your soul flies apart and scatters.",
+     "judgments": [
+      {
+       "keyPointId": "KP1",
+       "verdict": "hit",
+       "quote": "Heaven's karma;"
+      },
+      {
+       "keyPointId": "KP2",
+       "verdict": "hit",
+       "quote": "a nine-layer lightning tribulation;"
+      },
+      {
+       "keyPointId": "KP3",
+       "verdict": "hit",
+       "quote": "fail and your soul flies apart and scatters."
+      }
+     ]
+    },
+    {
+     "personaId": "a_genre_2",
+     "personaLabel": "仙侠核心读者 · 刚入坑",
+     "simulated": true,
+     "version": "selected",
+     "status": "ok",
+     "retelling": "It's heaven's law. Fail the ninefold trial by lightning and your soul gets destroyed.",
+     "judgments": [
+      {
+       "keyPointId": "KP1",
+       "verdict": "hit",
+       "quote": "It's heaven's law."
+      },
+      {
+       "keyPointId": "KP2",
+       "verdict": "hit",
+       "quote": "Fail the ninefold trial by lightning and your soul gets destroyed."
+      },
+      {
+       "keyPointId": "KP3",
+       "verdict": "hit",
+       "quote": "Fail the ninefold trial by lightning and your soul gets destroyed."
+      }
+     ]
+    },
+    {
+     "personaId": "a_genre_3",
+     "personaLabel": "仙侠核心读者 · 同时看日式奇幻",
+     "simulated": true,
+     "version": "literal",
+     "status": "ok",
+     "retelling": "The heavens demand it; if you can't withstand the thunder tribulation, your soul is scattered.",
+     "judgments": [
+      {
+       "keyPointId": "KP1",
+       "verdict": "hit",
+       "quote": "The heavens demand it;"
+      },
+      {
+       "keyPointId": "KP2",
+       "verdict": "missing",
+       "quote": "The heavens demand it; if you can't withstand the thunder tribulation, your soul is scattered."
+      },
+      {
+       "keyPointId": "KP3",
+       "verdict": "hit",
+       "quote": "if you can't withstand the thunder tribulation, your soul is scattered."
+      }
+     ]
+    },
+    {
+     "personaId": "a_genre_3",
+     "personaLabel": "仙侠核心读者 · 同时看日式奇幻",
+     "simulated": true,
+     "version": "selected",
+     "status": "ok",
+     "retelling": "Heaven's law: a ninefold lightning trial, and failing destroys your soul.",
+     "judgments": [
+      {
+       "keyPointId": "KP1",
+       "verdict": "hit",
+       "quote": "Heaven's law: a ninefold lightning trial, and failing destroys your soul."
+      },
+      {
+       "keyPointId": "KP2",
+       "verdict": "hit",
+       "quote": "Heaven's law: a ninefold lightning trial, and failing destroys your soul."
+      },
+      {
+       "keyPointId": "KP3",
+       "verdict": "hit",
+       "quote": "Heaven's law: a ninefold lightning trial, and failing destroys your soul."
+      }
+     ]
+    }
+   ],
+   "summary": {
+    "literal": {
+     "hit": 8,
+     "valid": 9
+    },
+    "selected": {
+     "hit": 9,
+     "valid": 9
+    }
+   },
+   "mode": "dev_stub",
+   "provenance": "dev_stub",
+   "judgeError": null
+  },
+  "case_a|a_genre|genre": {
+   "testId": "t_af7b841240",
+   "runId": "r_9170f4040d84",
+   "revision": 1,
+   "level": "genre",
+   "keyPointIds": [
+    "KP1",
+    "KP2",
+    "KP3"
+   ],
+   "expected": 6,
+   "completed": 6,
+   "readers": [
+    {
+     "personaId": "a_genre_1",
+     "personaLabel": "仙侠核心读者 · 追更英译网文多年",
+     "simulated": true,
+     "version": "literal",
+     "status": "ok",
+     "retelling": "Classic karmic reckoning from the heavens: fail the nine-layered thunder tribulation and the soul scatters.",
+     "judgments": [
+      {
+       "keyPointId": "KP1",
+       "verdict": "hit",
+       "quote": "Classic karmic reckoning from the heavens: fail the nine-layered thunder tribulation and the soul scatters."
+      },
+      {
+       "keyPointId": "KP2",
+       "verdict": "hit",
+       "quote": "Classic karmic reckoning from the heavens: fail the nine-layered thunder tribulation and the soul scatters."
+      },
+      {
+       "keyPointId": "KP3",
+       "verdict": "hit",
+       "quote": "Classic karmic reckoning from the heavens: fail the nine-layered thunder tribulation and the soul scatters."
+      }
+     ]
+    },
+    {
+     "personaId": "a_genre_1",
+     "personaLabel": "仙侠核心读者 · 追更英译网文多年",
+     "simulated": true,
+     "version": "selected",
+     "status": "ok",
+     "retelling": "Heavenly Dao's reckoning: fail the Ninefold Thunder Tribulation and your soul scatters.",
+     "judgments": [
+      {
+       "keyPointId": "KP1",
+       "verdict": "hit",
+       "quote": "Heavenly Dao's reckoning: fail the Ninefold Thunder Tribulation and your soul scatters."
+      },
+      {
+       "keyPointId": "KP2",
+       "verdict": "hit",
+       "quote": "Heavenly Dao's reckoning: fail the Ninefold Thunder Tribulation and your soul scatters."
+      },
+      {
+       "keyPointId": "KP3",
+       "verdict": "hit",
+       "quote": "Heavenly Dao's reckoning: fail the Ninefold Thunder Tribulation and your soul scatters."
+      }
+     ]
+    },
+    {
+     "personaId": "a_genre_2",
+     "personaLabel": "仙侠核心读者 · 刚入坑",
+     "simulated": true,
+     "version": "literal",
+     "status": "ok",
+     "retelling": "Heaven's karma; a nine-layer lightning tribulation; fail and your soul flies apart and scatters.",
+     "judgments": [
+      {
+       "keyPointId": "KP1",
+       "verdict": "hit",
+       "quote": "Heaven's karma;"
+      },
+      {
+       "keyPointId": "KP2",
+       "verdict": "hit",
+       "quote": "a nine-layer lightning tribulation;"
+      },
+      {
+       "keyPointId": "KP3",
+       "verdict": "hit",
+       "quote": "fail and your soul flies apart and scatters."
+      }
+     ]
+    },
+    {
+     "personaId": "a_genre_2",
+     "personaLabel": "仙侠核心读者 · 刚入坑",
+     "simulated": true,
+     "version": "selected",
+     "status": "ok",
+     "retelling": "The Dao demands a reckoning, the ninefold tribulation, and failure means the soul scatters.",
+     "judgments": [
+      {
+       "keyPointId": "KP1",
+       "verdict": "hit",
+       "quote": "The Dao demands a reckoning, the ninefold tribulation, and failure means the soul scatters."
+      },
+      {
+       "keyPointId": "KP2",
+       "verdict": "hit",
+       "quote": "The Dao demands a reckoning, the ninefold tribulation, and failure means the soul scatters."
+      },
+      {
+       "keyPointId": "KP3",
+       "verdict": "hit",
+       "quote": "The Dao demands a reckoning, the ninefold tribulation, and failure means the soul scatters."
+      }
+     ]
+    },
+    {
+     "personaId": "a_genre_3",
+     "personaLabel": "仙侠核心读者 · 同时看日式奇幻",
+     "simulated": true,
+     "version": "literal",
+     "status": "ok",
+     "retelling": "The heavens demand it; if you can't withstand the thunder tribulation, your soul is scattered.",
+     "judgments": [
+      {
+       "keyPointId": "KP1",
+       "verdict": "hit",
+       "quote": "The heavens demand it;"
+      },
+      {
+       "keyPointId": "KP2",
+       "verdict": "missing",
+       "quote": "The heavens demand it; if you can't withstand the thunder tribulation, your soul is scattered."
+      },
+      {
+       "keyPointId": "KP3",
+       "verdict": "hit",
+       "quote": "if you can't withstand the thunder tribulation, your soul is scattered."
+      }
+     ]
+    },
+    {
+     "personaId": "a_genre_3",
+     "personaLabel": "仙侠核心读者 · 同时看日式奇幻",
+     "simulated": true,
+     "version": "selected",
+     "status": "ok",
+     "retelling": "By the Heavenly Dao's reckoning, failing the Ninefold Thunder Tribulation scatters the soul.",
+     "judgments": [
+      {
+       "keyPointId": "KP1",
+       "verdict": "hit",
+       "quote": "By the Heavenly Dao's reckoning, failing the Ninefold Thunder Tribulation scatters the soul."
+      },
+      {
+       "keyPointId": "KP2",
+       "verdict": "hit",
+       "quote": "By the Heavenly Dao's reckoning, failing the Ninefold Thunder Tribulation scatters the soul."
+      },
+      {
+       "keyPointId": "KP3",
+       "verdict": "hit",
+       "quote": "By the Heavenly Dao's reckoning, failing the Ninefold Thunder Tribulation scatters the soul."
+      }
+     ]
+    }
+   ],
+   "summary": {
+    "literal": {
+     "hit": 8,
+     "valid": 9
+    },
+    "selected": {
+     "hit": 9,
+     "valid": 9
+    }
+   },
+   "mode": "dev_stub",
+   "provenance": "dev_stub",
+   "judgeError": null
+  }
+ },
+ "drafts": {
+  "case_a|a_new|KP2|Something about karma from heaven. If they can't get through some thunder thing, their soul flies away.": {
+   "draftId": "q_9027d2f988",
+   "query": "仙侠 渡劫 雷劫 翻译 英文",
+   "existing": [
+    {
+     "title": "小时候跑 800 米体测像渡劫，长大后反倒主动跑 10 公里上瘾，这种反差原因是什么？",
+     "url": "https://www.zhihu.com/question/2104548621190423196"
+    },
+    {
+     "title": "穿越到修仙界做一个法拉第笼是不是可以挡住所有雷劫？",
+     "url": "https://www.zhihu.com/question/2075607895882973368"
+    },
+    {
+     "title": "得了HPV51怎么能好，求解，渡劫中？",
+     "url": "https://www.zhihu.com/question/1906619668925506462"
+    },
+    {
+     "title": "劫是什么？劫是恶果，还是生慧的准备？渡劫，是反抗恶果，还是精进的历练？",
+     "url": "https://www.zhihu.com/question/2090890028721369783"
+    },
+    {
+     "title": "网文仙侠迭代成功，玄幻却未诞生新版本，你认为玄幻的下一个版本是什么？",
+     "url": "https://www.zhihu.com/question/1937403863943603166"
+    }
+   ],
+   "existingSource": "cache",
+   "existingNote": "缓存 · 2026-11-19 13:35 UTC 实测 · 查询词：仙侠 渡劫 雷劫 翻译 英文 · 知乎实时查询未启用",
+   "recommendation": "new_question",
+   "recommendationReason": "已有讨论没有涉及海外读者的理解（规则判断）",
+   "draft": {
+    "title": "海外读者对「九重雷劫」的理解和原意不一致，该怎样向他们解释？",
+    "body": "【海外读者原本的理解】Something about karma from heaven. If they can't get through some thunder thing, their soul flies away.\n【和原意的差异】原句要传达的是：试炼是“九重”雷劫\n【希望答主解释】「九重雷劫」在原文语境里是什么意思，以及怎样向没有相关背景的海外读者讲清楚。\n【来源】模拟读者误解（非真实用户）"
+   },
+   "sourceLabel": "模拟读者误解（非真实用户）",
+   "mode": "dev_stub",
+   "provenance": "dev_stub"
+  },
+  "case_a|a_new|KP3|Something about karma from heaven. If they can't get through some thunder thing, their soul flies away.": {
+   "draftId": "q_bba47aae79",
+   "query": "魂飞魄散 英文 怎么翻译",
+   "existing": [],
+   "existingSource": "none",
+   "existingNote": "知乎实时查询未启用",
+   "recommendation": "new_question",
+   "recommendationReason": "没有查到已有讨论（规则判断）",
+   "draft": {
+    "title": "海外读者对「魂飞魄散」的理解和原意不一致，该怎样向他们解释？",
+    "body": "【海外读者原本的理解】Something about karma from heaven. If they can't get through some thunder thing, their soul flies away.\n【和原意的差异】原句要传达的是：失败的后果是魂魄消散\n【希望答主解释】「魂飞魄散」在原文语境里是什么意思，以及怎样向没有相关背景的海外读者讲清楚。\n【来源】模拟读者误解（非真实用户）"
+   },
+   "sourceLabel": "模拟读者误解（非真实用户）",
+   "mode": "dev_stub",
+   "provenance": "dev_stub"
+  },
+  "case_a|a_new|KP1|A huge thunderstorm is coming.": {
+   "draftId": "q_3a3be229ad",
+   "query": "天道因果 英文 怎么翻译",
+   "existing": [],
+   "existingSource": "none",
+   "existingNote": "知乎实时查询未启用",
+   "recommendation": "new_question",
+   "recommendationReason": "没有查到已有讨论（规则判断）",
+   "draft": {
+    "title": "海外读者对「天道因果」的理解和原意不一致，该怎样向他们解释？",
+    "body": "【海外读者原本的理解】A huge thunderstorm is coming.\n【和原意的差异】原句要传达的是：世界规则（天道因果）导致这场试炼\n【希望答主解释】「天道因果」在原文语境里是什么意思，以及怎样向没有相关背景的海外读者讲清楚。\n【来源】模拟读者误解（非真实用户）"
+   },
+   "sourceLabel": "模拟读者误解（非真实用户）",
+   "mode": "dev_stub",
+   "provenance": "dev_stub"
+  },
+  "case_a|a_new|KP2|A huge thunderstorm is coming.": {
+   "draftId": "q_b5031b4254",
+   "query": "仙侠 渡劫 雷劫 翻译 英文",
+   "existing": [
+    {
+     "title": "小时候跑 800 米体测像渡劫，长大后反倒主动跑 10 公里上瘾，这种反差原因是什么？",
+     "url": "https://www.zhihu.com/question/2104548621190423196"
+    },
+    {
+     "title": "穿越到修仙界做一个法拉第笼是不是可以挡住所有雷劫？",
+     "url": "https://www.zhihu.com/question/2075607895882973368"
+    },
+    {
+     "title": "得了HPV51怎么能好，求解，渡劫中？",
+     "url": "https://www.zhihu.com/question/1906619668925506462"
+    },
+    {
+     "title": "劫是什么？劫是恶果，还是生慧的准备？渡劫，是反抗恶果，还是精进的历练？",
+     "url": "https://www.zhihu.com/question/2090890028721369783"
+    },
+    {
+     "title": "网文仙侠迭代成功，玄幻却未诞生新版本，你认为玄幻的下一个版本是什么？",
+     "url": "https://www.zhihu.com/question/1937403863943603166"
+    }
+   ],
+   "existingSource": "cache",
+   "existingNote": "缓存 · 2026-11-19 13:35 UTC 实测 · 查询词：仙侠 渡劫 雷劫 翻译 英文 · 知乎实时查询未启用",
+   "recommendation": "new_question",
+   "recommendationReason": "已有讨论没有涉及海外读者的理解（规则判断）",
+   "draft": {
+    "title": "海外读者对「九重雷劫」的理解和原意不一致，该怎样向他们解释？",
+    "body": "【海外读者原本的理解】A huge thunderstorm is coming.\n【和原意的差异】原句要传达的是：试炼是“九重”雷劫\n【希望答主解释】「九重雷劫」在原文语境里是什么意思，以及怎样向没有相关背景的海外读者讲清楚。\n【来源】模拟读者误解（非真实用户）"
+   },
+   "sourceLabel": "模拟读者误解（非真实用户）",
+   "mode": "dev_stub",
+   "provenance": "dev_stub"
+  },
+  "case_a|a_new|KP3|A huge thunderstorm is coming. If the hero can't survive the storm, he dies.": {
+   "draftId": "q_ba4da903c3",
+   "query": "魂飞魄散 英文 怎么翻译",
+   "existing": [],
+   "existingSource": "none",
+   "existingNote": "知乎实时查询未启用",
+   "recommendation": "new_question",
+   "recommendationReason": "没有查到已有讨论（规则判断）",
+   "draft": {
+    "title": "海外读者对「魂飞魄散」的理解和原意不一致，该怎样向他们解释？",
+    "body": "【海外读者原本的理解】A huge thunderstorm is coming. If the hero can't survive the storm, he dies.\n【和原意的差异】原句要传达的是：失败的后果是魂魄消散\n【希望答主解释】「魂飞魄散」在原文语境里是什么意思，以及怎样向没有相关背景的海外读者讲清楚。\n【来源】模拟读者误解（非真实用户）"
+   },
+   "sourceLabel": "模拟读者误解（非真实用户）",
+   "mode": "dev_stub",
+   "provenance": "dev_stub"
+  },
+  "case_a|a_new|KP3|If he fails the nine-layer lightning test, he will be reborn later as someone else.": {
+   "draftId": "q_fda4e70f57",
+   "query": "魂飞魄散 英文 怎么翻译",
+   "existing": [],
+   "existingSource": "none",
+   "existingNote": "知乎实时查询未启用",
+   "recommendation": "new_question",
+   "recommendationReason": "没有查到已有讨论（规则判断）",
+   "draft": {
+    "title": "海外读者对「魂飞魄散」的理解和原意不一致，该怎样向他们解释？",
+    "body": "【海外读者原本的理解】If he fails the nine-layer lightning test, he will be reborn later as someone else.\n【和原意的差异】原句要传达的是：失败的后果是魂魄消散\n【希望答主解释】「魂飞魄散」在原文语境里是什么意思，以及怎样向没有相关背景的海外读者讲清楚。\n【来源】模拟读者误解（非真实用户）"
+   },
+   "sourceLabel": "模拟读者误解（非真实用户）",
+   "mode": "dev_stub",
+   "provenance": "dev_stub"
+  },
+  "case_a|a_new|KP2|The Heavenly Dao is judging him with a Thunder Tribulation, and his soul will scatter if he fails.": {
+   "draftId": "q_13b2c2fd95",
+   "query": "仙侠 渡劫 雷劫 翻译 英文",
+   "existing": [
+    {
+     "title": "小时候跑 800 米体测像渡劫，长大后反倒主动跑 10 公里上瘾，这种反差原因是什么？",
+     "url": "https://www.zhihu.com/question/2104548621190423196"
+    },
+    {
+     "title": "穿越到修仙界做一个法拉第笼是不是可以挡住所有雷劫？",
+     "url": "https://www.zhihu.com/question/2075607895882973368"
+    },
+    {
+     "title": "得了HPV51怎么能好，求解，渡劫中？",
+     "url": "https://www.zhihu.com/question/1906619668925506462"
+    },
+    {
+     "title": "劫是什么？劫是恶果，还是生慧的准备？渡劫，是反抗恶果，还是精进的历练？",
+     "url": "https://www.zhihu.com/question/2090890028721369783"
+    },
+    {
+     "title": "网文仙侠迭代成功，玄幻却未诞生新版本，你认为玄幻的下一个版本是什么？",
+     "url": "https://www.zhihu.com/question/1937403863943603166"
+    }
+   ],
+   "existingSource": "cache",
+   "existingNote": "缓存 · 2026-11-19 13:35 UTC 实测 · 查询词：仙侠 渡劫 雷劫 翻译 英文 · 知乎实时查询未启用",
+   "recommendation": "new_question",
+   "recommendationReason": "已有讨论没有涉及海外读者的理解（规则判断）",
+   "draft": {
+    "title": "海外读者对「九重雷劫」的理解和原意不一致，该怎样向他们解释？",
+    "body": "【海外读者原本的理解】The Heavenly Dao is judging him with a Thunder Tribulation, and his soul will scatter if he fails.\n【和原意的差异】原句要传达的是：试炼是“九重”雷劫\n【希望答主解释】「九重雷劫」在原文语境里是什么意思，以及怎样向没有相关背景的海外读者讲清楚。\n【来源】模拟读者误解（非真实用户）"
+   },
+   "sourceLabel": "模拟读者误解（非真实用户）",
+   "mode": "dev_stub",
+   "provenance": "dev_stub"
+  },
+  "case_a|a_new|KP2|Some Dao reckoning. He has to pass a tribulation or his soul scatters.": {
+   "draftId": "q_96507c8d34",
+   "query": "仙侠 渡劫 雷劫 翻译 英文",
+   "existing": [
+    {
+     "title": "小时候跑 800 米体测像渡劫，长大后反倒主动跑 10 公里上瘾，这种反差原因是什么？",
+     "url": "https://www.zhihu.com/question/2104548621190423196"
+    },
+    {
+     "title": "穿越到修仙界做一个法拉第笼是不是可以挡住所有雷劫？",
+     "url": "https://www.zhihu.com/question/2075607895882973368"
+    },
+    {
+     "title": "得了HPV51怎么能好，求解，渡劫中？",
+     "url": "https://www.zhihu.com/question/1906619668925506462"
+    },
+    {
+     "title": "劫是什么？劫是恶果，还是生慧的准备？渡劫，是反抗恶果，还是精进的历练？",
+     "url": "https://www.zhihu.com/question/2090890028721369783"
+    },
+    {
+     "title": "网文仙侠迭代成功，玄幻却未诞生新版本，你认为玄幻的下一个版本是什么？",
+     "url": "https://www.zhihu.com/question/1937403863943603166"
+    }
+   ],
+   "existingSource": "cache",
+   "existingNote": "缓存 · 2026-11-19 13:35 UTC 实测 · 查询词：仙侠 渡劫 雷劫 翻译 英文 · 知乎实时查询未启用",
+   "recommendation": "new_question",
+   "recommendationReason": "已有讨论没有涉及海外读者的理解（规则判断）",
+   "draft": {
+    "title": "海外读者对「九重雷劫」的理解和原意不一致，该怎样向他们解释？",
+    "body": "【海外读者原本的理解】Some Dao reckoning. He has to pass a tribulation or his soul scatters.\n【和原意的差异】原句要传达的是：试炼是“九重”雷劫\n【希望答主解释】「九重雷劫」在原文语境里是什么意思，以及怎样向没有相关背景的海外读者讲清楚。\n【来源】模拟读者误解（非真实用户）"
+   },
+   "sourceLabel": "模拟读者误解（非真实用户）",
+   "mode": "dev_stub",
+   "provenance": "dev_stub"
+  },
+  "case_a|a_genre|KP2|The heavens demand it; if you can't withstand the thunder tribulation, your soul is scattered.": {
+   "draftId": "q_4937fa119c",
+   "query": "仙侠 渡劫 雷劫 翻译 英文",
+   "existing": [
+    {
+     "title": "小时候跑 800 米体测像渡劫，长大后反倒主动跑 10 公里上瘾，这种反差原因是什么？",
+     "url": "https://www.zhihu.com/question/2104548621190423196"
+    },
+    {
+     "title": "穿越到修仙界做一个法拉第笼是不是可以挡住所有雷劫？",
+     "url": "https://www.zhihu.com/question/2075607895882973368"
+    },
+    {
+     "title": "得了HPV51怎么能好，求解，渡劫中？",
+     "url": "https://www.zhihu.com/question/1906619668925506462"
+    },
+    {
+     "title": "劫是什么？劫是恶果，还是生慧的准备？渡劫，是反抗恶果，还是精进的历练？",
+     "url": "https://www.zhihu.com/question/2090890028721369783"
+    },
+    {
+     "title": "网文仙侠迭代成功，玄幻却未诞生新版本，你认为玄幻的下一个版本是什么？",
+     "url": "https://www.zhihu.com/question/1937403863943603166"
+    }
+   ],
+   "existingSource": "cache",
+   "existingNote": "缓存 · 2026-11-19 13:35 UTC 实测 · 查询词：仙侠 渡劫 雷劫 翻译 英文 · 知乎实时查询未启用",
+   "recommendation": "new_question",
+   "recommendationReason": "已有讨论没有涉及海外读者的理解（规则判断）",
+   "draft": {
+    "title": "海外读者对「九重雷劫」的理解和原意不一致，该怎样向他们解释？",
+    "body": "【海外读者原本的理解】The heavens demand it; if you can't withstand the thunder tribulation, your soul is scattered.\n【和原意的差异】原句要传达的是：试炼是“九重”雷劫\n【希望答主解释】「九重雷劫」在原文语境里是什么意思，以及怎样向没有相关背景的海外读者讲清楚。\n【来源】模拟读者误解（非真实用户）"
+   },
+   "sourceLabel": "模拟读者误解（非真实用户）",
+   "mode": "dev_stub",
+   "provenance": "dev_stub"
+  }
+ },
+ "replayDrafts": {},
+ "replays": 0
+}

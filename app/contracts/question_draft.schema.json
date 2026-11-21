@@ -1,0 +1,133 @@
+{
+  "$defs": {
+    "DraftBody": {
+      "additionalProperties": false,
+      "properties": {
+        "body": {
+          "title": "Body",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        }
+      },
+      "required": [
+        "title",
+        "body"
+      ],
+      "title": "DraftBody",
+      "type": "object"
+    },
+    "ExistingItem": {
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "url": {
+          "title": "Url",
+          "type": "string"
+        }
+      },
+      "required": [
+        "title",
+        "url"
+      ],
+      "title": "ExistingItem",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "draft": {
+      "$ref": "#/$defs/DraftBody"
+    },
+    "draftId": {
+      "title": "Draftid",
+      "type": "string"
+    },
+    "existing": {
+      "items": {
+        "$ref": "#/$defs/ExistingItem"
+      },
+      "title": "Existing",
+      "type": "array"
+    },
+    "existingNote": {
+      "default": "",
+      "title": "Existingnote",
+      "type": "string"
+    },
+    "existingSource": {
+      "enum": [
+        "zhihu_live",
+        "cache",
+        "replay",
+        "none",
+        "failed"
+      ],
+      "title": "Existingsource",
+      "type": "string"
+    },
+    "mode": {
+      "enum": [
+        "live",
+        "replay",
+        "degraded",
+        "dev_stub"
+      ],
+      "title": "Mode",
+      "type": "string"
+    },
+    "provenance": {
+      "enum": [
+        "real_run",
+        "dev_stub"
+      ],
+      "title": "Provenance",
+      "type": "string"
+    },
+    "query": {
+      "title": "Query",
+      "type": "string"
+    },
+    "recommendation": {
+      "enum": [
+        "answer_existing",
+        "new_question"
+      ],
+      "title": "Recommendation",
+      "type": "string"
+    },
+    "recommendationReason": {
+      "default": "",
+      "title": "Recommendationreason",
+      "type": "string"
+    },
+    "sourceLabel": {
+      "enum": [
+        "模拟读者误解（非真实用户）",
+        "用户粘贴",
+        "示例输入",
+        "守门待补材料"
+      ],
+      "title": "Sourcelabel",
+      "type": "string"
+    }
+  },
+  "required": [
+    "draftId",
+    "query",
+    "existing",
+    "existingSource",
+    "recommendation",
+    "draft",
+    "sourceLabel",
+    "mode",
+    "provenance"
+  ],
+  "title": "QuestionDraft",
+  "type": "object"
+}
