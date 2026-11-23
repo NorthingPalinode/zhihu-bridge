@@ -4,6 +4,7 @@ from bridge import contracts as C
 from bridge.adapters.llm import LLMError
 from bridge.adapters.llm_fake import FakeLLM
 from bridge.adapters.prompts import check_user
+from bridge.core.languages import LANGUAGES
 from bridge.pipeline.deps import build_deps
 from bridge.pipeline.questions import DraftError, make_draft
 from bridge.pipeline.runs import InputError, execute_run
@@ -198,8 +199,33 @@ async def test_rewrite_remains_locked_until_final_semantic_check_passes(deps, ca
     assert any(c.rule == "语义检查" and c.action == "review" for c in variant.checks)
 
 
-async def test_edited_case_text_becomes_custom_input(deps):
-    evs = await collect(deps, "此乃天道因果，若扛不过九重雷劫，只能魂飞魄散。", "a_new", "case_a")
+@pytest.mark.parametrize("case_id", ["case_a", "case_b", "case_c"])
+async def test_builtin_bridge_presets_cover_every_language_without_a_model(deps, case_id):
+    deps.llm = None
+    case = deps.fx.cases[case_id]
+    for lang in LANGUAGES:
+        for audience in case.audiences:
+            req = C.RunRequest(text=case.text, caseId=case_id, audienceId=audience.id,
+                               targetLanguage=lang.code, usePreset=True)
+            evs = [e async for e in execute_run(req, deps)]
+            assert [e["type"] for e in evs] == ["started", "terms", "evidence", "ready"]
+            snap = C.RunSnapshot(**evs[-1]["payload"])
+            assert (snap.mode, snap.provenance) == ("preset", "editor_preset")
+            assert snap.targetLanguage == lang.code
+            assert snap.recommendedLevel == audience.recommendedLevel
+            assert len(snap.variants) == (2 if case_id == "case_c" else 6)
+            for variant in snap.variants[1:]:
+                assert variant.exportState == "exportable", (case_id, lang.code, variant.level, variant.checks)
+                assert {tid for s in variant.segments for tid in s.termIds} == {t.id for t in snap.terms}
+
+
+@pytest.mark.parametrize("text,case_id", [
+    ("此乃天道因果，若扛不过九重雷劫，只能魂飞魄散。", "case_a"),
+    ("这款新品适合周末露营。", None),
+])
+async def test_nonpreset_input_keeps_normal_generation(deps, text, case_id):
+    req = C.RunRequest(text=text, audienceId="a_new", caseId=case_id, usePreset=True)
+    evs = [e async for e in execute_run(req, deps)]
     snap = C.RunSnapshot(**evs[-1]["payload"])
     assert snap.caseId is None
     assert snap.evidenceSource == "none" and snap.evidence == []

@@ -1,0 +1,274 @@
+{
+  "case_a": {
+    "text": "此乃天道因果，若扛不过九重雷劫，便只能魂飞魄散。",
+    "rationales": {
+      "T1": "保留天道与行为后果的关联。通俗档把因果说清楚，术语档保留仙侠语感。",
+      "T2": "把雷劫写成必须挺过的考验，保留九重的层次，不解释为九场独立试炼。",
+      "T3": "把后果写成神魂消散，保留失败的严重程度。"
+    },
+    "languages": {
+      "en": [
+        "This is [1:the karmic law of Heaven]; if you cannot withstand [2:the nine-layered thunder tribulation], [3:your soul will fly away and scatter].",
+        "[1:Heaven's law has brought this upon you]. Fail [2:the ninefold trial by lightning], and [3:your soul will be destroyed].",
+        "This is [1:Heaven's reckoning]. If you cannot survive [2:the ninefold lightning trial], [3:your soul will scatter].",
+        "[1:Heaven's law is exacting its due]. If you fail [2:the ninefold Lightning Tribulation], [3:your soul will be destroyed].",
+        "This is [1:the reckoning of the Heavenly Dao]. Fail to withstand [2:the ninefold tribulation of thunder], and [3:your soul will scatter].",
+        "This is [1:the Heavenly Dao's reckoning]. Fail [2:the Ninefold Thunder Tribulation], and [3:your soul will scatter]."
+      ],
+      "ja": [
+        "これは[1:天道の因果]だ。[2:九重の雷劫]に耐えられなければ、[3:魂は飛び散る]しかない。",
+        "これは[1:天の理がもたらした報い]だ。[2:九重に及ぶ雷の試練]に耐えられなければ、[3:魂まで消え失せる]。",
+        "これは[1:天の理による報い]だ。[2:九重の雷の試練]を越えられなければ、[3:魂は跡形もなく消える]。",
+        "これは[1:天道の報い]だ。[2:九重の雷の試練]に耐えられなければ、[3:魂は散り果てる]。",
+        "これが[1:天道の因果]だ。[2:九重の雷劫]という試練を越えられねば、[3:魂は散り果てる]。",
+        "これぞ[1:天道の因果]。[2:九重雷劫]をしのげねば、[3:魂は散って消え去る]のみ。"
+      ],
+      "ko": [
+        "이는 [1:천도의 인과]다. [2:구중의 뇌겁]을 견디지 못하면 [3:혼이 흩어질] 수밖에 없다.",
+        "이건 [1:하늘의 법칙에 따른 대가]다. [2:아홉 겹의 번개 시련]을 버티지 못하면 [3:영혼마저 사라진다].",
+        "[1:하늘의 이치가 내린 대가]다. [2:아홉 겹의 번개 시험]을 견디지 못하면 [3:영혼이 흩어진다].",
+        "이것이 [1:천도의 이치가 내리는 대가]다. [2:아홉 겹의 번개 시련]을 넘지 못하면 [3:영혼이 소멸한다].",
+        "이것이 [1:천도의 인과]다. [2:아홉 겹의 뇌겁]을 버티지 못하면 [3:영혼은 흩어지고 만다].",
+        "이것이 [1:천도의 인과]다. [2:구중뇌겁]을 견뎌 내지 못하면 [3:혼백이 흩어지고 만다]."
+      ],
+      "es": [
+        "Este es [1:el karma del orden celestial]. Si no resistes [2:la tribulación del trueno de nueve capas], [3:tu alma se dispersará].",
+        "[1:La ley del cielo te ha traído esta consecuencia]. Si no superas [2:la prueba de los rayos de nueve niveles], [3:tu alma quedará destruida].",
+        "Así cobra su deuda [1:el cielo]. Si no resistes [2:la prueba del relámpago de nueve niveles], [3:tu alma se desvanecerá].",
+        "Es [1:la consecuencia que dicta el orden celestial]. Si fallas en [2:la tribulación de rayos de nueve niveles], [3:tu alma se dispersará].",
+        "Así se cumple [1:el karma celestial]. Si no resistes [2:la tribulación de los nueve estratos del trueno], [3:tu alma se disipará].",
+        "Tal es [1:el karma del Dao Celestial]. Si sucumbes a [2:la Tribulación del Trueno de Nueve Estratos], [3:tu alma se dispersará]."
+      ],
+      "pt": [
+        "Este é [1:o carma da ordem celestial]. Se não resistir à [2:tribulação do trovão de nove camadas], [3:sua alma se dispersará].",
+        "É [1:a consequência que a lei do céu impõe]. Se você não suportar [2:a prova dos raios de nove níveis], [3:sua alma será destruída].",
+        "Assim o [1:céu cobra o que lhe é devido]. Se você falhar na [2:prova de relâmpagos de nove níveis], [3:sua alma se desfará].",
+        "É [1:o preço que a ordem celestial cobra]. Se não resistir à [2:tribulação de raios de nove níveis], [3:sua alma se dispersará].",
+        "Assim se cumpre [1:o carma celestial]. Se você sucumbir à [2:tribulação do trovão de nove camadas], [3:sua alma deixará de existir].",
+        "Esse é [1:o carma do Dao Celestial]. Se não resistir à [2:Tribulação do Trovão de Nove Camadas], [3:sua alma se dispersará]."
+      ],
+      "id": [
+        "Inilah [1:sebab-akibat Tatanan Langit]. Jika tak sanggup menahan [2:kesengsaraan guntur sembilan lapis], [3:jiwamu akan berpencar].",
+        "Inilah [1:akibat yang ditetapkan hukum langit]. Jika kau tak sanggup melewati [2:ujian petir sembilan tingkat], [3:jiwamu akan musnah].",
+        "Begitulah [1:langit menagih akibatnya]. Jika kau gagal menghadapi [2:ujian kilat sembilan lapis], [3:jiwamu akan tercerai-berai].",
+        "Ini [1:ganjaran menurut tatanan langit]. Jika kau tak tahan menghadapi [2:ujian guntur sembilan lapis], [3:jiwamu akan lenyap].",
+        "Inilah [1:karma Tatanan Langit]. Jika kau gagal menahan [2:cobaan guntur sembilan lapis], [3:jiwamu akan tercerai-berai].",
+        "Inilah [1:karma Dao Langit]. Jika kau tumbang dalam [2:Tribulasi Guntur Sembilan Lapis], [3:jiwamu akan buyar]."
+      ],
+      "th": [
+        "นี่คือ[1:เหตุและผลแห่งกฎสวรรค์] หากทน[2:เคราะห์สายฟ้าเก้าชั้น]ไม่ไหว [3:วิญญาณก็จะแตกสลาย]",
+        "นี่คือ[1:ผลที่กฎแห่งฟ้ากำหนด] หากเจ้าผ่าน[2:บททดสอบสายฟ้าเก้าชั้น]ไม่ได้ [3:วิญญาณของเจ้าจะสลายไป]",
+        "นี่คือ[1:ผลที่ฟ้ากำหนดให้เจ้าต้องรับ] หากเจ้าทน[2:ด่านทดสอบสายฟ้าเก้าชั้น]ไม่ไหว [3:วิญญาณเจ้าจะแตกสลาย]",
+        "นี่คือ[1:ผลกรรมตามวิถีฟ้า] หากเจ้าฝ่า[2:ด่านสายฟ้าเก้าชั้น]ไม่พ้น [3:วิญญาณของเจ้าจะสลาย]",
+        "นี่คือ[1:ผลกรรมแห่งกฎสวรรค์] หากเจ้าต้าน[2:ทัณฑ์สายฟ้าเก้าชั้น]ไม่ไหว [3:ดวงวิญญาณเจ้าจะแตกสลาย]",
+        "นี่คือ[1:ผลกรรมแห่งวิถีสวรรค์] หากเจ้าฝ่า[2:เคราะห์อัสนีเก้าชั้น]ไม่พ้น [3:จิตวิญญาณเจ้าจักแตกดับ]"
+      ],
+      "vi": [
+        "Đây là [1:nhân quả của thiên đạo]. Nếu không chống nổi [2:lôi kiếp chín tầng], [3:hồn phách sẽ tan tác].",
+        "Đó là [1:hệ quả do luật trời định]. Không vượt qua được [2:thử thách sấm sét chín tầng], [3:linh hồn ngươi sẽ tan biến].",
+        "Ấy là [1:cái giá theo lẽ trời]. Nếu không trụ nổi trước [2:thử thách sét chín tầng], [3:linh hồn ngươi sẽ tiêu tan].",
+        "Đây là [1:nhân quả theo lẽ trời]. Nếu không vượt nổi [2:kiếp nạn sấm sét chín tầng], [3:hồn phách ngươi sẽ tan biến].",
+        "Đây là [1:nhân quả của thiên đạo]. Nếu không vượt nổi [2:lôi kiếp chín tầng], [3:hồn phách ngươi sẽ tiêu tán].",
+        "Đó là [1:nhân quả thiên đạo]. Không gắng gượng nổi trước [2:cửu trọng lôi kiếp], ngươi ắt [3:hồn phi phách tán]."
+      ],
+      "de": [
+        "Das ist [1:die karmische Ordnung des Himmels]. Hältst du [2:der neunschichtigen Donnerprüfung] nicht stand, [3:zerstreut sich deine Seele].",
+        "Das ist [1:die Folge, die das Gesetz des Himmels bestimmt]. Bestehst du [2:die neunfache Blitzprüfung] nicht, [3:wird deine Seele ausgelöscht].",
+        "So fordert [1:der Himmel seinen Preis]. Hältst du [2:der neunfachen Prüfung durch Blitze] nicht stand, [3:vergeht deine Seele].",
+        "Das ist [1:die Vergeltung nach dem Gesetz des Himmels]. Scheiterst du an [2:der neunfachen Donnerprüfung], [3:zerfällt deine Seele].",
+        "So erfüllt sich [1:das Karma der himmlischen Ordnung]. Wenn du [2:der neunfachen Donnerprobe] nicht standhältst, [3:zerstreut sich deine Seele].",
+        "Das ist [1:die Vergeltung des himmlischen Dao]. Unterliegst du [2:der Neunfachen Donnerprüfung], [3:zerstreut sich deine Seele]."
+      ],
+      "fr": [
+        "Tel est [1:le karma de l’ordre céleste]. Si tu ne résistes pas à [2:la tribulation du tonnerre à neuf strates], [3:ton âme se dispersera].",
+        "C’est [1:la conséquence qu’impose la loi du ciel]. Si tu ne surmontes pas [2:l’épreuve de la foudre à neuf degrés], [3:ton âme sera détruite].",
+        "Ainsi [1:le ciel te fait payer le prix]. Si tu échoues à [2:l’épreuve des éclairs à neuf niveaux], [3:ton âme se dissipera].",
+        "C’est [1:la conséquence dictée par l’ordre céleste]. Si tu ne survis pas à [2:l’épreuve du tonnerre à neuf degrés], [3:ton âme se dispersera].",
+        "Ainsi s’accomplit [1:le karma céleste]. Si tu succombes à [2:la tribulation de la foudre à neuf strates], [3:ton âme sera anéantie].",
+        "Tel est [1:le karma du Dao céleste]. Si tu ne surmontes pas [2:la Tribulation du Tonnerre à Neuf Strates], [3:ton âme se dispersera]."
+      ],
+      "ar": [
+        "هذه [1:عاقبة ناموس السماء]. إن لم تصمد أمام [2:بلاء الرعد ذي الطبقات التسع]، [3:تتبدد روحك].",
+        "هذا [1:ما يترتب عليك بحكم قانون السماء]. إن لم تجتز [2:اختبار الصواعق ذا المراتب التسع]، [3:فستفنى روحك].",
+        "هكذا [1:تقتضي السماء ثمن الفعل]. إن لم تصمد أمام [2:اختبار البرق ذي المراتب التسع]، [3:تتلاشى روحك].",
+        "هذه [1:عاقبة يفرضها النظام السماوي]. إن أخفقت في [2:محنة الصواعق ذات المراتب التسع]، [3:تتبدد روحك].",
+        "هكذا يتحقق [1:الجزاء السماوي]. إن لم تتحمل [2:محنة الرعد ذات الطبقات التسع]، [3:تفنى روحك].",
+        "هذا [1:جزاء الداو السماوي]. إن لم تصمد أمام [2:محنة الرعد ذات الطبقات التسع]، [3:تتبدد روحك]."
+      ],
+      "ru": [
+        "Такова [1:карма небесного порядка]. Если не выдержишь [2:девятислойного бедствия грома], [3:твоя душа рассеется].",
+        "Таков [1:итог, предписанный законом небес]. Не выдержишь [2:девятикратного испытания молниями] — [3:душа будет уничтожена].",
+        "Так [1:небеса взыскивают должное]. Если не выстоишь под [2:девятью ступенями испытания молнией], [3:твоя душа рассеется].",
+        "Такова [1:расплата по небесному закону]. Если не выдержишь [2:девятиступенчатого испытания громом], [3:душа исчезнет].",
+        "Это [1:воздаяние небесного порядка]. Не выстоишь перед [2:девятислойным грозовым испытанием] — [3:твоя душа развеется].",
+        "Такова [1:карма Небесного Дао]. Если не пройдёшь [2:Девятислойное Испытание Грома], [3:твоя душа рассеется]."
+      ]
+    }
+  },
+  "case_b": {
+    "text": "自研高密度堆料主板，极限压榨功耗，支持底层协议调试。",
+    "rationales": {
+      "T1": "用元件布局和用料说明堆料，保留自主研发和高密度设计，不增加器件规格。",
+      "T2": "把声称限定在功耗优化。具体数值和续航需要实测数据。",
+      "T3": "明确支持底层协议调试，不扩展为开源或无限制改装。"
+    },
+    "languages": {
+      "en": [
+        "An in-house high-density motherboard with [1:stacked components], [2:squeezing power consumption to the limit], with [3:low-level protocol debugging].",
+        "We designed this high-density motherboard in-house and chose its [1:components carefully]. It's [2:optimized for power efficiency] and supports [3:debugging low-level protocols].",
+        "Our in-house high-density motherboard uses a carefully selected [1:component layout], is [2:tuned for efficient power use], and features [3:low-level protocol debugging].",
+        "This in-house high-density motherboard has a [1:dense component layout], [2:power consumption optimization], and support for [3:low-level protocol debugging].",
+        "The high-density motherboard is engineered in-house with a [1:compact component layout] and [2:power-optimized design], with support for [3:low-level protocol debugging].",
+        "An in-house high-density motherboard with [1:dense component placement], [2:power efficiency tuning], and [3:low-level protocol debug support]."
+      ],
+      "ja": [
+        "自社開発の高密度マザーボードに[1:部品を詰め込み]、[2:消費電力を極限まで絞り]、[3:低レベルプロトコルのデバッグ]に対応。",
+        "自社開発の高密度マザーボードに[1:厳選した部品を配置]。[2:消費電力を抑える設計]で、[3:機器の低レベル通信を調べるデバッグ]にも対応します。",
+        "自社で開発した高密度マザーボードに[1:吟味した部品を実装]し、[2:消費電力を抑えるよう調整]。[3:低レベルの通信プロトコルのデバッグ]が可能です。",
+        "自社開発の高密度マザーボードには[1:入念に選んだ部品を実装]。[2:消費電力を最適化]し、[3:低レベルプロトコルのデバッグ]に対応します。",
+        "[1:部品を高密度実装した]自社開発のマザーボードは、[2:電力効率を最適化]し、[3:低レベルプロトコルのデバッグ]をサポートします。",
+        "自社開発の高密度マザーボード。[1:選定した部品の高密度実装]、[2:消費電力の最適化]、[3:低レベルプロトコルデバッグ]に対応。"
+      ],
+      "ko": [
+        "자체 개발한 고밀도 메인보드에 [1:부품을 빽빽하게 넣고] [2:전력 소모를 극한까지 줄였으며] [3:저수준 프로토콜 디버깅]을 지원합니다.",
+        "직접 개발한 고밀도 메인보드에 [1:신중하게 고른 부품을 배치했습니다]. [2:전력을 효율적으로 쓰도록 설계했고] [3:저수준 통신 규약의 문제를 찾는 디버깅]을 지원합니다.",
+        "자체 개발 고밀도 메인보드에 [1:엄선한 부품을 배치]하고 [2:소비 전력을 줄이도록 설계]했습니다. [3:저수준 프로토콜의 디버깅]도 지원합니다.",
+        "자체 개발한 고밀도 메인보드는 [1:부품을 촘촘히 배치]하고 [2:소비 전력을 최적화]했으며 [3:저수준 프로토콜 디버깅]을 지원합니다.",
+        "자체 설계한 고밀도 메인보드로 [1:부품 집적도를 높이고] [2:전력 효율을 최적화]했으며 [3:저수준 프로토콜 디버깅]을 지원합니다.",
+        "자체 개발 고밀도 메인보드. [1:고밀도 부품 실장], [2:소비 전력 최적화], [3:저수준 프로토콜 디버깅] 지원."
+      ],
+      "es": [
+        "Placa base propia de alta densidad con [1:componentes apilados], [2:consumo de energía exprimido al límite] y [3:depuración de protocolos de bajo nivel].",
+        "Diseñamos esta placa base de alta densidad con [1:componentes cuidadosamente elegidos]. Está [2:optimizada para usar la energía con eficiencia] y permite [3:detectar fallos en protocolos de bajo nivel].",
+        "Placa base de alta densidad de diseño propio, con [1:componentes seleccionados con cuidado], [2:consumo de energía optimizado] y [3:depuración de protocolos de bajo nivel].",
+        "Nuestra placa base de diseño propio combina [1:una disposición de componentes de alta densidad], [2:optimización del consumo energético] y compatibilidad con [3:la depuración de protocolos de bajo nivel].",
+        "Placa base de alta densidad desarrollada internamente con [1:un montaje compacto de componentes], [2:gestión optimizada del consumo eléctrico] y soporte para [3:la depuración de protocolos de bajo nivel].",
+        "Placa base de desarrollo interno con [1:montaje de componentes de alta densidad], [2:ajuste de eficiencia energética] y [3:soporte de depuración de protocolos de bajo nivel]."
+      ],
+      "pt": [
+        "Placa-mãe própria de alta densidade, com [1:componentes empilhados], [2:consumo de energia levado ao limite] e [3:depuração de protocolos de baixo nível].",
+        "Projetamos esta placa-mãe de alta densidade com [1:componentes escolhidos com cuidado]. Ela foi [2:projetada para usar energia com eficiência] e permite [3:investigar falhas em protocolos de baixo nível].",
+        "Placa-mãe de alta densidade desenvolvida internamente, com [1:componentes selecionados], [2:projeto voltado à eficiência energética] e [3:depuração de protocolos de baixo nível].",
+        "Nossa placa-mãe de desenvolvimento próprio combina [1:uma disposição de componentes de alta densidade], [2:consumo de energia otimizado] e suporte à [3:depuração de protocolos de baixo nível].",
+        "Placa-mãe de alta densidade com desenvolvimento interno, [1:montagem compacta de componentes], [2:ajuste de consumo energético] e suporte à [3:depuração de protocolos de baixo nível].",
+        "Placa-mãe de desenvolvimento interno com [1:montagem de componentes de alta densidade], [2:otimização do consumo de energia] e [3:suporte à depuração de protocolos de baixo nível]."
+      ],
+      "id": [
+        "Papan induk berdensitas tinggi yang dikembangkan sendiri, dengan [1:komponen bertumpuk], [2:konsumsi daya ditekan hingga batasnya], dan [3:debugging protokol tingkat rendah].",
+        "Kami merancang papan induk berdensitas tinggi ini dengan [1:komponen yang dipilih dengan cermat]. Desainnya [2:dioptimalkan agar hemat daya] dan mendukung [3:pelacakan masalah pada protokol tingkat rendah].",
+        "Papan induk berdensitas tinggi rancangan sendiri, dengan [1:komponen pilihan], [2:desain hemat daya], dan [3:debugging protokol tingkat rendah].",
+        "Papan induk yang kami kembangkan menyediakan [1:tata letak komponen berdensitas tinggi], [2:konsumsi daya yang dioptimalkan], dan dukungan [3:debugging protokol tingkat rendah].",
+        "Papan induk rancangan internal ini memakai [1:penempatan komponen berdensitas tinggi] dengan [2:optimalisasi efisiensi daya] dan dukungan [3:debugging protokol tingkat rendah].",
+        "Papan induk rancangan internal, dengan [1:perakitan komponen berdensitas tinggi], [2:optimalisasi konsumsi daya], dan [3:dukungan debug protokol tingkat rendah]."
+      ],
+      "th": [
+        "เมนบอร์ดความหนาแน่นสูงที่พัฒนาเอง [1:อัดชิ้นส่วนแน่น] [2:บีบการใช้พลังงานถึงขีดสุด] และรองรับ[3:การดีบักโปรโตคอลระดับล่าง]",
+        "เมนบอร์ดความหนาแน่นสูงที่เราออกแบบเอง ใช้[1:ชิ้นส่วนที่คัดเลือกอย่างพิถีพิถัน] [2:ออกแบบให้ใช้พลังงานอย่างมีประสิทธิภาพ] และรองรับ[3:การตรวจหาข้อผิดพลาดของโปรโตคอลระดับล่าง]",
+        "เมนบอร์ดความหนาแน่นสูงที่พัฒนาเอง ใช้[1:ชิ้นส่วนที่ผ่านการคัดเลือก] [2:ปรับให้ใช้พลังงานอย่างคุ้มค่า] และรองรับ[3:การดีบักโปรโตคอลระดับล่าง]",
+        "เมนบอร์ดที่พัฒนาเอง พร้อม[1:การจัดวางชิ้นส่วนความหนาแน่นสูง] [2:การปรับการใช้พลังงานให้เหมาะสม] และ[3:การดีบักโปรโตคอลระดับล่าง]",
+        "เมนบอร์ดพัฒนาภายในพร้อม[1:การติดตั้งชิ้นส่วนแบบความหนาแน่นสูง] [2:การปรับประสิทธิภาพด้านพลังงาน] และรองรับ[3:การดีบักโปรโตคอลระดับล่าง]",
+        "เมนบอร์ดออกแบบภายใน ใช้[1:การจัดวางคอมโพเนนต์ความหนาแน่นสูง] พร้อม[2:การปรับแต่งการใช้พลังงาน] และ[3:รองรับการดีบักโปรโตคอลระดับล่าง]"
+      ],
+      "vi": [
+        "Bo mạch chủ mật độ cao tự phát triển với [1:linh kiện nhồi dày], [2:ép mức tiêu thụ điện đến giới hạn] và hỗ trợ [3:gỡ lỗi giao thức cấp thấp].",
+        "Bo mạch chủ mật độ cao do chúng tôi phát triển có [1:linh kiện được lựa chọn kỹ], [2:thiết kế để sử dụng điện hiệu quả] và hỗ trợ [3:tìm lỗi trong giao thức cấp thấp].",
+        "Bo mạch chủ mật độ cao tự phát triển với [1:linh kiện tuyển chọn], [2:mức tiêu thụ điện được tối ưu] và hỗ trợ [3:gỡ lỗi giao thức cấp thấp].",
+        "Bo mạch chủ do chúng tôi phát triển, với [1:bố trí linh kiện mật độ cao], [2:tối ưu mức tiêu thụ điện] và hỗ trợ [3:gỡ lỗi giao thức cấp thấp].",
+        "Bo mạch chủ thiết kế nội bộ với [1:linh kiện được bố trí mật độ cao], [2:tối ưu hiệu suất sử dụng điện] và [3:hỗ trợ gỡ lỗi giao thức cấp thấp].",
+        "Bo mạch chủ tự phát triển với [1:lắp ráp linh kiện mật độ cao], [2:tinh chỉnh mức tiêu thụ điện] và [3:hỗ trợ debug giao thức cấp thấp]."
+      ],
+      "de": [
+        "Eigenentwickeltes Mainboard hoher Dichte mit [1:gestapelten Bauteilen], [2:bis ans Limit gedrücktem Stromverbrauch] und [3:Debugging für Low-Level-Protokolle].",
+        "Für unser selbst entwickeltes Mainboard mit hoher Packungsdichte wählen wir [1:die Bauteile sorgfältig aus]. Es ist [2:auf sparsamen Stromverbrauch ausgelegt] und hilft bei [3:der Fehlersuche in systemnahen Protokollen].",
+        "Unser eigenentwickeltes Mainboard mit hoher Packungsdichte bietet [1:sorgfältig ausgewählte Bauteile], [2:optimierten Stromverbrauch] und [3:Debugging für systemnahe Protokolle].",
+        "Eigenentwickeltes Mainboard mit [1:dichter Bauteilanordnung], [2:optimierter Leistungsaufnahme] und [3:Debugging für Low-Level-Protokolle].",
+        "Intern entwickeltes Mainboard mit [1:hoher Bauteildichte], [2:auf Energieeffizienz abgestimmter Leistungsaufnahme] und Unterstützung für [3:Low-Level-Protokoll-Debugging].",
+        "Eigenentwickeltes Mainboard mit [1:Bauteilbestückung hoher Dichte], [2:Optimierung der Leistungsaufnahme] und [3:Low-Level-Protokoll-Debugging]."
+      ],
+      "fr": [
+        "Carte mère haute densité développée en interne, à [1:composants entassés], [2:consommation électrique comprimée au maximum] et [3:débogage de protocoles bas niveau].",
+        "Nous avons conçu cette carte mère haute densité avec [1:des composants choisis avec soin]. Elle est [2:conçue pour consommer l’énergie efficacement] et permet [3:de rechercher des erreurs dans les protocoles de bas niveau].",
+        "Carte mère haute densité conçue en interne, avec [1:des composants sélectionnés], [2:une consommation électrique optimisée] et [3:le débogage de protocoles de bas niveau].",
+        "Notre carte mère de conception interne associe [1:une implantation dense des composants], [2:une gestion optimisée de la consommation électrique] et [3:la prise en charge du débogage de protocoles de bas niveau].",
+        "Carte mère développée en interne avec [1:implantation de composants à haute densité], [2:optimisation de la puissance consommée] et prise en charge du [3:débogage de protocoles bas niveau].",
+        "Carte mère de développement interne, [1:montage haute densité des composants], [2:réglage de la consommation électrique] et [3:prise en charge du débogage de protocoles bas niveau]."
+      ],
+      "ar": [
+        "لوحة أم عالية الكثافة مطوّرة داخليًا مع [1:تكديس المكوّنات] و[2:خفض استهلاك الطاقة إلى أقصى حد] ودعم [3:تنقيح البروتوكولات منخفضة المستوى].",
+        "صممنا هذه اللوحة الأم عالية الكثافة مع [1:اختيار المكوّنات بعناية]. وهي [2:مصممة لاستخدام الطاقة بكفاءة] وتدعم [3:اكتشاف أخطاء البروتوكولات منخفضة المستوى].",
+        "لوحة أم عالية الكثافة من تطويرنا، مع [1:مكوّنات منتقاة] و[2:استهلاك طاقة محسّن] ودعم [3:تصحيح أخطاء البروتوكولات منخفضة المستوى].",
+        "لوحة أم مطوّرة داخليًا تجمع بين [1:توزيع عالي الكثافة للمكوّنات] و[2:تحسين استهلاك الطاقة] ودعم [3:تنقيح البروتوكولات منخفضة المستوى].",
+        "لوحة أم من تصميمنا الداخلي، مع [1:تركيب عالي الكثافة للمكوّنات] و[2:ضبط استهلاك الطاقة لتحسين الكفاءة] ودعم [3:تنقيح البروتوكولات منخفضة المستوى].",
+        "لوحة أم مطوّرة داخليًا بفضل [1:ترصيف المكوّنات عالي الكثافة]، مع [2:ضبط كفاءة استهلاك الطاقة] و[3:دعم تنقيح البروتوكولات منخفضة المستوى]."
+      ],
+      "ru": [
+        "Материнская плата высокой плотности собственной разработки с [1:плотно набранными компонентами], [2:предельно ужатым энергопотреблением] и поддержкой [3:отладки низкоуровневых протоколов].",
+        "Мы разработали эту материнскую плату высокой плотности и [1:тщательно подобрали компоненты]. Она [2:рассчитана на эффективное использование энергии] и позволяет [3:искать ошибки в низкоуровневых протоколах].",
+        "Материнская плата высокой плотности собственной разработки с [1:подобранными компонентами], [2:оптимизированным энергопотреблением] и [3:отладкой низкоуровневых протоколов].",
+        "Наша материнская плата сочетает [1:плотную компоновку компонентов], [2:оптимизацию энергопотребления] и поддержку [3:отладки низкоуровневых протоколов].",
+        "Материнская плата собственной разработки с [1:компоновкой компонентов высокой плотности], [2:настройкой потребления для повышения энергоэффективности] и поддержкой [3:отладки низкоуровневых протоколов].",
+        "Материнская плата собственной разработки с [1:высокой плотностью монтажа компонентов], [2:оптимизацией потребляемой мощности] и [3:поддержкой отладки низкоуровневых протоколов]."
+      ]
+    }
+  },
+  "case_c": {
+    "text": "回南天祛湿茶，清热解毒，拯救熬夜上火。",
+    "rationales": {
+      "C1": "把回南天写成潮湿天气，让不熟悉华南气候的读者直接理解使用场景。",
+      "C2": "把祛湿转成清爽口感，避免承诺排湿功效。",
+      "C3": "用饮用感受承接广告语气，避免解毒或医疗功效声称。",
+      "C4": "保留熬夜这一生活场景。",
+      "C5": "用放松的日常体验承接上火语境，避免暗示能治疗症状。"
+    },
+    "languages": {
+      "en": [
+        "A [2:dampness-removing] tea for [1:Huinantian] that [3:clears heat and detoxifies] and saves you from [5:internal heat] after [4:staying up late].",
+        "A [2:light, refreshing] herbal tea for [1:humid days]. Enjoy its [3:fresh herbal taste] as you [5:unwind] after [4:a late night]."
+      ],
+      "ja": [
+        "[1:回南天]の[2:湿気を取り除く]お茶。[3:熱を冷まし毒を取り除き]、[4:夜更かし]による[5:体の熱]を救う。",
+        "[1:蒸し暑い日]にも[2:すっきり飲める]ハーブティー。[4:夜更かし]のあと、[3:爽やかなハーブの風味]で[5:ほっとひと息]。"
+      ],
+      "ko": [
+        "[1:후이난톈]에 마시는 [2:습기를 없애는] 차. [3:열을 식히고 해독해] [4:밤을 새운] 뒤의 [5:몸속 열기]를 없애 줍니다.",
+        "[1:습한 날]에도 [2:가볍고 상쾌하게] 즐기는 허브차. [4:늦게까지 깨어 있었던 날]에는 [3:산뜻한 허브 풍미]로 [5:잠시 한숨 돌려 보세요]."
+      ],
+      "es": [
+        "Té para [2:eliminar la humedad] en [1:la temporada de Huinantian], que [3:elimina el calor y desintoxica] y te salva del [5:calor interno] al [4:trasnochar].",
+        "Una infusión de hierbas [2:ligera y refrescante] para [1:los días húmedos]. Disfruta de [3:su sabor fresco a hierbas] en [5:una pausa tranquila] después de [4:trasnochar]."
+      ],
+      "pt": [
+        "Chá para [2:eliminar a umidade] na [1:época de Huinantian], que [3:elimina o calor e desintoxica] e alivia o [5:calor interno] de [4:ficar acordado até tarde].",
+        "Um chá de ervas [2:leve e refrescante] para [1:os dias úmidos]. Desfrute do [3:sabor fresco das ervas] em [5:uma pausa tranquila] depois de [4:ficar acordado até tarde]."
+      ],
+      "id": [
+        "Teh [2:pengusir kelembapan] untuk [1:musim Huinantian], [3:membuang panas dan racun] serta meredakan [5:panas dalam] setelah [4:begadang].",
+        "Teh herbal yang [2:ringan dan menyegarkan] untuk [1:hari yang lembap]. Nikmati [3:rasa herba yang segar] saat [5:bersantai] setelah [4:begadang]."
+      ],
+      "th": [
+        "ชาสำหรับ[2:ขจัดความชื้น]ใน[1:ช่วงหุยหนานเทียน] [3:ดับร้อนและขับพิษ] ช่วยแก้[5:ภาวะร้อนใน]หลัง[4:นอนดึก]",
+        "ชาสมุนไพร[2:รสเบาและสดชื่น]สำหรับ[1:วันที่อากาศชื้น] ลิ้มรส[3:ความสดชื่นของสมุนไพร]ใน[5:ช่วงพักผ่อน]หลัง[4:นอนดึก]"
+      ],
+      "vi": [
+        "Trà [2:trừ ẩm] mùa [1:nồm Huinantian], [3:thanh nhiệt giải độc], cứu bạn khỏi [5:nóng trong] do [4:thức khuya].",
+        "Trà thảo mộc [2:nhẹ và thanh mát] cho [1:những ngày oi ẩm]. Hãy thưởng thức [3:vị thảo mộc tươi mát] khi [5:thư giãn] sau [4:một đêm thức khuya]."
+      ],
+      "de": [
+        "Tee zum [2:Vertreiben der Feuchtigkeit] während [1:der Huinantian-Zeit], der [3:Hitze vertreibt und entgiftet] und gegen [5:innere Hitze] durch [4:langes Wachbleiben] hilft.",
+        "Ein [2:leichter, erfrischender] Kräutertee für [1:schwüle Tage]. Genieße [3:seinen frischen Kräutergeschmack] bei [5:einer ruhigen Pause] nach [4:einer langen Nacht]."
+      ],
+      "fr": [
+        "Tisane pour [2:chasser l’humidité] pendant [1:la saison du Huinantian], qui [3:chasse la chaleur et détoxifie] après la [5:chaleur interne] due aux [4:veilles tardives].",
+        "Une tisane [2:légère et rafraîchissante] pour [1:les journées humides]. Savourez [3:sa fraîcheur végétale] le temps d’[5:une pause] après [4:une soirée prolongée]."
+      ],
+      "ar": [
+        "شاي [2:لطرد الرطوبة] في [1:موسم هوينانتيان]، [3:يبدد الحرارة ويزيل السموم] وينقذك من [5:الحرارة الداخلية] الناتجة عن [4:السهر].",
+        "شاي أعشاب [2:خفيف ومنعش] يناسب [1:الأيام الرطبة]. تذوّق [3:نكهته العشبية المنعشة] في [5:لحظة هدوء] بعد [4:ليلة سهرت فيها طويلًا]."
+      ],
+      "ru": [
+        "Чай для [2:устранения сырости] в [1:сезон хуйнаньтянь], который [3:снимает жар и выводит токсины] и спасает от [5:внутреннего жара] после [4:поздних посиделок].",
+        "[2:Лёгкий освежающий] травяной чай для [1:влажных дней]. Насладитесь [3:свежим травяным вкусом] во время [5:спокойного отдыха] после [4:поздней ночи]."
+      ]
+    }
+  }
+}

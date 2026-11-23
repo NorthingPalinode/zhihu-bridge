@@ -93,6 +93,8 @@ class FixtureStore:
         self.lexicon: dict = _load_json(root / "guard" / "claims_lexicon.json")
         rules_path = root / "guard" / "compliance_rules.json"
         self.compliance_rules: list[dict] = _load_json(rules_path).get("rules", []) if rules_path.exists() else []
+        preset_path = root / "bridge_presets.json"
+        self.bridge_presets: dict = _load_json(preset_path) if preset_path.exists() else {}
         stubs = root / "dev_stubs"
         self.gen_stub: dict = _load_json(stubs / "generation.json") if (stubs / "generation.json").exists() else {}
         self.retell_stub: dict = _load_json(stubs / "retellings.json") if (stubs / "retellings.json").exists() else {}

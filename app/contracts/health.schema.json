@@ -6,7 +6,8 @@
         "live",
         "replay",
         "degraded",
-        "dev_stub"
+        "dev_stub",
+        "preset"
       ],
       "title": "Generationmode",
       "type": "string"

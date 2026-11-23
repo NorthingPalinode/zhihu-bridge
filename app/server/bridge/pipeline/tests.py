@@ -126,7 +126,7 @@ async def run_test(run_id: str, req: TestRequest, deps: Deps) -> TestResult:
         testId="t_" + uuid.uuid4().hex[:10], runId=run_id, revision=snap.revision, level=req.level,
         keyPointIds=req.keyPointIds, expected=len(jobs), completed=len(ok_texts), readers=readers,
         summary=TestSummary(literal=tally("literal"), selected=tally("selected")),
-        mode=snap.mode if snap.mode != "replay" else "replay", provenance=snap.provenance,
+        mode=deps.generation_mode, provenance=deps.llm.provenance,
         judgeError=judge_error,
     )
     deps.tests.put(result.testId, result)

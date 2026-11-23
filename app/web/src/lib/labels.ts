@@ -36,6 +36,7 @@ export function levelHelpFor(level: Level, lang: TargetLanguageMeta): string {
 export const MODE_LABEL: Record<Mode, string> = {
   live: "实时生成",
   replay: "缓存回放",
+  preset: "预设缓存",
   degraded: "已降级",
   dev_stub: "开发占位 · 非真实运行",
 };

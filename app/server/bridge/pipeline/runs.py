@@ -24,6 +24,7 @@ from ..core.strategy import requested_levels
 from ..core.text import build_segments, text_digest, variant_text
 from ..fixtures import Audience
 from .deps import Deps, RunRecord
+from .presets import bridge_preset
 
 MAX_CHARS = 400
 EVIDENCE_SUMMARY_CHARS = 120
@@ -77,7 +78,8 @@ async def execute_run(req: RunRequest, deps: Deps) -> AsyncIterator[dict]:
         return {"runId": run_id, "seq": next(seq), "type": type_, "payload": payload}
 
     s = deps.settings
-    mode = deps.generation_mode
+    preset = bridge_preset(req, case, aud, lang.code, text, deps.fx.bridge_presets)
+    mode = "preset" if preset else deps.generation_mode
     key = run_key(text, aud.id, s.prompt_version, deps.fx.corpus_version, lang.code)
     log_event("run.started", runId=run_id, caseId=case.caseId if case else None, audienceId=aud.id, targetLanguage=lang.code, mode=mode, **text_fingerprint(text))
     yield ev("started", {"audienceId": aud.id, "audienceLabel": aud.label, "caseId": case.caseId if case else None,
@@ -149,7 +151,7 @@ async def execute_run(req: RunRequest, deps: Deps) -> AsyncIterator[dict]:
 
     # ---- generate ----
     base_levels = case.levels if case else (["single"] if aud.recommendedLevel == "single" else ["plain", "genre"])
-    levels = requested_levels(base_levels, mode == "live")
+    levels = requested_levels(base_levels, mode in ("live", "preset"))
     ctx = GenerateContext(
         text=text, case_id=case.caseId if case else None, audience_id=aud.id, audience_label=aud.label,
         audience_constraint=aud.constraint, recommended_level=aud.recommendedLevel, levels=levels,
@@ -160,9 +162,12 @@ async def execute_run(req: RunRequest, deps: Deps) -> AsyncIterator[dict]:
         target_language=lang.code,
     )
     try:
-        if deps.llm is None:
+        if preset:
+            gen = _parse_generation(preset, ctx)
+        elif deps.llm is None:
             raise LLMError("not_configured")
-        gen = await _generate_validated(ctx, deps)
+        else:
+            gen = await _generate_validated(ctx, deps)
     except (LLMError, ReferenceError_, ValidationError, KeyError, TypeError) as exc:
         reason = _failure_reason(exc)
         log_event("run.generate_failed", runId=run_id, reason=reason, errorType=exc.__class__.__name__, detail=_error_detail(exc))
@@ -178,7 +183,10 @@ async def execute_run(req: RunRequest, deps: Deps) -> AsyncIterator[dict]:
         return
 
     # ---- check ----
-    variants = await _check_variants(ctx, gen["variants"], gen["decisions"], case, deps, notices)
+    if preset:
+        variants = [_check_preset_variant(ctx, v, gen["decisions"], case, deps) for v in gen["variants"]]
+    else:
+        variants = await _check_variants(ctx, gen["variants"], gen["decisions"], case, deps, notices)
     if not case:
         if not evidence:
             notices.append("知乎证据不足：输出为仅基于原文的保守稿")
@@ -188,10 +196,12 @@ async def execute_run(req: RunRequest, deps: Deps) -> AsyncIterator[dict]:
     snapshot = RunSnapshot(
         runId=run_id, revision=1, caseId=case.caseId if case else None, audienceId=aud.id,
         targetLanguage=lang.code,
-        mode=mode, provenance=deps.llm.provenance, degradedReason=None, evidenceSource=ev_source,
+        mode=mode, provenance="editor_preset" if preset else deps.llm.provenance,
+        degradedReason=None, evidenceSource=ev_source,
         sourceSegments=build_segments(text, terms), terms=terms, keyPoints=key_points, evidence=evidence,
         decisions=gen["decisions"], recommendedLevel=aud.recommendedLevel,
-        recommendationReason=gen["reason"], variants=variants, modelVersion=deps.llm.model_version,
+        recommendationReason=gen["reason"], variants=variants,
+        modelVersion="bridge-preset-v1" if preset else deps.llm.model_version,
         promptVersion=s.prompt_version, corpusVersion=deps.fx.corpus_version, createdAt=now_iso(), notices=notices,
     )
     deps.runs.put(run_id, RunRecord(snapshot=snapshot, ctx=ctx, case=case, key=key))
@@ -866,6 +876,28 @@ async def _check_one_variant(ctx: GenerateContext, v: Variant, decisions: list[D
     else:
         state = "exportable"
     return v.model_copy(update={"segments": segments, "notes": notes, "checks": validation + claims, "exportState": state, "candidateText": candidate}), local_notices
+
+
+def _check_preset_variant(ctx: GenerateContext, variant: Variant, decisions: list[Decision], case, deps: Deps) -> Variant:
+    if variant.level == "literal":
+        return variant
+    text = variant_text(variant.segments)
+    validation = _deterministic_checks(ctx, case, text, deps)
+    claims = _claim_checks(ctx, case, text, deps)
+    checks = validation + claims
+    if any(c.status != "pass" and c.action != "needs_data" for c in validation) or any(
+        c.status == "fail" and c.action != "needs_data" for c in claims
+    ):
+        state = "draft"
+    elif any(c.action == "needs_data" and c.status != "pass" for c in checks):
+        state = "needs_data"
+    else:
+        state = "exportable"
+    return variant.model_copy(update={
+        "segments": _inherit_segment_evidence(variant.segments, decisions, variant.level),
+        "checks": checks,
+        "exportState": state,
+    })
 
 
 async def _check_variants(ctx: GenerateContext, variants: list[Variant], decisions: list[Decision], case, deps: Deps, notices: list[str]) -> list[Variant]:

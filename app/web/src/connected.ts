@@ -23,6 +23,8 @@ import { createZhihuTools, type ZhihuToolTab } from "./zhihuTools";
 import "./connected.css";
 
 const MAX_INPUT_CHARS = 400;
+const PRESET_CASE_IDS = new Set(["case_a", "case_b", "case_c"]);
+const PRESET_REVEAL_MS = 2000;
 const GENERAL_AUDIENCE: AudienceMeta = {
   id: "general_overseas",
   label: "海外 · 通用目标受众",
@@ -54,6 +56,7 @@ const el = <T extends HTMLElement = HTMLElement>(id: string) => document.getElem
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
 const errorText = (e: unknown) => e instanceof Error ? e.message : "请求失败";
 const wait = '<div class="waiting" aria-label="加载中"><i></i><i></i><i></i></div>';
+const presetWait = '<div class="note-empty" role="status">正在生成中</div>';
 const empty = (text: string) => '<div class="note-empty">' + esc(text) + '</div>';
 const notice = (text: string) => '<div class="meta">' + esc(text) + '</div>';
 const HIDDEN_NOTICE_RE = /候选条目|待人工审核|候选\s*[·,，]\s*待审核/;
@@ -95,8 +98,8 @@ function settleOffscreen(container: HTMLElement, selector: string, cls = "settle
   });
 }
 
-function sleep(ms: number, signal?: AbortSignal): Promise<void> {
-  if (ms <= 0 || signal?.aborted || prefersReducedMotion()) return Promise.resolve();
+function sleep(ms: number, signal?: AbortSignal, respectReducedMotion = true): Promise<void> {
+  if (ms <= 0 || signal?.aborted || (respectReducedMotion && prefersReducedMotion())) return Promise.resolve();
   return new Promise((resolve) => {
     const onAbort = () => {
       clearTimeout(timer);
@@ -1357,7 +1360,9 @@ export function mountConnected(layout: Layout) {
     if (previous === current) return;
     switch (event.type) {
       case "started":
-        setStatus(current.run.mode === "degraded" ? "检索证据中" : statusText(current.run.mode ?? "degraded"));
+        if (current.run.mode !== "preset") {
+          setStatus(current.run.mode === "degraded" ? "检索证据中" : statusText(current.run.mode ?? "degraded"));
+        }
         break;
       case "terms": {
         const segs = current.run.sourceSegments;
@@ -1375,7 +1380,7 @@ export function mountConnected(layout: Layout) {
       case "ready": {
         if (availableLevels().some((l) => l === level)) current = reducer(current, { type: "level", level: level as Level });
         const snap = current.run.snapshot!;
-        setStatus(statusText(snap.mode));
+        if (snap.mode !== "preset") setStatus(statusText(snap.mode));
         enabledPoints = new Set(current.run.keyPoints.map((p) => p.id));
         enqueueStage(signal, async () => {
           if (signal.aborted) return;
@@ -1396,7 +1401,17 @@ export function mountConnected(layout: Layout) {
           if (!activeVariant) return;
 
           // Step 3: Spotlight Cognitive Bridge + Strategy Translation
-          if (!revealSignal.aborted && !prefersReducedMotion()) {
+          if (snap.mode === "preset") {
+            layout.setStep(3);
+            layout.spotlight(["pBridge"]);
+            const bridge = el("bridge");
+            bridge.innerHTML = presetWait;
+            await sleep(PRESET_REVEAL_MS, signal, false);
+            if (signal.aborted) return;
+            renderBridgePanel(!revealSignal.aborted && !prefersReducedMotion() ? "type" : "instant");
+            setStatus(statusText(snap.mode));
+            await sleep(1450, revealSignal);
+          } else if (!revealSignal.aborted && !prefersReducedMotion()) {
             layout.setStep(3);
             layout.spotlight(["pBridge"]);
             renderBridgePanel("type");
@@ -1463,6 +1478,8 @@ export function mountConnected(layout: Layout) {
       text: trimmedText,
       audienceId: validAudienceId,
       targetLanguage,
+      usePreset: adapter.kind === "backend" && matchedCase && PRESET_CASE_IDS.has(matchedCase.caseId) && !allowStub
+        ? true : undefined,
       useGlobalSearch: next.useGlobalSearch ?? useGlobalSearch,
       knowledgeBaseIds: next.knowledgeBaseIds ?? (selectedKbIds.length ? [...selectedKbIds] : undefined),
     };
@@ -1968,6 +1985,7 @@ export function mountConnected(layout: Layout) {
   }
 
   function applyLevel(index: number) {
+    if (current.run.snapshot?.mode === "preset" && slider.disabled) return;
     const level = availableLevels()[index - 1];
     if (!level || current.level === level) return;
     revealController?.abort();

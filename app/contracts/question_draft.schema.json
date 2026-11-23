@@ -123,7 +123,8 @@
         "live",
         "replay",
         "degraded",
-        "dev_stub"
+        "dev_stub",
+        "preset"
       ],
       "title": "Mode",
       "type": "string"
@@ -131,7 +132,8 @@
     "provenance": {
       "enum": [
         "real_run",
-        "dev_stub"
+        "dev_stub",
+        "editor_preset"
       ],
       "title": "Provenance",
       "type": "string"

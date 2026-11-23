@@ -38,8 +38,8 @@ describe("诚实标签", () => {
     expect(screen.getByTestId("evidence-tag").textContent).toContain("知乎精选");
     expect(screen.getByTestId("evidence-tag").textContent).not.toContain("待审核");
   });
-  it("四种生成模式文案与 V6 一致", () => {
-    expect(MODE_LABEL).toEqual({ live: "实时生成", replay: "缓存回放", degraded: "已降级", dev_stub: "开发占位 · 非真实运行" });
+  it("区分五种生成模式", () => {
+    expect(MODE_LABEL).toEqual({ live: "实时生成", replay: "缓存回放", preset: "预设缓存", degraded: "已降级", dev_stub: "开发占位 · 非真实运行" });
   });
   it("作者为空时按内容类型显示，不编造署名", () => {
     const e = { provider: "zhihu", contentType: "article", author: null } as unknown as Evidence;

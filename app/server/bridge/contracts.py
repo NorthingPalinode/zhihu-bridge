@@ -12,8 +12,8 @@ from typing import Literal, Optional
 from pydantic import BaseModel, ConfigDict, Field
 
 Level = Literal["literal", "plain", "light", "balanced", "technical", "genre", "single"]
-Mode = Literal["live", "replay", "degraded", "dev_stub"]
-Provenance = Literal["real_run", "dev_stub"]
+Mode = Literal["live", "replay", "degraded", "dev_stub", "preset"]
+Provenance = Literal["real_run", "dev_stub", "editor_preset"]
 EvidenceSource = Literal["zhihu_live", "zhihu_cached", "zhihu_curated", "other", "none"]
 Attribution = Literal["zhihu", "other", "model", "editor"]
 ExportState = Literal["exportable", "draft", "needs_data"]
@@ -272,6 +272,7 @@ class RunRequest(Model):
     caseId: Optional[str] = None
     targetLanguage: TargetLanguageCode = "en"
     mode: Literal["auto", "replay"] = "auto"
+    usePreset: bool = False
     useGlobalSearch: bool = False
     knowledgeBaseIds: list[str] = Field(default_factory=list)
 

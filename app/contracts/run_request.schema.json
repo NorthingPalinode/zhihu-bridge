@@ -61,6 +61,11 @@
       "default": false,
       "title": "Useglobalsearch",
       "type": "boolean"
+    },
+    "usePreset": {
+      "default": false,
+      "title": "Usepreset",
+      "type": "boolean"
     }
   },
   "required": [

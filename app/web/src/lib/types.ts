@@ -1,8 +1,8 @@
 // 与 server/bridge/contracts.py（导出见 app/contracts/*.schema.json）一一对应。
 
 export type Level = "literal" | "plain" | "light" | "balanced" | "technical" | "genre" | "single";
-export type Mode = "live" | "replay" | "degraded" | "dev_stub";
-export type Provenance = "real_run" | "dev_stub";
+export type Mode = "live" | "replay" | "degraded" | "dev_stub" | "preset";
+export type Provenance = "real_run" | "dev_stub" | "editor_preset";
 export type EvidenceSource = "zhihu_live" | "zhihu_cached" | "zhihu_curated" | "other" | "none";
 export type Attribution = "zhihu" | "other" | "model" | "editor";
 export type ExportState = "exportable" | "draft" | "needs_data";
@@ -281,6 +281,7 @@ export interface SseEvent {
 }
 
 export interface RunRequest {
+  usePreset?: boolean;
   text: string;
   audienceId: string;
   caseId: string | null;
