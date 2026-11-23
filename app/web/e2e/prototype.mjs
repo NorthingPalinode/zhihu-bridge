@@ -1,12 +1,12 @@
-// Browser check of the delivered prototype, with pixel comparisons when the reference is present.
+// Browser check of the app's demo mode, with pixel comparisons when an HTML reference is supplied.
 import assert from "node:assert/strict";
 import { existsSync, mkdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { chromium } from "playwright-core";
 
 const [, , base = "http://127.0.0.1:8787", out = "../docs/acceptance/screens", input] = process.argv;
-const reference = input ? resolve(input) : new URL("../../../prototype/index.html", import.meta.url);
-const compare = existsSync(reference);
+const reference = input ? resolve(input) : undefined;
+const compare = reference !== undefined && existsSync(reference);
 const browser = await chromium.launch({
   executablePath: process.env.CHROMIUM_PATH || "/usr/bin/chromium",
   headless: true,
