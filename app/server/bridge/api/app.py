@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+import base64
 import json
 import logging
 import re
@@ -16,9 +17,18 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
-from ..adapters.zhihu import ZhihuError
+from ..adapters.zhihu import QUOTA_API_LABELS, SUPPORTED_QUOTA_API_IDS, ZhihuError
 from ..config import Settings
-from ..contracts import ComplianceRuleCreate, Health, QuestionDraftRequest, RunRequest, TestRequest
+from ..contracts import (
+    ComplianceRuleCreate,
+    GlobalSearchRequest,
+    Health,
+    KnowledgeSearchRequest,
+    QuestionDraftRequest,
+    RunRequest,
+    TestRequest,
+    ZhidaAskRequest,
+)
 from ..core.languages import LANGUAGES, SUPPORTED_LANGUAGE_CODES
 from ..pipeline.deps import Deps, build_deps
 from ..pipeline.questions import DraftError, make_draft
@@ -174,6 +184,298 @@ def create_app(settings: Optional[Settings] = None, deps: Optional[Deps] = None)
         response.delete_cookie(COOKIE, httponly=True, secure=is_https_request(request, deps), samesite="strict")
         return response
 
+    def _zhihu_err(exc: ZhihuError, personal: bool) -> JSONResponse:
+        if exc.kind == "disabled":
+            return _err(503, "知乎实时接口未启用，可在首页底部导入个人 Access Secret 使用此能力")
+        if exc.kind == "budget":
+            return _err(429, "该项目共享能力组今日额度已用完，可在首页底部导入个人 Access Secret 继续使用")
+        if exc.kind == "auth":
+            if not personal:
+                deps.zhihu_auth_failed = True
+            return _err(401, "知乎 Access Secret 鉴权失败或未开通该能力组授权")
+        if exc.kind == "rate_limit":
+            return _err(429, "知乎开放平台触发频率或日额度限制，请查看额度或稍后再试")
+        if exc.kind == "bad_request":
+            return _err(422, str(exc) or "请求参数不符合知乎接口要求")
+        if exc.kind == "not_found":
+            return _err(404, "未找到对应的知乎知识库或内容")
+        if exc.kind == "processing":
+            return _err(409, "相同文件正在解析中，请稍后再试")
+        if exc.kind == "parse_failed":
+            return _err(422, "知识库解析该文件失败，请更换文件格式后重试")
+        if exc.kind == "timeout":
+            return _err(504, str(exc) or "知乎接口响应超时，请稍后重试")
+        return _err(502, str(exc) or "知乎开放平台暂时不可用，请稍后重试")
+
+    def _session_or_expired(request: Request) -> tuple[PersonalSession | None, JSONResponse | None]:
+        token = request.cookies.get(COOKIE)
+        session = sessions.get(token)
+        if token and not session:
+            return None, _err(409, "个人密钥会话已过期，请在「本人创作」重新导入或切回项目共享额度")
+        return session, None
+
+    @app.get("/api/zhihu/quota")
+    async def zhihu_quota(request: Request):
+        session, expired_err = _session_or_expired(request)
+        if expired_err:
+            return expired_err
+        s = deps.settings
+        local_caps = {
+            "zhihu_search": s.budget_zhihu_search_cap,
+            "global_search": s.budget_global_search_cap,
+            "question_discovery": s.budget_question_discovery_cap,
+            "zhida_openai": s.budget_zhida_cap,
+            "knowledge": s.budget_knowledge_cap,
+            "creator": 0,
+        }
+        async with scoped(session) as zdeps:
+            if zdeps.zhihu.enabled and not zdeps.zhihu_auth_failed:
+                try:
+                    items = await zdeps.zhihu.quota_details(SUPPORTED_QUOTA_API_IDS)
+                    return JSONResponse({
+                        "mode": "personal" if session else "shared",
+                        "live": True,
+                        "items": items,
+                    }, headers={"Cache-Control": "no-store"})
+                except ZhihuError as exc:
+                    if exc.kind == "auth" and not session:
+                        deps.zhihu_auth_failed = True
+                    fallback_note = str(exc) or exc.kind
+            else:
+                fallback_note = "知乎实时接口未启用，当前展示本地共享配额配置"
+        items = []
+        for aid in SUPPORTED_QUOTA_API_IDS:
+            cap = local_caps[aid]
+            used = deps.store.used(aid) if cap > 0 else None
+            left = deps.store.left(aid, cap) if cap > 0 else None
+            items.append({
+                "apiId": aid,
+                "apiName": QUOTA_API_LABELS[aid],
+                "totalQuota": cap if cap > 0 else None,
+                "totalUsed": used,
+                "remainingQuota": left,
+                "personalOnly": aid == "creator",
+            })
+        return JSONResponse({
+            "mode": "personal" if session else "shared",
+            "live": False,
+            "note": fallback_note,
+            "items": items,
+        }, headers={"Cache-Control": "no-store"})
+
+    @app.post("/api/zhihu/global-search")
+    async def zhihu_global_search(body: GlobalSearchRequest, request: Request):
+        session, expired_err = _session_or_expired(request)
+        if expired_err:
+            return expired_err
+        if not deps.store.rate_hit(client_ip(request, deps), "zhihu_ext", deps.settings.rate_runs_per_ip_hour):
+            return _err(429, "扩展检索次数已达本小时上限，请稍后再试")
+        async with scoped(session) as zdeps:
+            try:
+                items, src = await zdeps.zhihu.global_search(
+                    body.query.strip(),
+                    count=body.count,
+                    filter_expr=body.filter,
+                    search_db=body.searchDb,
+                )
+            except ZhihuError as exc:
+                return _zhihu_err(exc, personal=session is not None)
+        return {"query": body.query.strip(), "source": src, "items": items}
+
+    @app.get("/api/zhihu/question-answers")
+    async def zhihu_question_answers(
+        request: Request,
+        questionUrl: str,
+        offset: int = 0,
+        limit: int = 10,
+    ):
+        session, expired_err = _session_or_expired(request)
+        if expired_err:
+            return expired_err
+        if not deps.store.rate_hit(client_ip(request, deps), "zhihu_ext", deps.settings.rate_runs_per_ip_hour):
+            return _err(429, "问题回答查询次数已达本小时上限，请稍后再试")
+        async with scoped(session) as zdeps:
+            try:
+                data, src = await zdeps.zhihu.question_answers(questionUrl, offset=offset, limit=limit)
+            except ZhihuError as exc:
+                return _zhihu_err(exc, personal=session is not None)
+        return {**data, "source": src}
+
+    @app.post("/api/zhihu/zhida")
+    async def zhihu_zhida(body: ZhidaAskRequest, request: Request):
+        session, expired_err = _session_or_expired(request)
+        if expired_err:
+            return expired_err
+        if not deps.store.rate_hit(client_ip(request, deps), "zhihu_ext", deps.settings.rate_runs_per_ip_hour):
+            return _err(429, "直答追问次数已达本小时上限，请稍后再试")
+        ctx_parts = []
+        if body.term:
+            ctx_parts.append(f"关注术语：{body.term.strip()}")
+        if body.sourceText:
+            ctx_parts.append(f"中文原文：{body.sourceText.strip()}")
+        async with scoped(session) as zdeps:
+            try:
+                ans = await zdeps.zhihu.zhida_ask(body.query.strip(), model=body.model, context="\n".join(ctx_parts))
+            except ZhihuError as exc:
+                return _zhihu_err(exc, personal=session is not None)
+        return {
+            **ans,
+            "disclaimer": "由知乎直答生成，适合快速理解背景与追问，不替代知乎原始回答/专栏证据。",
+        }
+
+    @app.get("/api/zhihu/knowledge/bases")
+    async def zhihu_knowledge_bases(request: Request, scope: str = "all"):
+        session, expired_err = _session_or_expired(request)
+        if expired_err:
+            return expired_err
+        async with scoped(session) as zdeps:
+            try:
+                items = await zdeps.zhihu.knowledge_bases(scope=scope)
+            except ZhihuError as exc:
+                return _zhihu_err(exc, personal=session is not None)
+        return {"scope": scope, "items": items}
+
+    @app.get("/api/zhihu/knowledge/bases/{kb_id}/items")
+    async def zhihu_knowledge_items(request: Request, kb_id: str, cursor: str = "", limit: int = 20):
+        session, expired_err = _session_or_expired(request)
+        if expired_err:
+            return expired_err
+        async with scoped(session) as zdeps:
+            try:
+                data = await zdeps.zhihu.knowledge_items(kb_id, cursor=cursor, limit=limit)
+            except ZhihuError as exc:
+                return _zhihu_err(exc, personal=session is not None)
+        return data
+
+    @app.post("/api/zhihu/knowledge/search")
+    async def zhihu_knowledge_search(body: KnowledgeSearchRequest, request: Request):
+        session, expired_err = _session_or_expired(request)
+        if expired_err:
+            return expired_err
+        if not deps.store.rate_hit(client_ip(request, deps), "zhihu_ext", deps.settings.rate_runs_per_ip_hour):
+            return _err(429, "知识库检索次数已达本小时上限，请稍后再试")
+        async with scoped(session) as zdeps:
+            try:
+                items = await zdeps.zhihu.knowledge_search(
+                    body.query,
+                    kb_ids=body.knowledgeBaseIds,
+                    recall_scopes=body.recallScopes,
+                    limit=body.limit,
+                )
+            except ZhihuError as exc:
+                return _zhihu_err(exc, personal=session is not None)
+        return {"query": body.query.strip(), "items": items}
+
+    @app.post("/api/zhihu/knowledge/upload")
+    async def zhihu_knowledge_upload(request: Request):
+        session, expired_err = _session_or_expired(request)
+        if expired_err:
+            return expired_err
+        if session is None:
+            return _err(403, "上传文件到知乎知识库仅支持个人 Access Secret，请先在「本人创作」导入个人密钥")
+        if not deps.store.rate_hit(client_ip(request, deps), "zhihu_upload", 30):
+            return _err(429, "知识库上传次数已达本小时上限，请稍后再试")
+        try:
+            payload = await request.json()
+        except ValueError:
+            return _err(400, "请提交 JSON 格式的上传请求")
+        if not isinstance(payload, dict):
+            return _err(400, "请求体格式无效")
+        file_name = str(payload.get("fileName") or "").strip()[:120]
+        b64 = payload.get("contentBase64")
+        content_type = str(payload.get("contentType") or "application/octet-stream").strip()[:100]
+        kb_id = str(payload.get("knowledgeBaseId") or "").strip() or None
+        if not file_name or not isinstance(b64, str) or not b64.strip():
+            return _err(422, "请提供文件名和文件内容")
+        try:
+            raw = base64.b64decode(b64, validate=True)
+        except ValueError:
+            return _err(422, "文件内容编码无效")
+        if not raw or len(raw) > 10 * 1024 * 1024:
+            return _err(422, "文件需非空且不超过 10 MiB")
+        async with scoped(session) as zdeps:
+            try:
+                uploaded = await zdeps.zhihu.knowledge_upload(file_name, raw, content_type, kb_id=kb_id)
+            except ZhihuError as exc:
+                return _zhihu_err(exc, personal=True)
+        return JSONResponse(status_code=201, content=uploaded)
+
+    @app.get("/api/zhihu/creator/content")
+    async def zhihu_creator_content(request: Request, contentUrl: str):
+        session, expired_err = _session_or_expired(request)
+        if expired_err:
+            return expired_err
+        if session is None:
+            return _err(403, "本人创作能力仅支持个人 Access Secret，请先导入个人密钥")
+        async with scoped(session) as zdeps:
+            try:
+                return await zdeps.zhihu.creator_content_detail(contentUrl)
+            except ZhihuError as exc:
+                return _zhihu_err(exc, personal=True)
+
+    @app.get("/api/zhihu/creator/comments")
+    async def zhihu_creator_comments(
+        request: Request,
+        contentUrl: str,
+        offset: int = 0,
+        limit: int = 20,
+        order: str = "score",
+    ):
+        session, expired_err = _session_or_expired(request)
+        if expired_err:
+            return expired_err
+        if session is None:
+            return _err(403, "本人创作能力仅支持个人 Access Secret，请先导入个人密钥")
+        async with scoped(session) as zdeps:
+            try:
+                return await zdeps.zhihu.creator_content_comments(contentUrl, offset=offset, limit=limit, order=order)
+            except ZhihuError as exc:
+                return _zhihu_err(exc, personal=True)
+
+    @app.get("/api/zhihu/creator/account-stats")
+    async def zhihu_creator_account_stats(
+        request: Request,
+        contentType: str = "all",
+        startDate: Optional[str] = None,
+        endDate: Optional[str] = None,
+    ):
+        session, expired_err = _session_or_expired(request)
+        if expired_err:
+            return expired_err
+        if session is None:
+            return _err(403, "本人创作能力仅支持个人 Access Secret，请先导入个人密钥")
+        async with scoped(session) as zdeps:
+            try:
+                return await zdeps.zhihu.creator_account_stats(
+                    content_type=contentType,
+                    start_date=startDate,
+                    end_date=endDate,
+                )
+            except ZhihuError as exc:
+                return _zhihu_err(exc, personal=True)
+
+    @app.get("/api/zhihu/creator/content-stats")
+    async def zhihu_creator_content_stats(
+        request: Request,
+        contentUrl: str,
+        startDate: Optional[str] = None,
+        endDate: Optional[str] = None,
+    ):
+        session, expired_err = _session_or_expired(request)
+        if expired_err:
+            return expired_err
+        if session is None:
+            return _err(403, "本人创作能力仅支持个人 Access Secret，请先导入个人密钥")
+        async with scoped(session) as zdeps:
+            try:
+                return await zdeps.zhihu.creator_content_stats(
+                    contentUrl,
+                    start_date=startDate,
+                    end_date=endDate,
+                )
+            except ZhihuError as exc:
+                return _zhihu_err(exc, personal=True)
+
     @app.get("/api/health", response_model=Health)
     def health() -> Health:
         s = deps.settings
@@ -259,7 +561,7 @@ def create_app(settings: Optional[Settings] = None, deps: Optional[Deps] = None)
         token = request.cookies.get(COOKIE)
         session = sessions.get(token)
         if token and not session:
-            return _err(409, "个人密钥会话已过期，请在首页重新导入或切回项目共享额度")
+            return _err(409, "个人密钥会话已过期，请在「本人创作」重新导入或切回项目共享额度")
         try:
             validate_request(body, deps)
         except InputError as exc:
@@ -324,7 +626,7 @@ def create_app(settings: Optional[Settings] = None, deps: Optional[Deps] = None)
         token = request.cookies.get(COOKIE)
         session = sessions.get(token)
         if token and not session:
-            return _err(409, "个人密钥会话已过期，请在首页重新导入或切回项目共享额度")
+            return _err(409, "个人密钥会话已过期，请在「本人创作」重新导入或切回项目共享额度")
         if not deps.store.rate_hit(client_ip(request, deps), "drafts", deps.settings.rate_drafts_per_ip_hour):
             return _err(429, "回流草稿次数已达每小时上限，请稍后再试")
         try:

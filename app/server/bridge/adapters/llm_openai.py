@@ -142,7 +142,9 @@ class OpenAICompatibleLLM:
         return q if isinstance(q, str) and q.strip() else seed_query
 
     async def draft_question(self, ctx: DraftContext) -> dict:
-        return await self._json(self.light, prompts.DRAFT_SYSTEM, prompts.draft_user(ctx), 600)
+        target_type = getattr(ctx, "target_type", "question") or "question"
+        budget = 900 if target_type == "article" else 650
+        return await self._json(self.light, prompts.draft_system_for(target_type), prompts.draft_user(ctx), budget)
 
     async def recommend(self, ctx: DraftContext) -> dict:
         out = await self._json(self.light, prompts.RECOMMEND_SYSTEM, prompts.recommend_user(ctx), 200)

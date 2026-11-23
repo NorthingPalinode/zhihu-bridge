@@ -202,12 +202,22 @@ export interface TestResult {
 }
 
 export type SourceKind = "reader_misreading" | "manual" | "example" | "guard_gap";
+export type DraftTarget = "answer" | "question" | "article" | "pin";
+
+export interface FlowbackDestination {
+  targetType: DraftTarget;
+  label: string;
+  description: string;
+  url: string;
+  primary?: boolean;
+}
 
 export interface QuestionDraftRequest {
   source: { kind: SourceKind; text: string; testId?: string; keyPointId?: string };
   caseId?: string | null;
   runId?: string | null;
   termIds?: string[];
+  targetType?: DraftTarget | null;
 }
 
 export interface QuestionDraft {
@@ -218,6 +228,9 @@ export interface QuestionDraft {
   existingNote: string;
   recommendation: "answer_existing" | "new_question";
   recommendationReason: string;
+  targetType?: DraftTarget;
+  recommendedTarget?: DraftTarget;
+  destinations?: FlowbackDestination[];
   draft: { title: string; body: string };
   sourceLabel: "模拟读者误解（非真实用户）" | "用户粘贴" | "示例输入" | "守门待补材料";
   mode: Mode;
@@ -273,4 +286,157 @@ export interface RunRequest {
   caseId: string | null;
   targetLanguage?: TargetLanguageCode;
   mode?: "auto" | "replay";
+  useGlobalSearch?: boolean;
+  knowledgeBaseIds?: string[];
+}
+
+export interface ZhihuQuotaItem {
+  apiId: string;
+  apiName: string;
+  totalQuota: number | null;
+  totalUsed: number | null;
+  remainingQuota: number | null;
+  personalOnly?: boolean;
+}
+
+export interface ZhihuQuotaResponse {
+  mode: "shared" | "personal";
+  live: boolean;
+  note?: string;
+  items: ZhihuQuotaItem[];
+}
+
+export interface GlobalSearchItem {
+  title: string;
+  url: string;
+  host: string;
+  contentType: string;
+  contentText: string;
+  author: string | null;
+  fetchedAt: string | null;
+}
+
+export interface GlobalSearchResponse {
+  query: string;
+  source: string;
+  items: GlobalSearchItem[];
+}
+
+export interface QuestionAnswerItem {
+  contentType: string;
+  contentToken: string;
+  url: string;
+  summary: string;
+}
+
+export interface QuestionAnswersResponse {
+  questionUrl: string;
+  source: string;
+  fetchedAt?: string;
+  items: QuestionAnswerItem[];
+  paging: { isEnd: boolean; nextOffset: number | null; totals: number | null };
+}
+
+export type ZhidaModel = "zhida-fast-1p5" | "zhida-thinking-1p5" | "zhida-agent";
+
+export interface ZhidaResponse {
+  model: string;
+  content: string;
+  reasoningContent: string | null;
+  fetchedAt: string;
+  disclaimer: string;
+}
+
+export interface KnowledgeBaseItem {
+  knowledgeBaseId: string;
+  name: string;
+  relation: string;
+  isDefault: boolean;
+  visibility: string;
+  contentCount: number;
+  updatedAt: string | number | null;
+  description: string | null;
+}
+
+export interface KnowledgeContentItem {
+  recallContentId: string;
+  contentType: string;
+  title: string;
+  abstract: string | null;
+  originUrl: string | null;
+  createdAt: string | number | null;
+}
+
+export interface KnowledgeSearchHit {
+  knowledgeBaseId: string;
+  recallContentId: string;
+  contentType: string;
+  title: string;
+  originUrl: string | null;
+  content: string[];
+}
+
+export interface CreatorContentDetail {
+  contentType: string;
+  contentToken: string;
+  url: string;
+  title: string;
+  content: string;
+  plainText: string;
+  excerpt: string;
+  createdAt?: string | number | null;
+  updatedAt?: string | number | null;
+  questionTitle?: string | null;
+  questionUrl?: string | null;
+}
+
+export interface CreatorCommentEntry {
+  comment: {
+    id: string;
+    type: string;
+    content: string;
+    createdAt?: string | number | null;
+    likeCount?: number | null;
+    dislikeCount?: number | null;
+    authorToken?: string;
+  };
+  children: Array<{
+    id: string;
+    type: string;
+    content: string;
+    createdAt?: string | number | null;
+    likeCount?: number | null;
+  }>;
+}
+
+export interface CreatorCommentsResponse {
+  contentUrl: string;
+  items: CreatorCommentEntry[];
+  paging: { isEnd: boolean; nextOffset: number | null };
+}
+
+export interface CreatorAccountStatsResponse {
+  contentType: string;
+  metrics: Record<string, unknown> | null;
+  audience: Record<string, unknown> | null;
+  creationCounts: Record<string, unknown> | null;
+  followers: Record<string, unknown> | null;
+  followerDetails: Record<string, unknown> | null;
+  followerProfile: Record<string, unknown> | null;
+  status: string | null;
+  reason: string | null;
+}
+
+export interface CreatorContentStatsResponse {
+  contentUrl: string;
+  items: Array<{
+    contentType: string;
+    contentToken: string;
+    url: string;
+    title: string | null;
+    metrics: Record<string, unknown> | null;
+    audience: Record<string, unknown> | null;
+    status: string | null;
+    reason: string | null;
+  }>;
 }

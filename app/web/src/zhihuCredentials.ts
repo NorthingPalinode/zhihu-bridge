@@ -1,62 +1,38 @@
 import { clearZhihuCredential, importZhihuCredential, zhihuCredentialStatus, type ZhihuCredentialStatus } from "./lib/api";
 
-export function mountZhihuCredentials() {
-  const section = document.createElement("section");
-  section.className = "zhihu-credentials";
-  section.setAttribute("aria-labelledby", "zhihuCredentialsTitle");
-  section.innerHTML = '<div><h2 id="zhihuCredentialsTitle">知乎 Access Secret</h2>' +
-    '<p>项目创作者提供的共享额度有限。用完后可导入自己的 Access Secret，继续使用知乎检索和问题发现。</p>' +
-    '<p class="quota-status" role="status" hidden></p></div>' +
-    '<div class="credential-actions"><button type="button" class="btn btn-ghost" id="openZhihuCredential">导入个人密钥</button>' +
-    '<button type="button" class="link-btn" id="clearZhihuCredential" hidden>切回共享额度</button></div>';
-  document.getElementById("hero")!.append(section);
+export interface ZhihuCredentialsHandle {
+  refresh(): Promise<void>;
+  openDialog(): void;
+  getMode(): ZhihuCredentialStatus["mode"];
+}
 
+export function mountZhihuCredentials(): ZhihuCredentialsHandle {
   const dialog = document.createElement("dialog");
   dialog.className = "zhihu-credential-dialog";
   dialog.setAttribute("aria-labelledby", "zhihuCredentialDialogTitle");
   dialog.innerHTML = '<form><h2 id="zhihuCredentialDialogTitle">导入知乎 Access Secret</h2>' +
-    '<p>仅用于这个浏览器会话中的知乎检索与问题发现，最长有效 8 小时。' +
+    '<p>仅用于这个浏览器会话中的知乎开放平台接口调用，最长有效 8 小时。' +
     '<a href="https://developer.zhihu.com/profile" target="_blank" rel="noopener noreferrer">获取 Access Secret ↗</a></p>' +
     '<label for="zhihuAccessSecret">Access Secret</label>' +
     '<input id="zhihuAccessSecret" type="password" required maxlength="256" autocomplete="off" spellcheck="false" autofocus>' +
     '<p class="credential-error" role="alert"></p><div class="modal-foot">' +
+    '<button type="button" class="link-btn" id="clearZhihuCredential" hidden>切回共享额度</button>' +
     '<button type="button" class="btn btn-ghost" id="cancelZhihuCredential">取消</button>' +
     '<button type="submit" class="btn btn-primary">校验并使用</button></div></form>';
   document.body.append(dialog);
 
   let requestId = 0;
   let updating = false;
-  const status = section.querySelector<HTMLElement>(".quota-status")!;
-  const toggle = section.querySelector<HTMLButtonElement>("#openZhihuCredential")!;
-  const clear = section.querySelector<HTMLButtonElement>("#clearZhihuCredential")!;
+  let currentMode: ZhihuCredentialStatus["mode"] = "shared";
+  const clear = dialog.querySelector<HTMLButtonElement>("#clearZhihuCredential")!;
   const input = dialog.querySelector<HTMLInputElement>("#zhihuAccessSecret")!;
   const submit = dialog.querySelector<HTMLButtonElement>('[type="submit"]')!;
   const error = dialog.querySelector<HTMLElement>(".credential-error")!;
-
-  function quotaText(quotas: Record<string, number>) {
-    return [["zhihu_search", "检索"], ["question_discovery", "问题发现"]].flatMap(([id, label]) =>
-      typeof quotas[id] === "number" ? [label + "余 " + quotas[id] + " 次"] : []).join(" · ");
-  }
-
-  function setStatus(text: string) {
-    status.textContent = text;
-    status.hidden = !text;
-  }
+  const cancel = dialog.querySelector<HTMLButtonElement>("#cancelZhihuCredential")!;
 
   function render(credential: ZhihuCredentialStatus) {
-    switch (credential.mode) {
-      case "personal": {
-        const quota = quotaText(credential.personalQuotaAtImport ?? {});
-        setStatus("当前使用个人知乎额度" + (quota ? " · 导入时" + quota : ""));
-        break;
-      }
-      case "expired":
-        setStatus("个人密钥会话已过期，请重新导入或切回共享额度。");
-        break;
-      default:
-        setStatus(credential.sharedAvailable ? "" : "项目共享凭据暂不可用，可导入个人密钥。");
-    }
-    toggle.textContent = credential.mode === "personal" ? "更换个人密钥" : "导入个人密钥";
+    currentMode = credential.mode;
+    dialog.querySelector("h2")!.textContent = currentMode === "personal" ? "管理知乎 Access Secret" : "导入知乎 Access Secret";
     clear.hidden = credential.mode === "shared";
   }
 
@@ -67,22 +43,21 @@ export function mountZhihuCredentials() {
       const credential = await zhihuCredentialStatus();
       if (requestId === id) render(credential);
     } catch {
-      if (requestId === id) setStatus("");
+      // Keep the last known mode if a status request fails.
     }
   }
 
-  toggle.onclick = () => { if (!updating) dialog.showModal(); };
-  dialog.querySelector<HTMLButtonElement>("#cancelZhihuCredential")!.onclick = () => dialog.close();
+  const openDialog = () => { if (!updating) dialog.showModal(); };
+  cancel.onclick = () => dialog.close();
   dialog.addEventListener("keydown", (event) => event.stopPropagation());
   dialog.addEventListener("cancel", (event) => { if (updating) event.preventDefault(); });
   dialog.addEventListener("close", () => { input.value = ""; error.textContent = ""; });
-  const cancel = dialog.querySelector<HTMLButtonElement>("#cancelZhihuCredential")!;
   dialog.querySelector("form")!.onsubmit = async (event) => {
     event.preventDefault();
     if (updating) return;
     updating = true;
     ++requestId;
-    submit.disabled = cancel.disabled = true;
+    submit.disabled = cancel.disabled = clear.disabled = true;
     error.textContent = "";
     const secret = input.value.trim();
     input.value = "";
@@ -94,21 +69,25 @@ export function mountZhihuCredentials() {
       input.focus();
     } finally {
       updating = false;
-      submit.disabled = cancel.disabled = false;
+      submit.disabled = cancel.disabled = clear.disabled = false;
     }
   };
   clear.onclick = async () => {
     if (updating) return;
-    updating = clear.disabled = true;
+    updating = true;
     ++requestId;
+    submit.disabled = cancel.disabled = clear.disabled = true;
+    error.textContent = "";
     try {
       render(await clearZhihuCredential());
+      dialog.close();
     } catch {
-      setStatus("切换未完成，请重试。");
+      error.textContent = "切换未完成，请重试。";
     } finally {
-      updating = clear.disabled = false;
+      updating = false;
+      submit.disabled = cancel.disabled = clear.disabled = false;
     }
   };
   void refresh();
-  return { refresh };
+  return { refresh, openDialog, getMode: () => currentMode };
 }

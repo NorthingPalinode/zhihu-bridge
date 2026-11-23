@@ -36,19 +36,19 @@
       "id": "DB1", "termId": "T1", "title": "堆料的表达",
       "choice": "把堆料写成对元件用料的描述，避免 stacking materials",
       "rationale": "原句表达对主板用料和选型的重视，没有列出具体器件规格。",
-      "evidenceIds": [], "attribution": "editor", "levels": ["plain", "genre"]
+      "evidenceIds": ["B1#1"], "attribution": "zhihu", "levels": ["plain", "genre"]
     },
     {
       "id": "DB2", "termId": "T2", "title": "功耗声称的边界",
       "choice": "写 optimized for power efficiency 或 power-optimized",
       "rationale": "原文支持设计上的功耗优化，缺少实测数值、对比基准和工况。",
-      "evidenceIds": [], "attribution": "editor", "levels": ["plain", "genre"]
+      "evidenceIds": ["B2#1", "B2#2"], "attribution": "zhihu", "levels": ["plain", "genre"]
     },
     {
       "id": "DB3", "termId": "T3", "title": "调试功能的边界",
       "choice": "写 supports low-level protocol debugging",
       "rationale": "支持协议调试是具体功能，开源、无限制改装和开放全部接口是另外的承诺。",
-      "evidenceIds": [], "attribution": "editor", "levels": ["plain", "genre"]
+      "evidenceIds": ["B3#1"], "attribution": "zhihu", "levels": ["plain", "genre"]
     }
   ],
   "claimPolicy": {

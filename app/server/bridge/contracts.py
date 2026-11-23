@@ -210,6 +210,9 @@ class TestResult(Model):
     judgeError: Optional[str] = None
 
 
+DraftTarget = Literal["answer", "question", "article", "pin"]
+
+
 class QuestionSource(Model):
     kind: Literal["reader_misreading", "manual", "example", "guard_gap"]
     text: str = Field(min_length=1, max_length=1000)
@@ -222,6 +225,7 @@ class QuestionDraftRequest(Model):
     caseId: Optional[str] = None
     runId: Optional[str] = None
     termIds: list[str] = Field(default_factory=list)
+    targetType: Optional[DraftTarget] = None
 
 
 class ExistingItem(Model):
@@ -232,6 +236,14 @@ class ExistingItem(Model):
 class DraftBody(Model):
     title: str
     body: str
+
+
+class FlowbackDestination(Model):
+    targetType: DraftTarget
+    label: str
+    description: str
+    url: str
+    primary: bool = False
 
 
 SourceLabel = Literal["模拟读者误解（非真实用户）", "用户粘贴", "示例输入", "守门待补材料"]
@@ -245,6 +257,9 @@ class QuestionDraft(Model):
     existingNote: str = ""
     recommendation: Literal["answer_existing", "new_question"]
     recommendationReason: str = ""
+    targetType: DraftTarget = "question"
+    recommendedTarget: DraftTarget = "question"
+    destinations: list[FlowbackDestination] = Field(default_factory=list)
     draft: DraftBody
     sourceLabel: SourceLabel
     mode: Mode
@@ -257,6 +272,29 @@ class RunRequest(Model):
     caseId: Optional[str] = None
     targetLanguage: TargetLanguageCode = "en"
     mode: Literal["auto", "replay"] = "auto"
+    useGlobalSearch: bool = False
+    knowledgeBaseIds: list[str] = Field(default_factory=list)
+
+
+class GlobalSearchRequest(Model):
+    query: str = Field(min_length=1, max_length=200)
+    count: int = Field(default=6, ge=1, le=20)
+    filter: str = Field(default="", max_length=300)
+    searchDb: Literal["all", "realtime", "static"] = "all"
+
+
+class ZhidaAskRequest(Model):
+    query: str = Field(min_length=1, max_length=600)
+    model: Literal["zhida-fast-1p5", "zhida-thinking-1p5", "zhida-agent"] = "zhida-fast-1p5"
+    term: Optional[str] = Field(default=None, max_length=80)
+    sourceText: Optional[str] = Field(default=None, max_length=500)
+
+
+class KnowledgeSearchRequest(Model):
+    query: str = Field(min_length=1, max_length=200)
+    knowledgeBaseIds: list[str] = Field(default_factory=list, max_length=10)
+    recallScopes: list[Literal["personal", "subscription", "public"]] = Field(default_factory=list)
+    limit: int = Field(default=5, ge=1, le=10)
 
 
 class TestRequest(Model):

@@ -1,11 +1,12 @@
-"""知乎回流闭环（V6 §4.3，P0-7）：误解句 / 用户粘贴 → 查知乎已有讨论 → 可编辑提问草稿 → 复制。系统不发布。"""
+"""知乎回流闭环（V6 §4.3，P0-7）：误解句 / 用户粘贴 → 查知乎已有讨论 → 多体裁可编辑草稿 → 复制并直达对应知乎板块。系统不发布。"""
 from __future__ import annotations
 
 import uuid
+from urllib.parse import quote
 
 from ..adapters.llm import DraftContext, LLMError
-from ..adapters.zhihu import ZhihuError
-from ..contracts import DraftBody, ExistingItem, QuestionDraft, QuestionDraftRequest
+from ..adapters.zhihu import ZhihuError, valid_zhihu_question_url
+from ..contracts import DraftBody, DraftTarget, ExistingItem, FlowbackDestination, QuestionDraft, QuestionDraftRequest
 from ..core.logs import event as log_event
 from ..core.logs import text_fingerprint
 from ..core.replay import draft_key
@@ -17,6 +18,52 @@ SOURCE_LABELS = {
     "example": "示例输入",
     "guard_gap": "守门待补材料",
 }
+
+
+def build_destinations(query: str, existing: list[dict], recommended: DraftTarget) -> list[FlowbackDestination]:
+    first_question_url = ""
+    for item in existing:
+        qurl = valid_zhihu_question_url(str(item.get("url", "")))
+        if qurl:
+            first_question_url = qurl
+            break
+    answer_url = first_question_url or "https://www.zhihu.com/question/waiting"
+    answer_desc = (
+        "直达命中的知乎相关问题页，补充海外读者视角与转译解释"
+        if first_question_url
+        else "前往知乎「等你来答」寻找相关问题并补充回答"
+    )
+    ask_url = f"https://www.zhihu.com/search?type=content&q={quote(query.strip() or '跨文化翻译')}"
+    return [
+        FlowbackDestination(
+            targetType="answer",
+            label="去知乎写回答",
+            description=answer_desc,
+            url=answer_url,
+            primary=(recommended == "answer"),
+        ),
+        FlowbackDestination(
+            targetType="question",
+            label="去知乎提问题",
+            description="在知乎检索核对同类讨论，并从顶部「提问」发起新问题",
+            url=ask_url,
+            primary=(recommended == "question"),
+        ),
+        FlowbackDestination(
+            targetType="article",
+            label="去知乎发文章",
+            description="打开知乎专栏编辑器，发布深度出海本地化案例复盘",
+            url="https://zhuanlan.zhihu.com/write",
+            primary=(recommended == "article"),
+        ),
+        FlowbackDestination(
+            targetType="pin",
+            label="去知乎发想法",
+            description="前往知乎想法广场，快速分享海外真实/模拟反馈速记",
+            url="https://www.zhihu.com/pins",
+            primary=(recommended == "pin"),
+        ),
+    ]
 
 
 class DraftError(ValueError):
@@ -44,7 +91,16 @@ async def make_draft(req: QuestionDraftRequest, deps: Deps) -> QuestionDraft:
         frozen = deps.replays.find_draft(rec.key, draft_key(src.text))
         if not frozen or frozen["sourceLabel"] != label:
             raise DraftError(404, "该回放中没有对应的冻结提问草稿")
-        return QuestionDraft(**{**frozen, "mode": "replay", "existingSource": "replay" if frozen["existing"] else frozen["existingSource"]})
+        rec_target: DraftTarget = "answer" if (frozen.get("recommendation") == "answer_existing" and frozen.get("existing")) else "question"
+        destinations = build_destinations(frozen.get("query", ""), frozen.get("existing") or [], rec_target)
+        return QuestionDraft(**{
+            **frozen,
+            "mode": "replay",
+            "existingSource": "replay" if frozen["existing"] else frozen["existingSource"],
+            "targetType": frozen.get("targetType") or "question",
+            "recommendedTarget": frozen.get("recommendedTarget") or rec_target,
+            "destinations": frozen.get("destinations") or [d.model_dump() for d in destinations],
+        })
     if deps.llm is None:
         raise DraftError(503, "提问草稿需要先配置转译模型")
     kps = rec.snapshot.keyPoints if rec else (case.keyPoints if case else [])
@@ -96,26 +152,45 @@ async def make_draft(req: QuestionDraftRequest, deps: Deps) -> QuestionDraft:
         if fallback_reason:
             note += f" · {fallback_reason}"
 
-    dctx = DraftContext(
+    base_ctx = DraftContext(
         case_id=case.caseId if case else None, source_kind=src.kind, source_text=src.text, source_label=label,
         term_surface=term.surface if term else None, key_point_text=kp.text if kp else None, query=query, existing=existing,
         target_language=rec.snapshot.targetLanguage if rec else "en",
     )
     try:
-        body = await deps.call_llm(deps.llm.draft_question, dctx)
-        draft = DraftBody(title=str(body["title"]), body=str(body["body"]))
-    except (LLMError, KeyError, TypeError) as exc:
-        raise DraftError(502, f"提问草稿生成失败（{exc.__class__.__name__}），请重试") from exc
-    try:
-        rec_out = await deps.call_llm(deps.llm.recommend, dctx)
+        rec_out = await deps.call_llm(deps.llm.recommend, base_ctx)
     except LLMError:
         rec_out = {"recommendation": "new_question", "reason": "建议判断未完成，默认新提问"}
 
+    recommended_target: DraftTarget = "answer" if (rec_out["recommendation"] == "answer_existing" and existing) else "question"
+    effective_target: DraftTarget = req.targetType or recommended_target
+    dctx = DraftContext(
+        case_id=base_ctx.case_id, source_kind=base_ctx.source_kind, source_text=base_ctx.source_text,
+        source_label=base_ctx.source_label, term_surface=base_ctx.term_surface, key_point_text=base_ctx.key_point_text,
+        query=base_ctx.query, existing=base_ctx.existing, target_language=base_ctx.target_language,
+        target_type=effective_target,
+    )
+    try:
+        body = await deps.call_llm(deps.llm.draft_question, dctx)
+        draft = DraftBody(title=str(body["title"]), body=str(body["body"]))
+    except (LLMError, KeyError, TypeError) as exc:
+        raise DraftError(502, f"草稿生成失败（{exc.__class__.__name__}），请重试") from exc
+
+    destinations = build_destinations(query, existing, recommended_target)
     out = QuestionDraft(
         draftId="q_" + uuid.uuid4().hex[:10], query=query,
         existing=[ExistingItem(**e) for e in existing], existingSource=existing_source, existingNote=note,
         recommendation=rec_out["recommendation"], recommendationReason=rec_out.get("reason", ""),
+        targetType=effective_target, recommendedTarget=recommended_target, destinations=destinations,
         draft=draft, sourceLabel=label, mode=deps.generation_mode, provenance=deps.llm.provenance,
     )
-    log_event("draft.done", draftId=out.draftId, kind=src.kind, existingSource=existing_source, mode=out.mode, **text_fingerprint(src.text))
+    log_event(
+        "draft.done",
+        draftId=out.draftId,
+        kind=src.kind,
+        targetType=effective_target,
+        existingSource=existing_source,
+        mode=out.mode,
+        **text_fingerprint(src.text),
+    )
     return out

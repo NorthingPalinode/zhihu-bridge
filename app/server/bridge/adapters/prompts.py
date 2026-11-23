@@ -247,12 +247,45 @@ DRAFT_SYSTEM = (
     "不得编造数据或经历。只输出 JSON。"
 )
 
+DRAFT_SYSTEM_BY_TARGET = {
+    "question": DRAFT_SYSTEM,
+    "answer": (
+        "你为知乎已有问题撰写补充回答草稿（建议切入标题 + 回答正文）。"
+        "正文从海外受众的真实/模拟困惑切入，对比中文原意与海外认知落差，给出可落地的跨文化转译思路与适用边界，"
+        "并在结尾明确标注反馈来源（如模拟读者或海外评论样本）。不得编造数据或经历。只输出 JSON。"
+    ),
+    "article": (
+        "你为知乎专栏撰写深度出海本地化复盘文章草稿（文章标题 + 分节正文大纲与初稿）。"
+        "包含：1) 跨文化误读案例现场；2) 认知壁垒拆解；3) 不同受众的转译策略与边界；4) 给同行与创作者的实践建议，"
+        "并明确标注来源标签。不得编造数据或经历。只输出 JSON。"
+    ),
+    "pin": (
+        "你为知乎「想法」板块写一条轻量、精炼的跨文化出海速记（主题短标题 + 120–260 字想法正文，末尾附 2–3 个相关 #话题标签）。"
+        "直接亮出海外读者对中文术语的有趣误解与原意反差，引发评论区讨论，并如实注明来源标签。不得编造数据。只输出 JSON。"
+    ),
+}
+
+
+def draft_system_for(target_type: str = "question") -> str:
+    return DRAFT_SYSTEM_BY_TARGET.get(target_type, DRAFT_SYSTEM)
+
 
 def draft_user(ctx) -> str:
     lang = _ctx_lang(ctx)
     lang_line = f"目标市场语言：{lang.label}（{lang.markets}）\n" if lang.code != "en" else ""
+    target_type = getattr(ctx, "target_type", "question") or "question"
+    target_labels = {
+        "question": "知乎提问（标题须为问句 + 问题描述）",
+        "answer": "知乎补充回答（标题为回答切入点 + 回答正文）",
+        "article": "知乎专栏文章（文章标题 + 分节复盘正文）",
+        "pin": "知乎想法（短标题 + 精炼想法正文与 #话题标签）",
+    }
+    existing_titles = [str(e.get("title", "")) for e in (ctx.existing or [])[:3] if e.get("title")]
+    existing_line = f"知乎已有相关问题：{json.dumps(existing_titles, ensure_ascii=False)}\n" if existing_titles else ""
     return (
-        f"来源：{ctx.source_label}\n{lang_line}误解或评论：{ctx.source_text}\n相关术语：{ctx.term_surface}\n原意信息点：{ctx.key_point_text}\n"
+        f"目标板块与体裁：{target_labels.get(target_type, target_labels['question'])}\n"
+        f"来源：{ctx.source_label}\n{lang_line}{existing_line}"
+        f"误解或评论：{ctx.source_text}\n相关术语：{ctx.term_surface}\n原意信息点：{ctx.key_point_text}\n"
         '输出：{"title":"...","body":"..."}'
     )
 

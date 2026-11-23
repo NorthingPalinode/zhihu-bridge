@@ -37,10 +37,57 @@
       ],
       "title": "ExistingItem",
       "type": "object"
+    },
+    "FlowbackDestination": {
+      "additionalProperties": false,
+      "properties": {
+        "description": {
+          "title": "Description",
+          "type": "string"
+        },
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "primary": {
+          "default": false,
+          "title": "Primary",
+          "type": "boolean"
+        },
+        "targetType": {
+          "enum": [
+            "answer",
+            "question",
+            "article",
+            "pin"
+          ],
+          "title": "Targettype",
+          "type": "string"
+        },
+        "url": {
+          "title": "Url",
+          "type": "string"
+        }
+      },
+      "required": [
+        "targetType",
+        "label",
+        "description",
+        "url"
+      ],
+      "title": "FlowbackDestination",
+      "type": "object"
     }
   },
   "additionalProperties": false,
   "properties": {
+    "destinations": {
+      "items": {
+        "$ref": "#/$defs/FlowbackDestination"
+      },
+      "title": "Destinations",
+      "type": "array"
+    },
     "draft": {
       "$ref": "#/$defs/DraftBody"
     },
@@ -106,6 +153,17 @@
       "title": "Recommendationreason",
       "type": "string"
     },
+    "recommendedTarget": {
+      "default": "question",
+      "enum": [
+        "answer",
+        "question",
+        "article",
+        "pin"
+      ],
+      "title": "Recommendedtarget",
+      "type": "string"
+    },
     "sourceLabel": {
       "enum": [
         "模拟读者误解（非真实用户）",
@@ -114,6 +172,17 @@
         "守门待补材料"
       ],
       "title": "Sourcelabel",
+      "type": "string"
+    },
+    "targetType": {
+      "default": "question",
+      "enum": [
+        "answer",
+        "question",
+        "article",
+        "pin"
+      ],
+      "title": "Targettype",
       "type": "string"
     }
   },

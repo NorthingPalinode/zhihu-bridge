@@ -129,7 +129,8 @@ async def test_case_b_blocks_invented_hardware_claims_until_rewritten(deps, monk
     plain = next(v for v in blocked.variants if v.level == "plain")
     assert plain.exportState == "draft"
     assert {"调试承诺", "续航或功耗数值", "无依据的比较或认证"}.issubset({c.rule for c in plain.checks if c.status == "fail"})
-    assert blocked.evidence == []  # 该案例的知乎证据只来自实时检索及相应缓存。
+    assert {e.id for e in blocked.evidence} == {"B1#1", "B2#1", "B2#2", "B3#1"}
+    assert blocked.evidenceSource == "zhihu_curated"
 
     async def rewrite(*args):
         return {"segments": [{"text": verified_copy}]}

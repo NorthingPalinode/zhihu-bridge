@@ -6,7 +6,7 @@ import "@fontsource/source-serif-4/400.css";
 import "@fontsource/source-serif-4/600.css";
 import kanshanStill from "./assets/liu-kanshan-still.png";
 import kanshanWave from "./assets/liu-kanshan-wave.gif";
-import { pickAdapter, type Adapter } from "./lib/api";
+import { pickAdapter, zhihuQuestionAnswers, type Adapter } from "./lib/api";
 import { buildBridgeRows } from "./lib/bridge";
 import {
   ATTRIBUTION_LABEL, contentTypeLabel, DEFAULT_TARGET_LANGUAGE, evidenceSourceLabel, getTargetLanguage,
@@ -14,11 +14,12 @@ import {
 } from "./lib/labels";
 import { copyGate, initialState, reducer, selectedVariant, testIsStale, variantText } from "./lib/state";
 import type {
-  AudienceMeta, CaseMeta, ComplianceRule, Evidence, Level, Mode, QuestionDraftRequest, Reader, RiskCategory, RunRequest, RunSnapshot,
+  AudienceMeta, CaseMeta, ComplianceRule, DraftTarget, Evidence, FlowbackDestination, Level, Mode, QuestionDraft, QuestionDraftRequest, Reader, RiskCategory, RunRequest, RunSnapshot,
   SourceSegment, SseEvent, TargetLanguageCode, TargetLanguageMeta, Term, TestResult, Variant,
 } from "./lib/types";
 import { closeAnyBridgePicker, createBridgePicker, type PickerOption } from "./bridgePicker";
-import { mountZhihuCredentials } from "./zhihuCredentials";
+import { mountZhihuCredentials, type ZhihuCredentialsHandle } from "./zhihuCredentials";
+import { createZhihuTools, type ZhihuToolTab } from "./zhihuTools";
 import "./connected.css";
 
 const MAX_INPUT_CHARS = 400;
@@ -57,7 +58,6 @@ const empty = (text: string) => '<div class="note-empty">' + esc(text) + '</div>
 const notice = (text: string) => '<div class="meta">' + esc(text) + '</div>';
 const HIDDEN_NOTICE_RE = /候选条目|待人工审核|候选\s*[·,，]\s*待审核/;
 const visibleNotices = (notices: string[]) => notices.filter((n) => n && !HIDDEN_NOTICE_RE.test(n));
-const ZHIHU_HOME = "https://www.zhihu.com/";
 
 function sourceLink(url: string, title: string) {
   try {
@@ -234,7 +234,6 @@ function groupReaders(readers: Reader[]): PersonaGroup[] {
 function evidenceCard(e: Evidence, index: number, terms: string, animate: boolean) {
   const title = esc(e.title ?? "来源未注明标题");
   const roleOrStatus = e.status === "rejected" ? "已拒绝" : ROLE_LABEL[e.role];
-  const fetched = e.fetchedAt ? '<div class="meta" style="margin-top:8px">采集于 ' + esc(e.fetchedAt) + '</div>' : "";
   const delay = animate ? Math.min(index, 5) * 260 : 0;
   return '<div class="ev" id="ev-' + index + '" data-terms="' + terms + '" style="--evc:var(--brand);animation-delay:' + delay + 'ms"><div class="ev-inner">' +
     '<div class="ev-face"><div class="ev-top"><i class="dot"></i><span class="lvl">' + evidenceSourceLabel(e) +
@@ -242,7 +241,7 @@ function evidenceCard(e: Evidence, index: number, terms: string, animate: boolea
     esc(e.summary) + '</div><div class="ev-author"><span>' + esc(e.author ?? contentTypeLabel(e)) + '</span><span class="ev-flip">翻转 ↻</span></div></div>' +
     '<div class="ev-face ev-back"><div class="ev-title">' + title + '</div><div class="ev-sum">' +
     '<div class="ev-scope"><b>能支撑 · 可参考的范围</b>' + esc(e.supports) + '</div>' +
-    '<div class="ev-scope"><b>不能支撑 · 不能据此下的结论</b>' + esc(e.limits) + '</div></div>' + fetched + '<div class="ev-author">' +
+    '<div class="ev-scope"><b>不能支撑 · 不能据此下的结论</b>' + esc(e.limits) + '</div></div><div class="ev-author">' +
     ROLE_LABEL[e.role] + " · " + sourceLink(e.url, "打开原文 ↗") +
     '<span class="ev-flip">返回 ↺</span></div></div></div></div>';
 }
@@ -302,7 +301,13 @@ export function mountConnected(layout: Layout) {
   intro.append(introCopy, stage);
   hero.prepend(intro);
   let adapter: Adapter | undefined;
-  let credentials: ReturnType<typeof mountZhihuCredentials> | undefined;
+  let credentials: ZhihuCredentialsHandle | undefined;
+  let zhihuTools: ReturnType<typeof createZhihuTools> | undefined;
+  let useGlobalSearch = false;
+  let selectedKbIds: string[] = [];
+  let selectedKbLabels: Record<string, string> = {};
+  let activeDraftSource: QuestionDraftRequest["source"] | null = null;
+  let activeDraftTarget: DraftTarget = "question";
   let cases: CaseMeta[] = [];
   let current = initialState;
   let serial = 0;
@@ -350,9 +355,36 @@ export function mountConnected(layout: Layout) {
   input.insertAdjacentHTML(
     "afterend",
     '<div class="composer-count-row"><span id="charCount" class="char-count" aria-live="polite">0 / ' + MAX_INPUT_CHARS + "</span></div>" +
-    '<div class="composer-meta"><div class="home-controls" id="homeControls"></div></div>',
+    '<div class="composer-meta"><div class="home-controls" id="homeControls"></div>' +
+    '<div class="home-zhihu-bar" id="homeZhihuBar" hidden>' +
+      '<span class="hz-label">知乎增强</span>' +
+      '<button type="button" class="hz-chip" id="toggleGlobalSearch" aria-pressed="false" title="开启后在转译循证中自动补充全网搜索对照资料">全网对照</button>' +
+      '<button type="button" class="hz-chip" id="openKbPicker" data-open-zt="knowledge" title="关联知乎知识库参与术语与设定 RAG 检索">关联知识库</button>' +
+      '<button type="button" class="hz-chip" id="openZhidaHome" data-open-zt="zhida" title="用知乎直答提前追问文化背景或术语差异">知乎直答</button>' +
+      '<button type="button" class="hz-chip" id="openCreatorHome" data-open-zt="creator" title="导入本人知乎回答/文章/想法全文到转译舱（需个人密钥）">导入本人内容</button>' +
+    "</div></div>",
   );
   const homeControls = el("homeControls");
+  const syncHomeZhihuBar = () => {
+    const gBtn = document.getElementById("toggleGlobalSearch");
+    if (gBtn) {
+      gBtn.classList.toggle("on", useGlobalSearch);
+      gBtn.setAttribute("aria-pressed", String(useGlobalSearch));
+      gBtn.textContent = useGlobalSearch ? "✓ 全网对照已开" : "全网对照";
+    }
+    const kbBtn = document.getElementById("openKbPicker");
+    if (kbBtn) {
+      kbBtn.classList.toggle("on", selectedKbIds.length > 0);
+      if (selectedKbIds.length > 0) {
+        const first = selectedKbLabels[selectedKbIds[0]];
+        kbBtn.textContent = selectedKbIds.length === 1 && first
+          ? "知识库：" + first.slice(0, 10)
+          : "已关联 " + selectedKbIds.length + " 个知识库";
+      } else {
+        kbBtn.textContent = "关联知识库";
+      }
+    }
+  };
   const homeLang = createBridgePicker({
     id: "homeLang",
     ariaLabel: "目标转译语言",
@@ -460,21 +492,36 @@ export function mountConnected(layout: Layout) {
     },
   });
   workAudience.setOptions(audienceOptionsOf([GENERAL_AUDIENCE]), GENERAL_AUDIENCE.id);
-  status.before(langSelect.element, workAudience.element);
+  const workZhihuToolsBtn = document.createElement("button");
+  workZhihuToolsBtn.type = "button";
+  workZhihuToolsBtn.id = "workZhihuTools";
+  workZhihuToolsBtn.className = "tool work-only zhihu-tools-btn";
+  workZhihuToolsBtn.title = "打开知乎开放平台能力工作台（全网对照 / 直答 / 知识库 / 本人创作 / 额度）";
+  workZhihuToolsBtn.dataset.openZt = "quota";
+  workZhihuToolsBtn.textContent = "知乎能力";
+  status.before(langSelect.element, workAudience.element, workZhihuToolsBtn);
   for (const id of ["tDuel", "tSheet"]) el(id).style.setProperty("display", "none", "important");
   const demoEvidence = document.querySelector<HTMLElement>("#pEvidence .meta")!;
   demoEvidence.textContent = "点击卡片翻转";
-  el("evidence").insertAdjacentHTML("beforebegin", '<details class="guide evidence-guide"><summary>如何读证据卡？</summary>' +
+  el("evidence").insertAdjacentHTML("beforebegin",
+    '<div class="evidence-tools" id="evidenceTools" hidden>' +
+      '<button type="button" class="ev-tool-btn" data-open-zt="global">全网对照</button>' +
+      '<button type="button" class="ev-tool-btn" data-open-zt="zhida">直答追问</button>' +
+      '<button type="button" class="ev-tool-btn" data-open-zt="knowledge">知识库 RAG</button>' +
+      '<button type="button" class="ev-tool-btn" data-open-zt="quota">能力与额度</button>' +
+    '</div>' +
+    '<details class="guide evidence-guide"><summary>如何读证据卡？</summary>' +
     '<p>能支撑是这条资料可以帮助解释的含义或译法。不能支撑是证据到不了的结论。例如，天气讨论可以解释「回南天」的潮湿语境，产品功效需要另外的证明。</p></details>');
   el("guard").insertAdjacentHTML("beforebegin", '<div class="guard-bar" id="guardBar"></div>');
   el("guardSum").insertAdjacentHTML("beforebegin", '<button type="button" class="guard-db-btn" id="openRulesDb" title="查看本地法律法规与风俗习惯风险数据库">风险规则库</button>');
   el("guardSum").className = "meta guard-gate";
   el("pDeliver").insertAdjacentHTML("afterend", '<section class="panel" id="pCommunity" aria-labelledby="communityHeading">' +
     '<div class="panel-h"><span class="step-no">07</span><h3 id="communityHeading">回流知乎</h3></div>' +
-    '<ol class="flow-path"><li>选取复述里的误解，或粘贴一条海外评论。</li>' +
-    '<li>检索已有讨论，补充回答或生成提问草稿。</li>' +
-    '<li>审核后到知乎提交。后续检索命中公开讨论时，可再次用作转译证据。</li></ol>' +
-    '<div class="run-row" id="flowActions"></div></section>');
+    '<ol class="flow-path"><li>选取复述误解或粘贴海外评论，按需选择反哺体裁。</li>' +
+    '<li>检索已有讨论与回答摘要，生成回答 / 提问 / 专栏文章 / 想法草稿。</li>' +
+    '<li>一键复制并直达对应知乎板块，人工审核后发布。</li></ol>' +
+    '<div class="run-row" id="flowActions"></div>' +
+    '<div class="flow-targets" id="flowTargets" aria-label="按需选择反哺知乎板块"></div></section>');
   el("delTitle").insertAdjacentHTML("afterend", '<span class="meta deliver-gate" id="deliverGate"></span>');
   workbench.querySelectorAll<HTMLElement>(".panel").forEach((panel) => {
     const header = panel.querySelector<HTMLElement>(":scope > .panel-h");
@@ -569,6 +616,21 @@ export function mountConnected(layout: Layout) {
     const actions = el("flowActions");
     actions.innerHTML = fromTest + '<button class="btn btn-ghost" id="manualDraft"' +
       (ready ? "" : " disabled") + ">粘贴海外评论</button>";
+    const targetsEl = document.getElementById("flowTargets");
+    if (targetsEl) {
+      const targetItems: Array<{ id: DraftTarget; label: string; hint: string }> = [
+        { id: "answer", label: "写回答", hint: "到已有问题补充海外视角" },
+        { id: "question", label: "提问题", hint: "发起新的跨文化求解问题" },
+        { id: "article", label: "发文章", hint: "在知乎专栏写深度复盘" },
+        { id: "pin", label: "发想法", hint: "分享轻量跨文化速记" },
+      ];
+      targetsEl.innerHTML =
+        '<span class="flow-targets-lbl">直达板块：</span>' +
+        targetItems.map((it) =>
+          '<button type="button" class="flow-target-chip" data-flow-quick="' + it.id + '" title="' + esc(it.hint) + '"' +
+          (ready ? "" : " disabled") + ">" + esc(it.label) + " ↗</button>",
+        ).join("");
+    }
     actions.classList.remove("panel-body-pop");
     if (animate && !prefersReducedMotion()) {
       actions.style.setProperty("--reveal-delay", "180ms");
@@ -1401,6 +1463,8 @@ export function mountConnected(layout: Layout) {
       text: trimmedText,
       audienceId: validAudienceId,
       targetLanguage,
+      useGlobalSearch: next.useGlobalSearch ?? useGlobalSearch,
+      knowledgeBaseIds: next.knowledgeBaseIds ?? (selectedKbIds.length ? [...selectedKbIds] : undefined),
     };
     request = reqWithLang;
     closeAnyBridgePicker();
@@ -1667,17 +1731,119 @@ export function mountConnected(layout: Layout) {
     }
   }
 
-  function openDraft() {
+  const DRAFT_TARGET_META: Record<DraftTarget, {
+    label: string;
+    heading: string;
+    titleLabel: string;
+    bodyLabel: string;
+    ctaLabel: string;
+    fallbackUrl: string;
+    fallbackDesc: string;
+  }> = {
+    answer: {
+      label: "写回答",
+      heading: "补充回答草稿",
+      titleLabel: "回答切入点 / 对应问题",
+      bodyLabel: "补充回答正文",
+      ctaLabel: "去知乎写回答",
+      fallbackUrl: "https://www.zhihu.com/question/waiting",
+      fallbackDesc: "前往知乎对应问题页或「等你来答」补充海外视角",
+    },
+    question: {
+      label: "提问题",
+      heading: "提问草稿",
+      titleLabel: "提问标题",
+      bodyLabel: "问题描述",
+      ctaLabel: "去知乎提问题",
+      fallbackUrl: "https://www.zhihu.com/search?type=content&q=",
+      fallbackDesc: "核对同类讨论后从知乎顶部「提问」发起新问题",
+    },
+    article: {
+      label: "发文章",
+      heading: "知乎专栏文章草稿",
+      titleLabel: "文章标题",
+      bodyLabel: "专栏正文初稿",
+      ctaLabel: "去知乎发文章",
+      fallbackUrl: "https://zhuanlan.zhihu.com/write",
+      fallbackDesc: "直达知乎专栏写作页，发布深度本地化复盘",
+    },
+    pin: {
+      label: "发想法",
+      heading: "知乎想法草稿",
+      titleLabel: "想法主题",
+      bodyLabel: "想法正文（含 #话题标签）",
+      ctaLabel: "去知乎发想法",
+      fallbackUrl: "https://www.zhihu.com/pins",
+      fallbackDesc: "直达知乎想法板块，分享轻量跨文化速记",
+    },
+  };
+
+  function resolveDestinations(d: QuestionDraft): FlowbackDestination[] {
+    if (d.destinations && d.destinations.length) return d.destinations;
+    const firstQ = d.existing.find((x) => /^https:\/\/www\.zhihu\.com\/question\/[0-9]+/.test(x.url))?.url;
+    const qUrl = "https://www.zhihu.com/search?type=content&q=" + encodeURIComponent(d.query || "跨文化翻译");
+    const rec: DraftTarget = d.recommendedTarget ?? (d.recommendation === "answer_existing" && d.existing.length ? "answer" : "question");
+    return [
+      {
+        targetType: "answer",
+        label: "去知乎写回答",
+        description: firstQ ? "直达命中的知乎相关问题页，补充海外读者视角" : DRAFT_TARGET_META.answer.fallbackDesc,
+        url: firstQ || DRAFT_TARGET_META.answer.fallbackUrl,
+        primary: rec === "answer",
+      },
+      {
+        targetType: "question",
+        label: "去知乎提问题",
+        description: DRAFT_TARGET_META.question.fallbackDesc,
+        url: qUrl,
+        primary: rec === "question",
+      },
+      {
+        targetType: "article",
+        label: "去知乎发文章",
+        description: DRAFT_TARGET_META.article.fallbackDesc,
+        url: DRAFT_TARGET_META.article.fallbackUrl,
+        primary: rec === "article",
+      },
+      {
+        targetType: "pin",
+        label: "去知乎发想法",
+        description: DRAFT_TARGET_META.pin.fallbackDesc,
+        url: DRAFT_TARGET_META.pin.fallbackUrl,
+        primary: rec === "pin",
+      },
+    ];
+  }
+
+  function buildContextPrefill(): string {
+    const snap = current.run.snapshot;
+    if (!snap) return "";
+    const terms = snap.terms.slice(0, 3).map((t) => `「${t.surface}」`).join("、");
+    const src = snap.sourceSegments.map((s) => s.text).join("").trim().slice(0, 120);
+    return terms
+      ? `面向海外读者转译「${src}」时，${terms}容易因为文化或背景差异产生理解落差，希望结合知乎社区经验整理更贴切的跨文化表达。`
+      : `面向海外读者转译「${src}」时出现理解偏差，希望补充跨文化背景说明。`;
+  }
+
+  function openDraft(initialTarget: DraftTarget = "question") {
     invalidateDraft();
-    draftDialog.innerHTML = '<h3>回流知乎</h3><div class="draft"><label for="comment">粘贴一条海外评论或困惑</label>' +
-      '<textarea id="comment" rows="4" maxlength="1000"></textarea></div>' +
+    activeDraftTarget = initialTarget;
+    const pills = (["answer", "question", "article", "pin"] as DraftTarget[]).map((t) =>
+      '<button type="button" class="flow-mode-pill' + (t === activeDraftTarget ? " on" : "") +
+      '" data-pick-draft-target="' + t + '">' + esc(DRAFT_TARGET_META[t].label) + "</button>",
+    ).join("");
+    draftDialog.innerHTML = '<h3>回流知乎 · 按需生成草稿</h3>' +
+      '<div class="flow-mode-row"><span class="meta">反哺板块：</span>' + pills + "</div>" +
+      '<div class="draft"><label for="comment">粘贴一条海外评论、读者困惑，或点击下方一键带入当前转译语境</label>' +
+      '<textarea id="comment" rows="4" maxlength="1000" placeholder="例如：海外评论看不懂某个中文专有词，或想把本次跨文化拆解整理成知乎文章/想法…"></textarea>' +
+      '<div class="draft-helper-row"><button type="button" class="link-btn" id="fillDraftContext">一键填入当前转译语境</button></div></div>' +
       '<div class="modal-foot"><button class="btn btn-primary" id="generateDraft">查讨论并生成草稿</button><button class="btn btn-ghost" id="closeModal">关闭</button></div>';
     draftDialog.inert = false;
     draftDialog.classList.add("on");
     el("comment").focus();
   }
 
-  async function fetchDraft(source: QuestionDraftRequest["source"]) {
+  async function fetchDraft(source: QuestionDraftRequest["source"], targetType?: DraftTarget) {
     const snap = current.run.snapshot;
     if (!adapter || !snap) return;
     const cleanedText = source.text.trim().slice(0, 1000);
@@ -1686,37 +1852,79 @@ export function mountConnected(layout: Layout) {
       return;
     }
     const safeSource: QuestionDraftRequest["source"] = { ...source, text: cleanedText };
+    activeDraftSource = safeSource;
+    if (targetType) activeDraftTarget = targetType;
     draftController?.abort();
     const controller = new AbortController();
     draftController = controller;
     const modal = draftDialog;
     const footer = '<div class="modal-foot"><button class="btn btn-ghost" id="closeModal">关闭</button></div>';
-    modal.innerHTML = '<h3>回流知乎</h3><p class="guide">正在查找已有讨论并整理草稿…</p>' + wait + footer;
+    const loadingTitle = targetType ? `回流知乎 · ${DRAFT_TARGET_META[targetType].heading}` : "回流知乎";
+    modal.innerHTML = "<h3>" + esc(loadingTitle) + '</h3><p class="guide">正在查找知乎已有讨论并按所选板块生成草稿…</p>' + wait + footer;
     modal.inert = false;
     modal.classList.add("on");
     try {
       const termIds = snap.terms.filter((t) => safeSource.keyPointId && t.keyPointIds.includes(safeSource.keyPointId)).map((t) => t.id);
-      const d = await adapter.draft({ source: safeSource, runId: snap.runId, caseId: snap.caseId, termIds }, controller.signal);
+      const d = await adapter.draft(
+        { source: safeSource, runId: snap.runId, caseId: snap.caseId, termIds, targetType: targetType ?? null },
+        controller.signal,
+      );
       if (controller.signal.aborted || !modal.classList.contains("on")) return;
+      const effectiveTarget: DraftTarget = d.targetType ?? targetType ?? "question";
+      const recommendedTarget: DraftTarget = d.recommendedTarget ?? (d.recommendation === "answer_existing" && d.existing.length > 0 ? "answer" : "question");
+      activeDraftTarget = effectiveTarget;
+      const meta = DRAFT_TARGET_META[effectiveTarget];
+      const destinations = resolveDestinations(d);
+      const activeDest = destinations.find((x) => x.targetType === effectiveTarget) ?? destinations[0];
       const recommendExisting = d.recommendation === "answer_existing" && d.existing.length > 0;
       const recommendation = ["failed", "none"].includes(d.existingSource)
-        ? "请先在知乎核对相似讨论，再决定补答或提问。"
-        : recommendExisting ? "建议优先在已有讨论补充回答" : "建议核对相关讨论后发起新问题";
-      modal.innerHTML = '<h3>回流知乎 · 提问草稿</h3>' + notice(d.sourceLabel + " · " + statusText(d.mode)) +
-        '<div class="flow-summary"><b>' + recommendation + '</b>' +
-        (["failed", "none"].includes(d.existingSource) ? "" : notice(d.recommendationReason)) + '</div>' +
-        '<details open class="guide"><summary>已有讨论 · ' + d.existing.length + ' 条</summary>' + notice(d.existingNote) +
-        (d.existing.length ? '<ul>' + d.existing.map((x) => '<li>' + sourceLink(x.url, x.title) + '</li>').join("") + '</ul>' : '') +
-        '</details><div class="draft"><label for="draftTitle">草稿标题</label><input id="draftTitle">' +
-        '<label for="draftText">草稿正文</label><textarea id="draftText" rows="5"></textarea></div>' +
-        '<div class="modal-foot"><span class="meta">点击“打开知乎”即可跳转至发布页</span>' +
-        sourceLink(ZHIHU_HOME, "打开知乎 ↗") +
-        '<button class="btn btn-primary" id="copyDraft">复制草稿</button><button class="btn btn-ghost" id="closeModal">完成</button></div>';
+        ? "请先在知乎核对相似讨论，再选择对应板块发布。"
+        : recommendExisting ? "建议优先在已有讨论下写回答，也可按需切换为文章或想法" : "建议核对相关讨论后发起新问题，或整理为专栏文章/想法";
+      const targetTabs = (["answer", "question", "article", "pin"] as DraftTarget[]).map((t) => {
+        const isRec = t === recommendedTarget;
+        return '<button type="button" class="flow-mode-pill' + (t === effectiveTarget ? " on" : "") +
+          '" data-switch-draft-target="' + t + '">' + esc(DRAFT_TARGET_META[t].label) +
+          (isRec ? '<span class="flow-rec-dot">推荐</span>' : "") + "</button>";
+      }).join("");
+      const existingList = d.existing.length
+        ? '<ul class="flow-existing-list">' + d.existing.map((x, idx) => {
+            const canPreviewAnswers = adapter?.kind === "backend" && /^https:\/\/www\.zhihu\.com\/question\/[0-9]+/.test(x.url);
+            return '<li class="flow-existing-item"><div class="flow-existing-row">' +
+              sourceLink(x.url, x.title + " ↗") +
+              (canPreviewAnswers
+                ? '<button type="button" class="flow-qa-btn" data-qa-url="' + esc(x.url) + '" data-qa-slot="qaSlot' + idx + '">看回答摘要</button>'
+                : "") +
+              '</div><div class="flow-qa-slot" id="qaSlot' + idx + '" hidden></div></li>';
+          }).join("") + "</ul>"
+        : "";
+      const otherDestLinks = destinations
+        .filter((dest) => dest.targetType !== effectiveTarget)
+        .map((dest) => sourceLink(dest.url, dest.label + " ↗"))
+        .join('<span class="flow-sep">·</span>');
+
+      modal.innerHTML = "<h3>回流知乎 · " + esc(meta.heading) + "</h3>" +
+        notice(d.sourceLabel + " · " + statusText(d.mode)) +
+        '<div class="flow-mode-row" role="tablist" aria-label="切换反哺知乎体裁">' + targetTabs + "</div>" +
+        '<div class="flow-summary"><b>' + esc(recommendation) + "</b>" +
+        (["failed", "none"].includes(d.existingSource) ? "" : notice(d.recommendationReason)) + "</div>" +
+        '<details open class="guide"><summary>已有讨论 · ' + d.existing.length + " 条</summary>" + notice(d.existingNote) +
+        existingList +
+        '</details><div class="draft"><label for="draftTitle">' + esc(meta.titleLabel) + '</label><input id="draftTitle">' +
+        '<label for="draftText">' + esc(meta.bodyLabel) + '</label><textarea id="draftText" rows="5"></textarea></div>' +
+        '<div class="flow-dest-card">' +
+          '<div class="flow-dest-info"><b>' + esc(activeDest.label) + '</b><span>' + esc(activeDest.description) + "</span></div>" +
+          '<div class="flow-dest-actions">' +
+            '<button type="button" class="btn btn-primary" id="copyAndGoZhihu" data-dest-url="' + esc(activeDest.url) + '" data-dest-label="' + esc(activeDest.label) + '">复制并' + esc(activeDest.label) + " ↗</button>" +
+            '<button type="button" class="btn btn-ghost" id="copyDraft">仅复制草稿</button>' +
+          "</div>" +
+        "</div>" +
+        '<div class="modal-foot flow-other-bar"><span class="meta">其他板块直达：</span>' + otherDestLinks +
+        '<span class="spacer"></span><button class="btn btn-ghost" id="closeModal">完成</button></div>';
       el<HTMLInputElement>("draftTitle").value = d.draft.title;
       el<HTMLTextAreaElement>("draftText").value = d.draft.body;
-      layout.tlog("question.draft", d.sourceLabel, "ok");
+      layout.tlog("question.draft", `${d.sourceLabel} · ${meta.label}`, "ok");
     } catch (e) {
-      if (!controller.signal.aborted && modal.classList.contains("on")) modal.innerHTML = '<h3>知乎提问草稿</h3>' + empty(errorText(e)) + footer;
+      if (!controller.signal.aborted && modal.classList.contains("on")) modal.innerHTML = '<h3>回流知乎</h3>' + empty(errorText(e)) + footer;
     } finally {
       if (!controller.signal.aborted) void credentials?.refresh();
     }
@@ -1938,7 +2146,96 @@ export function mountConnected(layout: Layout) {
       })();
       return;
     }
-    if (target.closest("#manualDraft")) openDraft();
+    if (target.closest("#toggleGlobalSearch")) {
+      useGlobalSearch = !useGlobalSearch;
+      syncHomeZhihuBar();
+      layout.toast(useGlobalSearch ? "已开启全网对照检索，转译时将补充站外语境资料" : "已关闭全网对照检索");
+      return;
+    }
+    const openZtTab = target.closest<HTMLElement>("[data-open-zt]")?.dataset.openZt as ZhihuToolTab | undefined;
+    if (openZtTab && zhihuTools) {
+      zhihuTools.open(openZtTab);
+      return;
+    }
+    if (target.closest("#manualDraft")) {
+      openDraft("question");
+      return;
+    }
+    const quickTarget = target.closest<HTMLElement>("[data-flow-quick]")?.dataset.flowQuick as DraftTarget | undefined;
+    if (quickTarget) {
+      if (draftAction.length > 0) void fetchDraft(draftAction[0], quickTarget);
+      else openDraft(quickTarget);
+      return;
+    }
+    const pickDraftTarget = target.closest<HTMLElement>("[data-pick-draft-target]")?.dataset.pickDraftTarget as DraftTarget | undefined;
+    if (pickDraftTarget) {
+      activeDraftTarget = pickDraftTarget;
+      draftDialog.querySelectorAll<HTMLElement>("[data-pick-draft-target]").forEach((btn) => {
+        btn.classList.toggle("on", btn.dataset.pickDraftTarget === pickDraftTarget);
+      });
+      return;
+    }
+    if (target.closest("#fillDraftContext")) {
+      const ta = document.getElementById("comment") as HTMLTextAreaElement | null;
+      if (ta) {
+        ta.value = buildContextPrefill();
+        ta.focus();
+      }
+      return;
+    }
+    const switchTarget = target.closest<HTMLElement>("[data-switch-draft-target]")?.dataset.switchDraftTarget as DraftTarget | undefined;
+    if (switchTarget && activeDraftSource && switchTarget !== activeDraftTarget) {
+      void fetchDraft(activeDraftSource, switchTarget);
+      return;
+    }
+    const qaBtn = target.closest<HTMLButtonElement>("[data-qa-url]");
+    if (qaBtn) {
+      const qUrl = qaBtn.dataset.qaUrl!;
+      const slotId = qaBtn.dataset.qaSlot!;
+      const slot = document.getElementById(slotId);
+      if (slot) {
+        if (!slot.hidden && slot.dataset.loaded === "1") {
+          slot.hidden = true;
+          qaBtn.textContent = "看回答摘要";
+          return;
+        }
+        slot.hidden = false;
+        if (slot.dataset.loaded === "1") {
+          qaBtn.textContent = "收起摘要";
+          return;
+        }
+        qaBtn.disabled = true;
+        qaBtn.textContent = "加载中…";
+        slot.innerHTML = '<div class="meta">正在拉取知乎已有回答摘要…</div>';
+        void (async () => {
+          try {
+            const res = await zhihuQuestionAnswers(qUrl, 0, 4);
+            slot.dataset.loaded = "1";
+            if (!res.items.length) {
+              slot.innerHTML = '<div class="meta">该问题暂未返回可展示的回答摘要。</div>';
+            } else {
+              const totalHint = typeof res.paging.totals === "number" ? `（共约 ${res.paging.totals} 条回答，展示前 ${res.items.length} 条）` : "";
+              slot.innerHTML =
+                '<div class="meta">已有回答摘要' + esc(totalHint) + "</div>" +
+                '<ul class="qa-summary-list">' +
+                res.items.map((ans) =>
+                  '<li><p>' + esc(ans.summary.slice(0, 180)) + (ans.summary.length > 180 ? "…" : "") + "</p>" +
+                  sourceLink(ans.url, "查看原回答 ↗") + "</li>",
+                ).join("") +
+                "</ul>";
+            }
+            qaBtn.textContent = "收起摘要";
+            void credentials?.refresh();
+          } catch (err) {
+            slot.innerHTML = '<div class="meta">' + esc(errorText(err)) + "</div>";
+            qaBtn.textContent = "重试摘要";
+          } finally {
+            qaBtn.disabled = false;
+          }
+        })();
+      }
+      return;
+    }
     const button = target.closest<HTMLElement>("[data-service-misreading]");
     if (button) {
       const source = draftAction[Number(button.dataset.serviceMisreading)];
@@ -1946,8 +2243,17 @@ export function mountConnected(layout: Layout) {
     }
     if (target.closest("#generateDraft")) {
       const text = el<HTMLTextAreaElement>("comment").value.trim();
-      if (text) void fetchDraft({ kind: "manual", text });
-      else layout.toast("请先粘贴评论");
+      if (text) void fetchDraft({ kind: "manual", text }, activeDraftTarget);
+      else layout.toast("请先粘贴评论或点击填入当前转译语境");
+    }
+    const copyGo = target.closest<HTMLButtonElement>("#copyAndGoZhihu");
+    if (copyGo) {
+      const destUrl = copyGo.dataset.destUrl || "https://www.zhihu.com/";
+      const destLabel = copyGo.dataset.destLabel || "知乎";
+      const content = el<HTMLInputElement>("draftTitle").value + "\n\n" + el<HTMLTextAreaElement>("draftText").value;
+      void copy(content, "草稿，正在打开" + destLabel);
+      window.open(destUrl, "_blank", "noopener,noreferrer");
+      return;
     }
     if (target.closest("#copyDraft")) {
       void copy(el<HTMLInputElement>("draftTitle").value + "\n\n" + el<HTMLTextAreaElement>("draftText").value, "草稿");
@@ -1975,7 +2281,38 @@ export function mountConnected(layout: Layout) {
         audienceOptionsOf(allHomeAudiences),
         matchedInitial?.defaultAudienceId ?? GENERAL_AUDIENCE.id,
       );
-      if (service.kind === "backend") credentials = mountZhihuCredentials();
+      if (service.kind === "backend") {
+        credentials = mountZhihuCredentials();
+        zhihuTools = createZhihuTools({
+          getSourceText: () =>
+            document.body.classList.contains("state-work")
+              ? current.run.sourceSegments.map((s) => s.text).join("")
+              : input.value,
+          getTerms: () => current.run.terms,
+          isPersonalMode: () => credentials?.getMode() === "personal",
+          openCredentialDialog: () => credentials?.openDialog(),
+          getSelectedKbIds: () => selectedKbIds,
+          setSelectedKbIds: (ids, labels) => {
+            selectedKbIds = ids;
+            selectedKbLabels = { ...selectedKbLabels, ...labels };
+            syncHomeZhihuBar();
+          },
+          onImportToComposer: (text, title) => {
+            if (document.body.classList.contains("state-work")) resetWorkbench();
+            input.value = text;
+            updateComposerMeta();
+            input.focus();
+            layout.toast(title ? `已导入「${title.slice(0, 18)}」至输入框` : "已导入本人知乎内容至输入框");
+          },
+          toast: (msg) => layout.toast(msg),
+          refreshCredentials: () => { void credentials?.refresh(); },
+        });
+        el("homeZhihuBar").hidden = false;
+        el("evidenceTools").hidden = false;
+        syncHomeZhihuBar();
+      } else {
+        workZhihuToolsBtn.style.setProperty("display", "none", "important");
+      }
       homeStatus.textContent = allowStub ? statusText(health.generationMode) :
         (health.zhihuLive ? "知乎实时检索已配置" : "知乎来源库可用") +
         (health.generationMode === "live" ? " · 转译模型已配置" : " · 转译模型待配置");

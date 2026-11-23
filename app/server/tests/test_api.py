@@ -258,3 +258,173 @@ def test_sse_emits_keepalive_during_slow_run(make_settings):
     assert ": keep-alive" in r.text
     evs = sse(r)
     assert [e["type"] for e in evs] == ["started", "terms", "evidence", "ready"]
+
+
+def test_zhihu_extended_apis_and_personal_gate(make_settings):
+    import base64
+
+    def zhihu(req: httpx.Request) -> httpx.Response:
+        p = req.url.path
+        if p == "/api/v1/quota":
+            return httpx.Response(200, json={
+                "Code": 0,
+                "Message": "success",
+                "Data": [
+                    {"APIID": "zhihu_search", "APIName": "知乎搜索", "TotalQuota": 100, "TotalUsed": 2, "RemainingQuota": 98},
+                    {"APIID": "global_search", "APIName": "全网搜索", "TotalQuota": 100, "TotalUsed": 1, "RemainingQuota": 99},
+                    {"APIID": "question_discovery", "APIName": "问题发现", "TotalQuota": 100, "TotalUsed": 0, "RemainingQuota": 100},
+                    {"APIID": "zhida_openai", "APIName": "知乎直答", "TotalQuota": 50, "TotalUsed": 3, "RemainingQuota": 47},
+                    {"APIID": "knowledge", "APIName": "知识库", "TotalQuota": 50, "TotalUsed": 0, "RemainingQuota": 50},
+                    {"APIID": "creator", "APIName": "创作能力", "TotalQuota": 50, "TotalUsed": 0, "RemainingQuota": 50},
+                ],
+            })
+        if p == "/api/v1/content/global_search":
+            return httpx.Response(200, json={
+                "Code": 0,
+                "Data": {"HasMore": False, "Items": [{
+                    "Title": "FTC Dietary Supplement Guide",
+                    "ContentText": "Claims about curing disease require clinical substantiation.",
+                    "Url": "https://example.org/ftc-guide",
+                    "ContentType": "web",
+                }]},
+            })
+        if p == "/api/v1/content/question_answers":
+            return httpx.Response(200, json={
+                "Code": 0,
+                "Data": {
+                    "Paging": {"IsEnd": True, "Totals": 1},
+                    "Items": [{"ContentType": "answer", "ContentToken": "999", "Summary": "把天劫当作进阶考验更容易理解。", "Url": "https://www.zhihu.com/question/123456/answer/999"}],
+                },
+            })
+        if p == "/v1/chat/completions":
+            return httpx.Response(200, json={
+                "id": "chatcmpl-test",
+                "model": "zhida-fast-1p5",
+                "choices": [{"index": 0, "message": {"role": "assistant", "reasoning_content": "先拆解语境", "content": "「渡劫」在跨文化转译中常译为 heavenly tribulation。"}}],
+            })
+        if p == "/api/v1/knowledge/bases":
+            return httpx.Response(200, json={
+                "Code": 0,
+                "Data": {"Items": [{"KnowledgeBaseID": "7526139256098382426", "Name": "品牌合规术语库", "Relation": "created", "IsDefault": True, "Visibility": "private", "ContentCount": 3}]},
+            })
+        if p == "/api/v1/knowledge/bases/7526139256098382426/items":
+            return httpx.Response(200, json={
+                "Code": 0,
+                "Data": {"HasMore": False, "NextCursor": "", "Items": [{"RecallContentID": "c1", "ContentType": "file", "Title": "出海合规白皮书.pdf", "Abstract": "严禁疾病疗效宣称"}]},
+            })
+        if p == "/api/v1/knowledge/search":
+            return httpx.Response(200, json={
+                "Code": 0,
+                "Data": {"Items": [{"RecallContentID": "c1", "Title": "出海合规白皮书.pdf", "Content": ["清热去火在北美市场应转译为 herbal wellness support。"], "OriginUrl": "https://www.zhihu.com/knowledge-base/7526139256098382426"}]},
+            })
+        if p == "/api/v1/knowledge/files":
+            return httpx.Response(200, json={
+                "Code": 0,
+                "Data": {"KnowledgeBaseID": "7526139256098382426", "RecallContentID": "c2", "FileName": "terms.txt", "FileSize": 12, "Title": "terms.txt"},
+            })
+        if p == "/api/v1/user/content_detail":
+            return httpx.Response(200, json={
+                "Code": 0,
+                "Data": {"ContentType": "answer", "ContentToken": "777", "Title": "我的出海转译复盘", "Body": "<p>先看目标读者背景，再做语义取舍。</p>", "Url": "https://www.zhihu.com/question/123456/answer/777"},
+            })
+        if p == "/api/v1/user/content_comments":
+            return httpx.Response(200, json={
+                "Code": 0,
+                "Data": {"Paging": {"IsEnd": True}, "Items": [{"Comment": {"Content": "讲得很透彻", "LikeCount": 12}, "Children": []}]},
+            })
+        if p == "/api/v1/user/creator_account_stats":
+            return httpx.Response(200, json={
+                "Code": 0,
+                "Data": {"ContentType": "all", "Status": "ok", "Metrics": {"views": 1200, "likes": 85}},
+            })
+        if p == "/api/v1/user/creator_content_stats":
+            return httpx.Response(200, json={
+                "Code": 0,
+                "Data": {"Items": [{"Title": "我的出海转译复盘", "Url": "https://www.zhihu.com/question/123456/answer/777", "Metrics": {"views": 420, "likes": 30}}]},
+            })
+        return httpx.Response(404, json={"Code": 40004, "Message": f"unexpected path {p}"})
+
+    settings = make_settings(ZHIHU_LIVE_ENABLED="true", ZHIHU_ACCESS_SECRET="shared-secret-not-real")
+    deps = build_deps(settings, zhihu_transport=httpx.MockTransport(zhihu))
+    c = TestClient(create_app(deps=deps))
+
+    # 1. Quota lists only the 6 supported API groups and excludes hot_list / user data
+    q = c.get("/api/zhihu/quota")
+    assert q.status_code == 200
+    q_body = q.json()
+    ids = {item["apiId"] for item in q_body["items"]}
+    assert ids == {"zhihu_search", "global_search", "question_discovery", "zhida_openai", "knowledge", "creator"}
+    assert "hot_list" not in ids and "user_contents" not in ids and "followees" not in ids and "favorites" not in ids
+
+    # 2. Shared-accessible extended endpoints work
+    gs = c.post("/api/zhihu/global-search", json={"query": "FTC dietary supplement", "count": 5})
+    assert gs.status_code == 200 and gs.json()["items"][0]["title"] == "FTC Dietary Supplement Guide"
+
+    qa = c.get("/api/zhihu/question-answers", params={"questionUrl": "https://www.zhihu.com/question/123456"})
+    assert qa.status_code == 200 and "把天劫当作进阶考验" in qa.json()["items"][0]["summary"]
+
+    zd = c.post("/api/zhihu/zhida", json={"query": "渡劫怎么译更自然？", "model": "zhida-fast-1p5", "term": "渡劫"})
+    assert zd.status_code == 200 and "heavenly tribulation" in zd.json()["content"]
+
+    kbs = c.get("/api/zhihu/knowledge/bases")
+    assert kbs.status_code == 200 and kbs.json()["items"][0]["knowledgeBaseId"] == "7526139256098382426"
+
+    kbi = c.get("/api/zhihu/knowledge/bases/7526139256098382426/items")
+    assert kbi.status_code == 200 and kbi.json()["items"][0]["title"] == "出海合规白皮书.pdf"
+
+    kbsr = c.post("/api/zhihu/knowledge/search", json={"query": "清热去火", "knowledgeBaseIds": ["7526139256098382426"]})
+    assert kbsr.status_code == 200 and "herbal wellness" in kbsr.json()["items"][0]["content"][0]
+
+    # 3. Personal-only endpoints reject shared mode with 403
+    assert c.post("/api/zhihu/knowledge/upload", json={"fileName": "terms.txt", "contentBase64": base64.b64encode(b"hello terms!").decode()}).status_code == 403
+    assert c.get("/api/zhihu/creator/content", params={"contentUrl": "https://www.zhihu.com/question/123456/answer/777"}).status_code == 403
+    assert c.get("/api/zhihu/creator/comments", params={"contentUrl": "https://www.zhihu.com/question/123456/answer/777"}).status_code == 403
+    assert c.get("/api/zhihu/creator/account-stats").status_code == 403
+    assert c.get("/api/zhihu/creator/content-stats", params={"contentUrl": "https://www.zhihu.com/question/123456/answer/777"}).status_code == 403
+
+    # 4. After importing personal Access Secret, upload + creator endpoints succeed
+    sess = c.post("/api/zhihu/session", json={"accessSecret": "personal-secret-not-real"})
+    assert sess.status_code == 200
+
+    up = c.post("/api/zhihu/knowledge/upload", json={
+        "fileName": "terms.txt",
+        "contentBase64": base64.b64encode(b"hello terms!").decode(),
+        "knowledgeBaseId": "7526139256098382426",
+    })
+    assert up.status_code == 201 and up.json()["fileName"] == "terms.txt"
+
+    cd = c.get("/api/zhihu/creator/content", params={"contentUrl": "https://www.zhihu.com/question/123456/answer/777"})
+    assert cd.status_code == 200 and "先看目标读者背景" in cd.json()["plainText"]
+
+    cc = c.get("/api/zhihu/creator/comments", params={"contentUrl": "https://www.zhihu.com/question/123456/answer/777"})
+    assert cc.status_code == 200 and cc.json()["items"][0]["comment"]["content"] == "讲得很透彻"
+
+    ast = c.get("/api/zhihu/creator/account-stats", params={"contentType": "all"})
+    assert ast.status_code == 200 and ast.json()["metrics"]["views"] == 1200
+
+    cst = c.get("/api/zhihu/creator/content-stats", params={"contentUrl": "https://www.zhihu.com/question/123456/answer/777"})
+    assert cst.status_code == 200 and cst.json()["items"][0]["metrics"]["views"] == 420
+
+
+def test_flowback_multi_target_modes_and_destinations(make_settings):
+    c = make_client(make_settings)
+    base_payload = {
+        "caseId": "case_a",
+        "termIds": ["t1"],
+        "source": {"kind": "manual", "text": "Why does a storm decide if he becomes immortal?", "keyPointId": "kp1"},
+    }
+    for target_type, expected_host_path in [
+        ("answer", "https://www.zhihu.com/question/"),
+        ("question", "https://www.zhihu.com/search?type=content&q="),
+        ("article", "https://zhuanlan.zhihu.com/write"),
+        ("pin", "https://www.zhihu.com/pins"),
+    ]:
+        r = c.post("/api/questions/draft", json={**base_payload, "targetType": target_type})
+        assert r.status_code == 200, r.text
+        data = r.json()
+        assert data["targetType"] == target_type
+        assert data["recommendedTarget"] in ("answer", "question", "article", "pin")
+        dest_map = {d["targetType"]: d for d in data["destinations"]}
+        assert set(dest_map.keys()) == {"answer", "question", "article", "pin"}
+        assert dest_map[target_type]["url"].startswith(expected_host_path)
+        assert data["draft"]["title"].strip() and data["draft"]["body"].strip()

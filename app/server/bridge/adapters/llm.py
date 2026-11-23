@@ -50,6 +50,7 @@ class DraftContext:
     query: str
     existing: list[dict]
     target_language: str = "en"
+    target_type: str = "question"
 
 
 class LLMAdapter(Protocol):

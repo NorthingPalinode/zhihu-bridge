@@ -114,6 +114,15 @@ async def execute_run(req: RunRequest, deps: Deps) -> AsyncIterator[dict]:
         if should_search
         else ([], {})
     )
+    extra_fetched: list[Evidence] = []
+    if req.useGlobalSearch:
+        g_ev, g_excerpts = await _retrieve_global_evidence(text, terms, deps, notices, query=query, aliases=aliases)
+        extra_fetched.extend(g_ev)
+        excerpts.update(g_excerpts)
+    if req.knowledgeBaseIds:
+        kb_ev, kb_excerpts = await _retrieve_knowledge_evidence(text, terms, req.knowledgeBaseIds, deps, notices, query=query)
+        extra_fetched.extend(kb_ev)
+        excerpts.update(kb_excerpts)
     curated_by_url = {e.url: e for e in curated}
     fetched_urls = {e.url for e in fetched}
     evidence = []
@@ -126,6 +135,15 @@ async def execute_run(req: RunRequest, deps: Deps) -> AsyncIterator[dict]:
         if e.id in excerpts:
             evidence_excerpts[merged.id] = excerpts[e.id]
     evidence.extend(e for e in curated if e.url not in fetched_urls)
+    seen_all_urls = {e.url for e in evidence}
+    for e in extra_fetched:
+        if e.url and e.url in seen_all_urls:
+            continue
+        if e.url:
+            seen_all_urls.add(e.url)
+        evidence.append(e)
+        if e.id in excerpts:
+            evidence_excerpts[e.id] = excerpts[e.id]
     ev_source = _evidence_source(evidence)
     yield ev("evidence", {"evidence": [e.model_dump() for e in evidence], "evidenceSource": ev_source, "notices": notices})
 
@@ -313,6 +331,119 @@ async def _retrieve_evidence(text: str, terms: list[Term], deps: Deps, notices: 
             break
     if not out:
         notices.append("知乎检索未返回可展示的来源")
+    return out, excerpts
+
+
+async def _retrieve_global_evidence(
+    text: str,
+    terms: list[Term],
+    deps: Deps,
+    notices: list[str],
+    *,
+    query: str | None,
+    aliases: dict[str, list[str]],
+) -> tuple[list[Evidence], dict[str, str]]:
+    if deps.zhihu_auth_failed or not deps.zhihu.enabled:
+        notices.append("全网对照检索未启用（需开启知乎实时凭据或导入个人密钥）")
+        return [], {}
+    base = " ".join(t.surface for t in terms[:3]) or text[:20]
+    q = query or f"{base} 英文 含义"
+    try:
+        items, _src = await deps.zhihu.global_search(q, count=4)
+    except ZhihuError as exc:
+        if exc.kind == "budget":
+            notices.append("全网搜索今日共享额度已用完，已自动降级为仅知乎站内循证。")
+        elif exc.kind == "rate_limit":
+            notices.append("全网搜索触发频率或额度限制，已自动降级。")
+        else:
+            notices.append(f"全网对照检索暂不可用（{exc.kind}），已自动跳过。")
+        return [], {}
+    out: list[Evidence] = []
+    excerpts: dict[str, str] = {}
+    for it in items:
+        body = it.get("contentText", "")
+        title = it.get("title", "")
+        url = it.get("url", "")
+        if not title or not url:
+            continue
+        matched = [
+            t for t in terms
+            if any(word in title or word in body for word in (t.surface, *aliases.get(t.id, [])))
+        ]
+        ev_id = f"G{len(out) + 1}"
+        if body:
+            excerpts[ev_id] = (body[:EVIDENCE_EXCERPT_CHARS] + "…") if len(body) > EVIDENCE_EXCERPT_CHARS else body
+        host = it.get("host") or "全网来源"
+        out.append(Evidence(
+            id=ev_id,
+            provider="other",
+            sourceMode="other",
+            contentType="other",
+            title=title,
+            author=it.get("author") or host,
+            url=url,
+            summary=(body[:EVIDENCE_SUMMARY_CHARS] + "…") if len(body) > EVIDENCE_SUMMARY_CHARS else (body or f"来自 {host} 的全网对照资料"),
+            role="context",
+            supports="来自知乎开放平台全网搜索的站外对照信息，可辅助核对外部语境或行业规范。",
+            limits="站外搜索摘录需结合原站权威性自行核实，不能单独作为合规背书。",
+            termIds=[t.id for t in matched],
+            fetchedAt=it.get("fetchedAt"),
+            status="candidate",
+        ))
+        if len(out) == 2:
+            break
+    return out, excerpts
+
+
+async def _retrieve_knowledge_evidence(
+    text: str,
+    terms: list[Term],
+    kb_ids: list[str],
+    deps: Deps,
+    notices: list[str],
+    *,
+    query: str | None,
+) -> tuple[list[Evidence], dict[str, str]]:
+    if deps.zhihu_auth_failed or not deps.zhihu.enabled:
+        notices.append("知乎知识库检索未启用（需导入个人 Access Secret 或开启服务端密钥）")
+        return [], {}
+    q = query or (" ".join(t.surface for t in terms[:3]) or text[:40])
+    try:
+        items = await deps.zhihu.knowledge_search(q, kb_ids=kb_ids[:5], limit=3)
+    except ZhihuError as exc:
+        if exc.kind == "budget":
+            notices.append("知识库共享额度已用完，已跳过知识库检索。")
+        else:
+            notices.append(f"知乎知识库检索暂不可用（{exc.kind}），已自动跳过。")
+        return [], {}
+    out: list[Evidence] = []
+    excerpts: dict[str, str] = {}
+    for it in items:
+        chunks = it.get("content") or []
+        joined = " / ".join(chunks)
+        title = it.get("title") or "知乎知识库片段"
+        ev_id = f"K{len(out) + 1}"
+        if joined:
+            excerpts[ev_id] = (joined[:EVIDENCE_EXCERPT_CHARS] + "…") if len(joined) > EVIDENCE_EXCERPT_CHARS else joined
+        matched = [t for t in terms if t.surface in title or t.surface in joined]
+        out.append(Evidence(
+            id=ev_id,
+            provider="zhihu",
+            sourceMode="zhihu_live",
+            contentType="glossary",
+            title=title,
+            author="知乎知识库",
+            url=it.get("originUrl") or "https://www.zhihu.com/",
+            summary=(joined[:EVIDENCE_SUMMARY_CHARS] + "…") if len(joined) > EVIDENCE_SUMMARY_CHARS else (joined or "已命中个人知识库资料"),
+            role="setting",
+            supports="来自你关联的知乎知识库 RAG 检索，可用于统一品牌术语表或既定设定约束。",
+            limits="知识库片段为按句召回结果，引用关键条款前请核对知识库原文档。",
+            termIds=[t.id for t in matched],
+            fetchedAt=now_iso(),
+            status="reviewed",
+        ))
+        if len(out) == 2:
+            break
     return out, excerpts
 
 

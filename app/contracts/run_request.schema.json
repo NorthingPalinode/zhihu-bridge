@@ -17,6 +17,13 @@
       "default": null,
       "title": "Caseid"
     },
+    "knowledgeBaseIds": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Knowledgebaseids",
+      "type": "array"
+    },
     "mode": {
       "default": "auto",
       "enum": [
@@ -49,6 +56,11 @@
       "maxLength": 4000,
       "title": "Text",
       "type": "string"
+    },
+    "useGlobalSearch": {
+      "default": false,
+      "title": "Useglobalsearch",
+      "type": "boolean"
     }
   },
   "required": [

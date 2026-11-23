@@ -102,6 +102,35 @@ class FakeLLM:
     async def draft_question(self, ctx: DraftContext) -> dict:
         await self._pause(0.5)
         term = ctx.term_surface or "这句话"
+        target_type = getattr(ctx, "target_type", "question") or "question"
+        kp = ctx.key_point_text or "待编辑补充原文核心信息"
+        if target_type == "answer":
+            q_title = ctx.existing[0]["title"] if ctx.existing else f"如何向海外读者解释「{term}」？"
+            lines = [
+                f"补充一个出海本地化中观察到的海外读者视角（{ctx.source_label}）：",
+                f"1. 海外读者看到直译或初步表达后，常见的理解是：{ctx.source_text}",
+                f"2. 但中文原句真正想传达的核心信息是：{kp}",
+                f"3. 建议在向缺少背景的海外受众解释「{term}」时，先补齐语境边界，再决定保留或意译术语，避免因字面直译引发误读。",
+            ]
+            return {"title": f"补充回答：{q_title}", "body": "\n".join(lines)}
+        if target_type == "article":
+            lines = [
+                f"## 一、海外读者的第一反应（{ctx.source_label}）",
+                ctx.source_text,
+                f"## 二、认知壁垒拆解：「{term}」为何容易被误读",
+                f"原文希望传达的核心信息：{kp}。由于海外受众缺少对应的文化或行业背景，直译往往会丢失关键语境。",
+                "## 三、跨文化转译建议与边界",
+                "建议区分泛大众与垂类核心受众，按需控制术语保留度，并在敏感宣传语境下用可验证的体验表达替代绝对化说法。",
+                f"【数据与反馈来源】{ctx.source_label}",
+            ]
+            return {"title": f"出海本地化笔记：当海外读者遇到「{term}」，为什么会读偏？", "body": "\n".join(lines)}
+        if target_type == "pin":
+            body = (
+                f"做跨文化转译时发现一个很有意思的认知差：海外读者对「{term}」的理解偏向「{ctx.source_text[:80]}」，"
+                f"但原意其实强调「{kp[:80]}」。你们在向海外朋友解释这类中文表达时，会怎么翻？"
+                f"\n（来源：{ctx.source_label}）\n#出海本地化 #跨文化表达 #{term}"
+            )
+            return {"title": f"关于「{term}」的海外理解差", "body": body}
         title = f"海外读者对「{term}」的理解和原意不一致，该怎样向他们解释？"
         lines = [
             f"【海外读者原本的理解】{ctx.source_text}",

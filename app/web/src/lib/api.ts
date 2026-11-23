@@ -4,12 +4,24 @@ import type {
   ComplianceRule,
   ComplianceRuleCreate,
   ComplianceRulesResponse,
+  CreatorAccountStatsResponse,
+  CreatorCommentsResponse,
+  CreatorContentDetail,
+  CreatorContentStatsResponse,
+  GlobalSearchResponse,
   Health,
+  KnowledgeBaseItem,
+  KnowledgeContentItem,
+  KnowledgeSearchHit,
+  QuestionAnswersResponse,
   QuestionDraft,
   QuestionDraftRequest,
   RunRequest,
   SseEvent,
   TestResult,
+  ZhidaModel,
+  ZhidaResponse,
+  ZhihuQuotaResponse,
 } from "./types";
 
 export interface Adapter {
@@ -102,6 +114,148 @@ export async function importZhihuCredential(accessSecret: string): Promise<Zhihu
 
 export async function clearZhihuCredential(): Promise<ZhihuCredentialStatus> {
   return json(await fetch("/api/zhihu/session", { method: "DELETE" }));
+}
+
+export async function zhihuQuota(): Promise<ZhihuQuotaResponse> {
+  return json(await fetch("/api/zhihu/quota", { cache: "no-store" }));
+}
+
+export async function zhihuGlobalSearch(body: {
+  query: string;
+  count?: number;
+  filter?: string;
+  searchDb?: "all" | "realtime" | "static";
+}): Promise<GlobalSearchResponse> {
+  return json(await fetch("/api/zhihu/global-search", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  }));
+}
+
+export async function zhihuQuestionAnswers(
+  questionUrl: string,
+  offset = 0,
+  limit = 6,
+): Promise<QuestionAnswersResponse> {
+  const qs = new URLSearchParams({
+    questionUrl,
+    offset: String(offset),
+    limit: String(limit),
+  });
+  return json(await fetch(`/api/zhihu/question-answers?${qs}`, { cache: "no-store" }));
+}
+
+export async function zhihuZhidaAsk(body: {
+  query: string;
+  model?: ZhidaModel;
+  term?: string | null;
+  sourceText?: string | null;
+}): Promise<ZhidaResponse> {
+  return json(await fetch("/api/zhihu/zhida", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  }));
+}
+
+export async function zhihuKnowledgeBases(scope: "all" | "created" | "subscribed" = "all"): Promise<{
+  scope: string;
+  items: KnowledgeBaseItem[];
+}> {
+  return json(await fetch(`/api/zhihu/knowledge/bases?scope=${encodeURIComponent(scope)}`, { cache: "no-store" }));
+}
+
+export async function zhihuKnowledgeItems(
+  kbId: string,
+  cursor = "",
+  limit = 20,
+): Promise<{
+  knowledgeBaseId: string;
+  items: KnowledgeContentItem[];
+  hasMore: boolean;
+  nextCursor: string | null;
+}> {
+  const qs = new URLSearchParams({ limit: String(limit) });
+  if (cursor) qs.set("cursor", cursor);
+  return json(await fetch(`/api/zhihu/knowledge/bases/${encodeURIComponent(kbId)}/items?${qs}`, { cache: "no-store" }));
+}
+
+export async function zhihuKnowledgeSearch(body: {
+  query: string;
+  knowledgeBaseIds?: string[];
+  recallScopes?: Array<"personal" | "subscription" | "public">;
+  limit?: number;
+}): Promise<{ query: string; items: KnowledgeSearchHit[] }> {
+  return json(await fetch("/api/zhihu/knowledge/search", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  }));
+}
+
+export async function zhihuKnowledgeUpload(body: {
+  fileName: string;
+  contentBase64: string;
+  contentType?: string;
+  knowledgeBaseId?: string | null;
+}): Promise<{
+  knowledgeBaseId: string;
+  recallContentId: string;
+  fileName: string;
+  fileSize: number;
+  title?: string | null;
+  abstract?: string | null;
+  originUrl?: string | null;
+}> {
+  return json(await fetch("/api/zhihu/knowledge/upload", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  }));
+}
+
+export async function zhihuCreatorContent(contentUrl: string): Promise<CreatorContentDetail> {
+  const qs = new URLSearchParams({ contentUrl });
+  return json(await fetch(`/api/zhihu/creator/content?${qs}`, { cache: "no-store" }));
+}
+
+export async function zhihuCreatorComments(
+  contentUrl: string,
+  offset = 0,
+  limit = 20,
+  order: "score" | "time" = "score",
+): Promise<CreatorCommentsResponse> {
+  const qs = new URLSearchParams({
+    contentUrl,
+    offset: String(offset),
+    limit: String(limit),
+    order,
+  });
+  return json(await fetch(`/api/zhihu/creator/comments?${qs}`, { cache: "no-store" }));
+}
+
+export async function zhihuCreatorAccountStats(params: {
+  contentType?: "all" | "answer" | "article" | "pin" | "zvideo";
+  startDate?: string;
+  endDate?: string;
+} = {}): Promise<CreatorAccountStatsResponse> {
+  const qs = new URLSearchParams();
+  if (params.contentType) qs.set("contentType", params.contentType);
+  if (params.startDate) qs.set("startDate", params.startDate);
+  if (params.endDate) qs.set("endDate", params.endDate);
+  return json(await fetch(`/api/zhihu/creator/account-stats?${qs}`, { cache: "no-store" }));
+}
+
+export async function zhihuCreatorContentStats(params: {
+  contentUrl: string;
+  startDate?: string;
+  endDate?: string;
+}): Promise<CreatorContentStatsResponse> {
+  const qs = new URLSearchParams({ contentUrl: params.contentUrl });
+  if (params.startDate) qs.set("startDate", params.startDate);
+  if (params.endDate) qs.set("endDate", params.endDate);
+  return json(await fetch(`/api/zhihu/creator/content-stats?${qs}`, { cache: "no-store" }));
 }
 
 export class BackendAdapter implements Adapter {

@@ -81,6 +81,24 @@
     "source": {
       "$ref": "#/$defs/QuestionSource"
     },
+    "targetType": {
+      "anyOf": [
+        {
+          "enum": [
+            "answer",
+            "question",
+            "article",
+            "pin"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Targettype"
+    },
     "termIds": {
       "items": {
         "type": "string"

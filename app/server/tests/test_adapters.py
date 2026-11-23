@@ -254,7 +254,7 @@ async def test_curated_preset_preserves_shared_zhihu_budget_and_passes_full_exce
     assert ev_a["evidenceSource"] == "zhihu_curated"
     assert calls == [] and deps.store.used("zhihu_search") == 0
 
-    # case_b 无精选证据：执行实时检索，且模型上下文应收到超过 80 字的完整摘录，UI 卡片摘要保持精简
+    # 开启 ZHIHU_PRESET_LIVE_SEARCH 时执行实时检索，且模型上下文应收到超过 80 字的完整摘录，UI 卡片摘要保持精简
     captured_prompt = {}
 
     def llm_handler(req):
@@ -274,7 +274,8 @@ async def test_curated_preset_preserves_shared_zhihu_budget_and_passes_full_exce
 
     stub_token = "transport-test"
     live_settings = zsettings(make_settings, LLM_PROVIDER="openai_compatible", LLM_API_KEY=stub_token,
-                              LLM_BASE_URL="https://llm.invalid/v1", LLM_MAIN_MODEL="m", LLM_LIGHT_MODEL="l")
+                              LLM_BASE_URL="https://llm.invalid/v1", LLM_MAIN_MODEL="m", LLM_LIGHT_MODEL="l",
+                              ZHIHU_PRESET_LIVE_SEARCH="true")
     deps_b = build_deps(live_settings, zhihu_transport=httpx.MockTransport(zhihu_handler),
                         llm=OpenAICompatibleLLM(live_settings, transport=httpx.MockTransport(llm_handler)))
     evs_b = [e async for e in execute_run(C.RunRequest(text=deps_b.fx.cases["case_b"].text, audienceId="b_backer", caseId="case_b"), deps_b)]
