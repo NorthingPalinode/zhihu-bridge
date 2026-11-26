@@ -34,7 +34,7 @@ const ready = () => page.locator("#copyFinal:enabled").waitFor({ timeout: 15000 
 const level = () => page.locator("#stops .on").innerText();
 const shot = (name) => page.screenshot({ path: out + "/" + prefix + name + ".png" });
 try {
-  await page.goto(base + "/" + query);
+  await page.goto(base + "/legacy.html" + query);
   await page.getByText(/开发占位 · 非真实运行/, { exact: false }).filter({ visible: true }).waitFor();
   assert.equal(await page.locator("#heroChips .chip").count(), offline ? 2 : 3);
   if (!offline) {

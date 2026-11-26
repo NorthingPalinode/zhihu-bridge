@@ -1,0 +1,12 @@
+{
+  "note": "工作台规则检查：英文正文中没有依据的夸大说法、直译黑话与不准确的防护说法。suggestion 只做弱化或替换，不引入新事实。",
+  "rules": [
+    {"pattern": "all[- ]day battery( life)?", "suggestion": "power-optimized design", "why": "资料里没有续航实测"},
+    {"pattern": "industry[- ]leading", "suggestion": "carefully engineered", "why": "没有和竞品对比的依据"},
+    {"pattern": "medical[- ]grade", "suggestion": "wellness-focused", "why": "资料里没有医疗认证"},
+    {"pattern": "FDA[- ](approved|cleared|certified)", "suggestion": "not a medical device", "why": "资料里没有 FDA 证明"},
+    {"pattern": "best[- ]in[- ]class", "suggestion": "well-engineered", "why": "没有对比依据"},
+    {"pattern": "stacking (premium )?materials", "suggestion": "high-grade component selection", "why": "“堆料”直译，英文读者看不懂"},
+    {"pattern": "waterproof", "suggestion": "water-resistant (5 ATM)", "why": "5 ATM 是生活防水，不是完全防水"}
+  ]
+}

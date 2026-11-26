@@ -14,7 +14,7 @@ try {
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 }, reducedMotion: "reduce" });
   await page.route("https://fonts.googleapis.com/**", (r) => r.abort());
   await page.route("https://fonts.gstatic.com/**", (r) => r.abort());
-  await page.goto(base + "/?dev=1&case=case_a&aud=a_new");
+  await page.goto(base + "/legacy.html?dev=1&case=case_a&aud=a_new");
   await page.locator("#txText [role=alert]").waitFor({ timeout: 15000 });
   assert.match(await page.locator(".livechip").innerText(), /已降级/);
   assert.match(await page.locator("#txText").innerText(), /没有可匹配的真实回放/);
