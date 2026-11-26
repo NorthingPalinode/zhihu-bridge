@@ -50,3 +50,12 @@ export function fileToBase64(file: File): Promise<string> {
     r.readAsDataURL(file);
   });
 }
+
+export function downloadText(name: string, text: string) {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([text], { type: "text/markdown" }));
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}

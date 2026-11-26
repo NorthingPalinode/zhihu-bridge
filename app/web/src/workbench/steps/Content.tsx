@@ -5,66 +5,110 @@ import { useWb } from "../context";
 import { DecisionPop, FixPop } from "../Decision";
 import { Icon } from "../icons";
 import type { Asset, Item, Part } from "../types";
+import { factIcon } from "./Materials";
+
+const MOD_ICON: Record<string, string> = { headline: "type", features: "star", story: "doc", specs: "gear", faq: "help" };
+const MOD_EN: Record<string, string> = { headline: "Headline", features: "Core Features", story: "Product Story", specs: "Technical Specs", faq: "FAQ" };
 
 export function Content() {
-  const { ws } = useWb();
-  const [active, setActive] = useState<Item | null>(null);
+  const { ws, goStep, run } = useWb();
+  const [activeMod, setActiveMod] = useState<string>(ws.assets[0]?.id ?? "headline");
+  const [activeItem, setActiveItem] = useState<Item | null>(null);
+  const pickMod = (id: string, scroll = true) => {
+    setActiveMod(id);
+    setActiveItem(null);
+    if (scroll) document.getElementById(`m-${id}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+  const current = ws.assets.find((a) => a.id === activeMod) ?? ws.assets[0];
   return (
-    <div className="panelset main-right">
-      <div className="col">
-        <EvidenceIndex active={active} />
+    <>
+      <div className="cols cols-content">
+        <nav className="glass mod-nav" aria-label="内容模块">
+          <h3><span className="itile sm"><Icon name="layers" /></span>内容模块</h3>
+          {ws.assets.map((a) => (
+            <button key={a.id} type="button" className={`mod-btn${a.id === activeMod ? " on" : ""}`} aria-current={a.id === activeMod ? "true" : undefined} onClick={() => pickMod(a.id)}>
+              <Icon name={MOD_ICON[a.id] ?? "doc"} />{a.title}
+              <span className="badge">{a.need ? <span className="tag t-need">{a.need}</span> : <Icon name="chev" small />}</span>
+            </button>
+          ))}
+        </nav>
+
+        <section className="glass" style={{ paddingBottom: 6 }}>
+          <div className="doc-head">
+            <h2>海外内容 <small>/ Global Launch Content</small></h2>
+            <span className="grow" />
+            <span className="tag t-info">美式英语 · {ws.settings_options.channel.find((o) => o[0] === ws.settings.channel)?.[1]}</span>
+          </div>
+          <div className="legend"><span><i className="sw" />系统改过，点开可看原句、可撤销</span><span><i className="sw need" />等你决定，点开直接选</span></div>
+          {ws.assets.map((a) => (
+            <Module key={a.id} asset={a} active={a.id === activeMod} activeItemId={activeItem?.id ?? null}
+              onFocus={() => setActiveMod(a.id)} onPick={(it) => { setActiveMod(a.id); setActiveItem(it); }} />
+          ))}
+        </section>
+
+        <aside className="links-col"><LinksPanel asset={current} item={activeItem} /></aside>
+      </div>
+
+      <div className="bottom-actions">
+        <button type="button" className="btn btn-lg btn-outline-glow" onClick={() => run(() => api.regenerate(ws.id, current.id), [current.id])}><Icon name="reflow" />重新写「{current.title}」</button>
+        <span className="grow" />
+        <button type="button" className="btn btn-lg btn-primary" onClick={() => goStep("review")}><Icon name="checkCircle" />进入发布前审校 <Icon name="right" /></button>
+      </div>
+    </>
+  );
+}
+
+function LinksPanel({ asset, item }: { asset: Asset; item: Item | null }) {
+  const { ws } = useWb();
+  const facts = Object.fromEntries(ws.facts.map((f) => [f.id, f]));
+  const scope = item ? [item] : asset.items;
+  const factIds = [...new Set(scope.flatMap((i) => i.facts))].filter((id) => facts[id]);
+  const insIds = [...new Set(scope.flatMap((i) => i.insights))];
+  const insights = ws.insights.filter((i) => insIds.includes(i.id));
+  const pendingDecisions = ws.decisions.filter((d) => d.kind !== "confirm_facts" && d.value === null &&
+    scope.some((i) => i.parts.some((p) => p.type === "ph" && p.decision === d.id)));
+  return (
+    <section className="glass links-panel">
+      <div className="ph-head"><span className="itile"><Icon name="link" /></span><h2>依据与关联 <small>/ Fact & Insight Links</small></h2></div>
+      <div className="ph-body">
+        <div className="glass-inner sel"><span className="muted">当前内容模块：</span><span className="itile sm"><Icon name={MOD_ICON[asset.id] ?? "doc"} /></span><b>{item ? "这一条" : asset.title}</b></div>
+        <h4><span className="itile sm"><Icon name="box" /></span>关联的产品资料 <small>(Product Facts)</small></h4>
+        <div className="hash-list">
+          {factIds.length === 0 && pendingDecisions.length === 0 && <span className="muted" style={{ fontSize: 13 }}>这一段没有直接引用的事实。</span>}
+          {factIds.map((id) => <span key={id} className={`hash${facts[id].user_decision === "rejected" ? " off" : ""}`}># {facts[id].user_text ?? facts[id].short}</span>)}
+          {pendingDecisions.map((d) => <span key={d.id} className="hash need"># {d.subject ?? "待决定"}（等你决定）</span>)}
+        </div>
+        {factIds.length > 0 && (
+          <div className="glass-inner support" style={{ marginBottom: 16 }}>
+            <b><Icon name="checkCircle" small />支持说明</b>
+            {factIds.slice(0, 3).map((id) => <div key={id}>· {facts[id].user_text ?? facts[id].text}<span className="muted">（{facts[id].source.file} · {facts[id].source.locator}）</span></div>)}
+          </div>
+        )}
+        <h4><span className="itile sm"><Icon name="layers" /></span>关联的知乎洞察 <small>(Zhihu Insights)</small></h4>
+        <div className="hash-list">
+          {insights.length === 0 && <span className="muted" style={{ fontSize: 13 }}>这一段没有用到知乎建议。</span>}
+          {insights.map((i) => <span key={i.id} className={`hash${i.enabled ? "" : " off"}`}># {i.concept}</span>)}
+        </div>
+        {insights.length > 0 && (
+          <div className="glass-inner support">
+            <b><Icon name="checkCircle" small />支持说明</b>
+            {insights.map((i) => <div key={i.id}>· {i.concept} → <span className="en">{i.localized}</span>{i.enabled ? "" : "（已关掉）"}</div>)}
+          </div>
+        )}
         {ws.is_demo && (
-          <div className="change">
-            <div className="panel-h"><h3>洞察带来的改变</h3><span className="meta">同一句工程笔记</span></div>
-            <div className="row"><div className="k"><b>中文原句</b>工程笔记 · 第 1 段</div><div>自研高密度堆料主板，极限压榨功耗，支持底层协议调试。</div></div>
-            <div className="row"><div className="k"><b>普通直译</b>同一模型直接翻译</div><div className="lit en">Self-developed high-density stacking motherboard, extreme power squeezing, supports low-level protocol debugging.</div></div>
-            <div className="row"><div className="k"><b>Zhihu Bridge</b>资料事实 + 知乎建议</div><div className="en">A custom 6-layer PCB with high-grade component selection<sup>堆料</sup>, power-optimized firmware<sup>功耗</sup>, and low-level UART/BLE protocol debugging via the charging dock — firmware is not open source<sup>调试</sup>.</div></div>
+          <div className="change-card" style={{ marginTop: 16 }}>
+            <h4><span className="itile sm violet"><Icon name="scale" /></span>洞察带来的改变</h4>
+            <div className="row"><span className="k"><b>中文原句</b>工程笔记 · 第 1 段</span><span>自研高密度堆料主板，极限压榨功耗，支持底层协议调试。</span></div>
+            <div className="row"><span className="k"><b>普通直译</b>同一模型直接翻译</span><span className="lit en">Self-developed high-density stacking motherboard, extreme power squeezing, supports low-level protocol debugging.</span></div>
+            <div className="row"><span className="k"><b>Zhihu Bridge</b>资料事实 + 知乎建议</span><span className="en">A custom 6-layer PCB with high-grade component selection<sup>堆料</sup>, power-optimized firmware<sup>功耗</sup>, and low-level UART/BLE protocol debugging via the charging dock — firmware is not open source<sup>调试</sup>.</span></div>
           </div>
         )}
       </div>
-      <div className="col">
-        <div className="module-legend"><span><i className="sw" />系统改过，点开可看原句、可撤销</span><span><i className="sw need" />等你决定，点开直接选</span></div>
-        {ws.assets.map((a) => <Module key={a.id} asset={a} activeId={active?.id ?? null} onPick={setActive} />)}
-      </div>
-    </div>
+    </section>
   );
 }
 
-function EvidenceIndex({ active }: { active: Item | null }) {
-  const { ws } = useWb();
-  const linked = new Set([...(active?.facts ?? []), ...(active?.insights ?? [])]);
-  const facts = Object.fromEntries(ws.facts.map((f) => [f.id, f]));
-  const confirm = ws.decisions.find((d) => d.kind === "confirm_facts");
-  const chip = (key: string, keys: string[], label: string, sub: ReactNode, cls = "") => (
-    <div key={key} className={`lchip ${cls}${keys.some((k) => linked.has(k)) ? " is-linked" : ""}`}><span>{label}</span><span className="lab">{sub}</span></div>
-  );
-  const names = [...linked].map((id) => facts[id]?.short ?? ws.insights.find((i) => i.id === id)?.concept).filter(Boolean);
-  return (
-    <div className="panel">
-      <div className="panel-h"><h3>依据</h3><span className="meta">点任意一条卖点</span></div>
-      <p className="link-hint">{active ? `这条卖点用到了：${names.join("、") || "没有关联的事实"}。` : "点任意一条核心卖点，这里会高亮它用到的事实和知乎建议。"}</p>
-      <div className="idx-group"><h4>用到的产品事实</h4><div className="chip-list">
-        {(confirm?.fact_ids ?? []).map((id) => facts[id] && chip(id, [id], facts[id].user_text ?? facts[id].short,
-          <>你的资料 · {confirm?.value ? "已确认" : <span className="tagx">等你确认</span>}</>))}
-        {ws.decisions.filter((d) => d.kind !== "confirm_facts").map((d) => {
-          const keys = (d.options ?? []).map((o) => o.fact ?? "").filter(Boolean);
-          if (d.value === null) return chip(d.id, keys, d.kind === "conflict" ? `${d.subject ?? "数值"}：资料之间不一致` : `${d.subject ?? "计划功能"}的写法`, <>你的资料 · <span className="tagx">等你决定</span></>, "need");
-          if (d.kind === "roadmap_wording" && d.value === "omit") return null;
-          const v = d.kind === "conflict" ? `${d.subject ?? "数值"} ${d.value === "custom" ? d.custom : d.options?.find((o) => o.value === d.value)?.render}` : `${d.subject ?? "计划功能"}：照实写上市状态与计划`;
-          return chip(d.id, keys, v, "你的资料 · 你选的");
-        })}
-      </div></div>
-      {ws.insights.length > 0 && <div className="idx-group"><h4>用到的知乎建议</h4><div className="chip-list">
-        {ws.insights.map((i) => chip(i.id, [i.id], `${i.concept} → ${i.localized.split(" (")[0]}`, `知乎讨论 · ${i.enabled ? "在用" : "没用"}`, i.enabled ? "z" : "z off"))}
-      </div></div>}
-      {ws.blocked.length > 0 && <div className="idx-group"><h4>不会使用</h4><div className="chip-list">
-        {ws.blocked.map((b) => chip(b.id, [b.id], b.short, "资料里没有依据", "off"))}
-      </div></div>}
-    </div>
-  );
-}
-
-function Module({ asset, activeId, onPick }: { asset: Asset; activeId: string | null; onPick: (i: Item) => void }) {
+function Module({ asset, active, activeItemId, onFocus, onPick }: { asset: Asset; active: boolean; activeItemId: string | null; onFocus: () => void; onPick: (i: Item) => void }) {
   const { ws, busy, editing, setEditing, run, openPop, closePop, toast } = useWb();
   const refs = useRef<Record<string, HTMLElement | null>>({});
   const isEditing = editing === asset.id;
@@ -89,7 +133,7 @@ function Module({ asset, activeId, onPick }: { asset: Asset; activeId: string | 
       <button type="button" role="menuitem" onClick={() => {
         closePop();
         const t = asset.items.map((i) => (i.label ? `${i.label}: ` : "") + plainText(i.parts)).join("\n");
-        void navigator.clipboard?.writeText(t).then(() => toast(`已复制「${SECTION_NAMES[asset.id]}」`), () => toast("浏览器不允许复制，请手动选择文字"));
+        void navigator.clipboard?.writeText(t).then(() => toast(`已复制「${SECTION_NAMES[asset.id] ?? asset.title}」`), () => toast("浏览器不允许复制，请手动选择文字"));
       }}>复制这一段</button>
     </div>), "menu-pop");
 
@@ -107,14 +151,13 @@ function Module({ asset, activeId, onPick }: { asset: Asset; activeId: string | 
 
   const n = asset.need;
   return (
-    <article className={`module${isEditing ? " editing" : ""}`} id={`m-${asset.id}`}>
+    <article className={`glass-inner module${active ? " active" : ""}${isEditing ? " editing" : ""}`} id={`m-${asset.id}`} onClickCapture={onFocus}>
       <div className="module-h">
-        <h3>{asset.title}</h3>
+        <h3>{asset.title.toUpperCase()} · {MOD_EN[asset.id] ?? ""}</h3>
         <span className={`st ${isBusy ? "busy" : n ? "need" : "ok"}`}>
           {isBusy ? <><span className="spin" style={{ width: 12, height: 12, borderWidth: 1.5 }} />检查中…</>
-            : n ? <><Icon name="hand" />{n} 处等你决定</> : <><Icon name="check" />已检查</>}
+            : n ? <><Icon name="hand" />{n} 处等你决定</> : <><Icon name="checkCircle" />已检查</>}
         </span>
-        <span className="grow" />
         <span className="tools">
           {isEditing ? (
             <><button type="button" className="btn btn-sm btn-ghost" onClick={() => setEditing(null)}>放弃</button>
@@ -127,28 +170,28 @@ function Module({ asset, activeId, onPick }: { asset: Asset; activeId: string | 
       </div>
       <div className="module-b en">
         {asset.id === "features" ? (
-          <ul className="feats">
-            {asset.items.map((it, idx) => (
-              <li key={it.id} className={`feat${activeId === it.id ? " is-active" : ""}`} tabIndex={0}
+          <ul className="feat-grid">
+            {asset.items.map((it) => (
+              <li key={it.id} className={`feat${activeItemId === it.id ? " is-active" : ""}`} tabIndex={0}
                 onClick={(e) => { if (!isEditing && !(e.target as HTMLElement).closest(".fx,.kept,.ph,mark")) onPick(it); }}
                 onKeyDown={(e) => { if (!isEditing && (e.key === "Enter" || e.key === " ") && e.target === e.currentTarget) { e.preventDefault(); onPick(it); } }}>
-                <span className="num">{String(idx + 1).padStart(2, "0")}</span>
-                {body(it, (c) => <span className="feat-text">{c}</span>)}
-                <span className="links">{it.facts.length > 0 && <span className="c">资料</span>}{it.insights.length > 0 && <span className="i">知乎</span>}</span>
+                <span className="itile sm"><Icon name={factIcon(plainText(it.parts) + " " + it.facts.map((f) => ws.facts.find((x) => x.id === f)?.text ?? "").join(" "))} /></span>
+                {body(it, (c) => <span className="ftxt">{c}</span>)}
+                <span className="links">{it.facts.length > 0 && <span>资料</span>}{it.insights.length > 0 && <span className="i">知乎</span>}</span>
               </li>
             ))}
           </ul>
         ) : asset.id === "specs" ? (
-          <table className="spec"><tbody>
+          <div className="spec-grid">
             {asset.items.map((it) => (
-              <tr key={it.id}><th>{it.label}</th><td>{body(it, (c) => c)}{it.note && !isEditing && <span className="muted" style={{ fontSize: 12 }}>（{it.note}）</span>}</td></tr>
+              <div key={it.id} className="spec-cell"><span className="k">{it.label}</span><span>{body(it, (c) => c)}{it.note && !isEditing && <span className="note">（{it.note}）</span>}</span></div>
             ))}
-          </tbody></table>
+          </div>
         ) : asset.id === "faq" ? (
           <dl className="faq">{asset.items.map((it) => <div key={it.id}><dt>{it.label}</dt><dd>{body(it, (c) => c)}</dd></div>)}</dl>
         ) : (
           asset.items.map((it) => (
-            <p key={it.id} className={it.kind === "title" ? "headline-t" : it.kind === "tagline" ? "muted" : undefined}>{body(it, (c) => c)}</p>
+            <p key={it.id} className={it.kind === "title" ? "headline-t" : it.kind === "tagline" ? "tagline-t" : undefined}>{body(it, (c) => c)}</p>
           ))
         )}
       </div>
@@ -156,8 +199,8 @@ function Module({ asset, activeId, onPick }: { asset: Asset; activeId: string | 
   );
 }
 
-/** 正文片段：绿色虚线 = 系统改过；红底 = 你保留的原句；琥珀 = 等你决定；红色下划线 = 你新写的风险说法。 */
-export function Parts({ parts }: { parts: Part[] }) {
+/** 正文片段：绿色虚线 = 系统改过；红底 = 你保留的原句；琥珀 = 等你决定；红框 = 你新写的风险说法。 */
+export function Parts({ parts, numbered }: { parts: Part[]; numbered?: Record<string, number> }) {
   const { ws, openPop, editing } = useWb();
   const issue = (id: string) => ws.issues.find((i) => i.id === id);
   return (
@@ -168,14 +211,16 @@ export function Parts({ parts }: { parts: Part[] }) {
           return <button type="button" key={i} className="ph" onClick={(e) => { if (!editing) openPop(e.currentTarget, <DecisionPop dkey={p.decision} />); }}>{p.text}</button>;
         }
         const iss = issue(p.issue);
+        const num = numbered?.[p.issue];
+        const marker = num ? <span className={`marker${p.type === "fix" ? " ok" : p.type === "kept" ? " risk" : ""}`}>{num}</span> : null;
         if (p.type === "risk") {
-          return <mark key={i} className="risk" tabIndex={0} role="button" onClick={(e) => { if (!editing) openPop(e.currentTarget, <DecisionPop dkey={`x:${p.issue}`} />); }}>{p.text}</mark>;
+          return <span key={i}>{marker}<mark className="risk" tabIndex={0} role="button" onClick={(e) => { if (!editing) openPop(e.currentTarget, <DecisionPop dkey={`x:${p.issue}`} />); }}>{p.text}</mark></span>;
         }
         const cls = p.type === "fix" ? "fx" : "kept";
         if (!iss || iss.fix_kind === "user_introduced") return <span key={i} className={cls}>{p.text}</span>;
-        return <span key={i} className={cls} tabIndex={0} role="button"
+        return <span key={i}>{marker}<span className={cls} tabIndex={0} role="button"
           onClick={(e) => { if (!editing) openPop(e.currentTarget, <FixPop issue={iss} />); }}
-          onKeyDown={(e) => { if (e.key === "Enter" && !editing) openPop(e.currentTarget, <FixPop issue={iss} />); }}>{p.text}</span>;
+          onKeyDown={(e) => { if (e.key === "Enter" && !editing) openPop(e.currentTarget, <FixPop issue={iss} />); }}>{p.text}</span></span>;
       })}
     </>
   );

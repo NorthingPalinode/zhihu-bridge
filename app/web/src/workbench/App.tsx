@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { ApiError, api } from "./api";
 import { WbProvider, useWb, type Step } from "./context";
 import { Home } from "./Home";
+import { GradDefs } from "./icons";
 import { Run } from "./Run";
 import type { Workspace } from "./types";
 import { Workbench } from "./Workbench";
@@ -48,20 +49,36 @@ export function App() {
 
   useEffect(() => { window.scrollTo(0, 0); }, [route.view, projectId]);
 
+  /** 顶部导航的 Demo：已有示例项目就直接打开，没有才创建（不重复建项目）。 */
+  const openDemo = useCallback(async () => {
+    try {
+      const { projects } = await api.list();
+      const demo = projects.find((p) => p.is_demo);
+      if (demo) { go(`#/p/${demo.id}/materials`); return; }
+      const { id } = await api.createDemo();
+      setRunNames(["PulseRing X1 示例资料包（5 份）"]);
+      go(`#/run/${id}`);
+    } catch { go("#/"); }
+  }, []);
+
+  let view: React.ReactNode;
   if (route.view === "home") {
-    return <Home onOpen={(id) => go(`#/p/${id}/materials`)} onRun={(id, names) => { setRunNames(names); go(`#/run/${id}`); }} />;
+    view = <Home onOpen={(id) => go(`#/p/${id}/materials`)} onRun={(id, names) => { setRunNames(names); go(`#/run/${id}`); }} />;
+  } else if (route.view === "run") {
+    view = <Run id={route.id} names={runNames.length ? runNames : ["你的资料"]} onHome={() => go("#/")} onDemo={openDemo} onDone={onDone} />;
+  } else if (loadError) {
+    view = <main className="run"><h1>没有打开这个项目</h1><p className="sub">{loadError}</p><button type="button" className="btn btn-primary" onClick={() => go("#/")}>回首页</button></main>;
+  } else if (!ws) {
+    view = <main className="run" aria-busy="true"><p className="sub">正在打开…</p></main>;
+  } else {
+    view = (
+      <WbProvider initial={ws} step={route.step} goStep={(s) => go(`#/p/${ws.id}/${s}`)}>
+        <ArrivalToast message={arrivalToast} onShown={() => setArrivalToast(null)} />
+        <Workbench onHome={() => go("#/")} onDemo={openDemo} />
+      </WbProvider>
+    );
   }
-  if (route.view === "run") return <Run id={route.id} names={runNames.length ? runNames : ["你的资料"]} onHome={() => go("#/")} onDone={onDone} />;
-  if (loadError) {
-    return <main className="run"><h1>没有打开这个项目</h1><p className="sub">{loadError}</p><button type="button" className="btn btn-primary" onClick={() => go("#/")}>回首页</button></main>;
-  }
-  if (!ws) return <main className="run" aria-busy="true"><p className="sub">正在打开…</p></main>;
-  return (
-    <WbProvider initial={ws} step={route.step} goStep={(s) => go(`#/p/${ws.id}/${s}`)}>
-      <ArrivalToast message={arrivalToast} onShown={() => setArrivalToast(null)} />
-      <Workbench onHome={() => go("#/")} />
-    </WbProvider>
-  );
+  return <><GradDefs />{view}</>;
 }
 
 function ArrivalToast({ message, onShown }: { message: string | null; onShown: () => void }) {

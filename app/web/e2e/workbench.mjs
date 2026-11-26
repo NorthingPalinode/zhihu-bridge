@@ -20,7 +20,7 @@ page.on("response", (r) => { if (new URL(r.url()).origin === base && r.status() 
 const shot = (name) => page.screenshot({ path: `${out}/${name}.png` });
 let clicks = 0;
 const click = async (loc) => { clicks++; await loc.click(); };
-const pill = () => page.locator(".pill").innerText();
+const pill = async () => (await page.locator(".pstats .btn").innerText()).replace(/\s+/g, " ").trim();
 const settle = () => page.waitForTimeout(750);
 
 try {
@@ -28,7 +28,7 @@ try {
   await page.goto(base + "/");
   await page.getByRole("heading", { level: 1 }).waitFor();
   await shot("01-home");
-  await click(page.getByRole("button", { name: /打开示例项目/ }));
+  await click(page.locator(".nav-links").getByRole("button", { name: "Demo" }));
   await page.locator(".runlist").waitFor();
   await page.waitForURL(/#\/p\/.+\/materials/, { timeout: 15000 });
   assert.equal(await pill(), "还需你决定 3 件");
@@ -50,14 +50,14 @@ try {
   await settle();
   await click(page.getByRole("button", { name: /都对，确认这 4 条/ }).first());
   await settle();
-  assert.equal(await pill(), "可以导出了");
+  assert.equal(await pill(), "导出交付");
   await page.keyboard.press("Control+z");
   await settle();
   assert.equal(await pill(), "还需你决定 1 件", "Ctrl+Z 应撤销最近一次决定");
   await page.keyboard.press("Control+y"); // 无副作用
   await page.getByRole("button", { name: /都对，确认这 4 条/ }).first().click();
   await settle();
-  assert.equal(await pill(), "可以导出了");
+  assert.equal(await pill(), "导出交付");
 
   // ---- 4. 第 2 步：桥接卡与开关
   await page.locator("#t-insights").click();
@@ -71,7 +71,8 @@ try {
   assert.equal(await page.evaluate(() => document.activeElement?.textContent?.trim()), "好的", "默认焦点不能落在“恢复原句”");
   await page.keyboard.press("Escape");
   await page.locator(".feat").nth(2).click();
-  assert.equal(await page.locator(".lchip.is-linked").count(), 2, "卖点应高亮它用到的事实与知乎建议");
+  assert.match(await page.locator(".links-panel .sel").innerText(), /这一条/);
+  assert.equal(await page.locator(".links-panel .hash").count(), 2, "点卖点应显示它用到的事实与知乎建议");
   await shot("04-content");
   const faq = page.locator("#m-faq");
   await faq.getByRole("button", { name: "编辑" }).click();
@@ -83,7 +84,7 @@ try {
   await faq.locator("mark.risk").click();
   await page.locator(".pop .opt.primary").click();
   await settle();
-  assert.equal(await pill(), "可以导出了");
+  assert.equal(await pill(), "导出交付");
 
   // ---- 6. 第 4 步：高风险恢复必须选理由
   await page.locator("#t-review").click();
@@ -98,13 +99,13 @@ try {
   await settle();
 
   // ---- 7. 导出：全部决定后不含 [待确认]
-  await click(page.getByRole("button", { name: "导出交付" }));
+  await click(page.locator(".pstats .btn"));
   await page.locator("dialog pre.md").first().waitFor();
   const md = await page.locator("dialog pre.md").first().innerText();
   assert.ok(!md.includes("[待确认]"), "全部决定后导出不应有占位");
   assert.ok(!/all-day battery|fda approved|medical-grade/i.test(md), "导出不应含无依据声称");
   await shot("06-export");
-  const [download] = await Promise.all([page.waitForEvent("download"), click(page.getByRole("button", { name: /下载全部/ }))]);
+  const [download] = await Promise.all([page.waitForEvent("download"), click(page.getByRole("button", { name: /导出 Markdown/ }))]);
   assert.match(download.suggestedFilename(), /launch-pack\.md$/);
   console.log(`主路径点击数：${clicks}（含打开示例项目与导出）`);
   assert.ok(clicks <= 6, `主路径点击超出预算：${clicks}`);
@@ -123,9 +124,9 @@ try {
   await page.waitForTimeout(150);
   const order = await page.evaluate(() => ({
     doc: document.querySelector("#m-headline")?.getBoundingClientRect().top ?? 0,
-    index: document.querySelector(".chip-list")?.getBoundingClientRect().top ?? 0,
+    index: document.querySelector(".links-panel")?.getBoundingClientRect().top ?? 0,
   }));
-  assert.ok(order.doc < order.index, "手机上英文正文应排在依据列表之前");
+  assert.ok(order.doc < order.index, "手机上英文正文应排在依据与关联之前");
   await shot("07-mobile-content");
 
   // ---- 9. 旧页面仍可访问

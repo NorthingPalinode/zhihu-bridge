@@ -1,10 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { ApiError, api, fileToBase64 } from "./api";
 import { DEMO_TAG } from "./copy";
-import { BridgeMark, Icon } from "./icons";
+import { Icon, ProductTile } from "./icons";
+import { TopNav } from "./TopNav";
 import type { ProjectRow } from "./types";
+import kanshanWave from "./assets/kanshan-wave.gif";
+import kanshanStill from "./assets/kanshan-still.png";
 
 const ACCEPT = ".txt,.md,.csv,.docx,.pdf";
+const reducedMotion = () => typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 
 export function Home({ onOpen, onRun }: { onOpen: (id: string) => void; onRun: (id: string, names: string[]) => void }) {
   const [projects, setProjects] = useState<ProjectRow[] | null>(null);
@@ -14,6 +18,7 @@ export function Home({ onOpen, onRun }: { onOpen: (id: string) => void; onRun: (
   const [error, setError] = useState<string | null>(null);
   const [working, setWorking] = useState(false);
   const input = useRef<HTMLInputElement>(null);
+  const recent = useRef<HTMLDivElement>(null);
 
   useEffect(() => { api.list().then((r) => setProjects(r.projects), () => setProjects([])); }, []);
 
@@ -45,80 +50,109 @@ export function Home({ onOpen, onRun }: { onOpen: (id: string) => void; onRun: (
     }
   };
 
+  const pick = () => input.current?.click();
+  const caps: [string, string, string, string, string][] = [
+    ["box", "", "产品事实档案", "Product Fact Profile", "从说明书、规格表、工程笔记里提取可核对的事实，标出冲突和缺口；资料写得明确的，你一次确认。"],
+    ["layers", "violet", "知乎认知洞察", "Zhihu Insights", "检索知乎讨论与英文同类产品的说法，找出直译会被误读的工程黑话，给出本地化写法。"],
+    ["shield", "teal", "发布前审校", "Pre-publish Review", "逐句检查事实一致性、夸大声称与跨文化表达；没有依据的说法直接改掉，留痕可撤销。"],
+  ];
+  const flow: [string, string, string, string][] = [
+    ["file", "", "产品资料", "说明书、规格表、工程笔记、中文文案"],
+    ["layers", "zhi", "知乎洞察", "社区语境、出海经验、英文同类表达"],
+    ["sparkle", "", "海外内容", "标题、卖点、详细介绍、技术参数、FAQ"],
+    ["shield", "you", "审校交付", "逐句核对，你拍板几件事，一次导出"],
+  ];
+
   return (
     <div>
-      <header className="chrome">
-        <span className="brand"><BridgeMark />Zhihu Bridge <small>出海内容工作台</small></span>
-        <span className="spacer" />
-        <button type="button" className="btn btn-sm" onClick={() => input.current?.click()} disabled={working}><Icon name="plus" small />新建项目</button>
-      </header>
-      <main className="home">
-        <section className="hero">
-          <div className={`hero-drop${over ? " over" : ""}`}
-            onDragOver={(e) => { e.preventDefault(); setOver(true); }} onDragLeave={() => setOver(false)}
-            onDrop={(e) => { e.preventDefault(); setOver(false); const fs = [...e.dataTransfer.files]; if (fs.length) void start(fs); }}>
-            <div className="eyebrow"><span>智能硬件出海</span><span>美国 · English (US)</span><span>知乎知识增强</span><span>发布前检查</span></div>
-            <h1>把中国智能硬件的产品资料，变成海外团队敢直接发布的新品内容</h1>
-            <p className="lead">把产品说明、规格表、工程笔记丢进来。系统借助知乎社区的工程语境看清认知差，写好面向美国市场的英文发布页，并在上线前逐句查过。你只需要拍板几件只有你知道的事。</p>
-            <div className="cta-row">
-              <button type="button" className="btn btn-primary btn-lg" disabled={working} onClick={() => input.current?.click()}><Icon name="upload" />上传产品资料，开始</button>
-              <button type="button" className="btn btn-lg" disabled={working} onClick={openDemo}>打开示例项目（PulseRing X1）<Icon name="right" /></button>
-            </div>
-            <input ref={input} type="file" multiple hidden accept={ACCEPT} onChange={(e) => { const fs = [...(e.target.files ?? [])]; e.target.value = ""; if (fs.length) void start(fs); }} />
-            <p className="formats">支持 .txt · .md · .csv · .docx，可以一次放多份，也可以直接拖到这里，或 <button type="button" className="link" onClick={() => setPasting((v) => !v)}>粘贴文字</button>。不用填表，产品名和渠道系统会自己判断。</p>
-            {pasting && (
-              <div className="paste">
-                <textarea autoFocus value={text} onChange={(e) => setText(e.target.value)} placeholder="把产品介绍、参数或现有中文文案直接粘贴进来" maxLength={20000} />
-                <div className="row"><span className="muted" style={{ fontSize: 12 }}>{text.trim().length} 字</span>
-                  <button type="button" className="btn btn-primary btn-sm" disabled={!text.trim() || working} onClick={() => start([], text)}>开始</button></div>
+      <TopNav onHome={() => window.scrollTo({ top: 0, behavior: "smooth" })} onNew={pick} onDemo={openDemo}
+        onRecent={() => recent.current?.scrollIntoView({ behavior: "smooth", block: "start" })} current="home" />
+      <main className="page">
+        <div className="home-grid">
+          <div>
+            <section className={`hero${over ? " dropping" : ""}`}
+              onDragOver={(e) => { e.preventDefault(); setOver(true); }} onDragLeave={() => setOver(false)}
+              onDrop={(e) => { e.preventDefault(); setOver(false); const fs = [...e.dataTransfer.files]; if (fs.length) void start(fs); }}>
+              <div>
+                <span className="hero-badge"><b>AI × 出海</b><span>面向中国智能硬件团队的海外内容工作台</span></span>
+                <h1><span className="nw">让知乎知识，</span><br /><span className="nw">成为出海内容的<span className="hl">认知桥梁</span></span></h1>
+                <div className="bar" />
+                <p className="lead">连接产品资料、知乎洞察、海外内容生成与发布前审校，帮助中国智能硬件品牌高效准备面向美国市场的英文上市内容。</p>
+                <button type="button" className="btn btn-primary btn-xl" disabled={working} onClick={pick}>
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 10 }}>{working ? <span className="spin" /> : null}创建新品出海项目 <Icon name="right" /></span>
+                  <small>上传资料就开始 · Create a New Global Launch Project</small>
+                </button>
+                <input ref={input} type="file" multiple hidden accept={ACCEPT} onChange={(e) => { const fs = [...(e.target.files ?? [])]; e.target.value = ""; if (fs.length) void start(fs); }} />
+                <p className="hero-hint">支持 .txt · .md · .csv · .docx，可以一次放多份，也可以直接拖到这里，或 <button type="button" className="link" onClick={() => setPasting((v) => !v)}>粘贴文字</button>。不用填表。</p>
+                {pasting && (
+                  <div className="paste">
+                    <textarea autoFocus value={text} onChange={(e) => setText(e.target.value)} placeholder="把产品介绍、参数或现有中文文案直接粘贴进来" maxLength={20000} />
+                    <div className="row"><span className="muted" style={{ fontSize: 12 }}>{text.trim().length} 字</span>
+                      <button type="button" className="btn btn-primary btn-sm" disabled={!text.trim() || working} onClick={() => start([], text)}>开始</button></div>
+                  </div>
+                )}
+                {error && <div className="state need" role="alert" style={{ marginTop: 16 }}><Icon name="alert" /><span className="grow">{error}</span></div>}
               </div>
-            )}
-            {error && <div className="state need" role="alert" style={{ marginBottom: 20 }}><Icon name="alert" /><span className="grow">{error}</span></div>}
-            <ul className="principles">
-              <li><b>企业资料是唯一事实来源</b>参数、认证、续航只认你的资料，缺了就不写，绝不编造。</li>
-              <li><b>知乎提供语境，不提供参数</b>用社区讨论解释黑话和出海经验，每条依据都标明出处。</li>
-              <li><b>系统替你做，你说了算</b>系统改过的地方都能看、能撤销；冲突由你拍板，任何平台都不会自动发布。</li>
-            </ul>
+              <div className="hero-art" aria-hidden="true">
+                <svg className="arcs" viewBox="0 0 600 400" preserveAspectRatio="none">
+                  <path d="M60 330 C 160 180, 300 180, 380 300" /><path d="M200 340 C 300 150, 470 150, 560 300" /><path d="M120 360 C 240 260, 380 250, 500 340" />
+                  <circle cx="380" cy="300" r="4" /><circle cx="560" cy="300" r="4" /><circle cx="60" cy="330" r="3" />
+                </svg>
+                <div className="globe" />
+                <div className="zhi-badge">知</div>
+                <img className="mascot" src={reducedMotion() ? kanshanStill : kanshanWave} alt="" />
+              </div>
+            </section>
+
+            <div className="cap-grid">
+              {caps.map(([icon, tone, zh, en, desc]) => (
+                <div key={zh} className="glass cap">
+                  <span className={`itile${tone ? " " + tone : ""}`}><Icon name={icon} /></span>
+                  <b>{zh}</b><Icon name="right" />
+                  <span className="en-sub">{en}</span>
+                  <p>{desc}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="section-h" ref={recent}>
+              <span className="itile sm"><Icon name="folder" /></span><h2>最近项目</h2><small>Recent Projects</small>
+            </div>
+            <div className="proj-grid">
+              {projects === null && <div className="glass empty-card">正在读取…</div>}
+              {projects?.length === 0 && <div className="glass empty-card">还没有项目。上传资料，或者先打开示例项目看看。</div>}
+              {projects?.map((p) => (
+                <button key={p.id} type="button" className="glass proj" onClick={() => onOpen(p.id)}>
+                  <ProductTile />
+                  <div>
+                    <b>{p.name}</b>
+                    <div className="row"><Icon name="shield" small />美国市场<span className="sep" />英文<span className="sep" />{p.channel === "ks" ? "Kickstarter" : "独立站"}</div>
+                    <div className="row">
+                      {p.open ? <><span className="dot-i" style={{ color: "var(--need)" }} /><b style={{ display: "inline", fontSize: 13, margin: 0, color: "var(--need)" }}>还需你决定 {p.open} 件</b></>
+                        : <><Icon name="checkCircle" small className="ok-ic" /><b style={{ display: "inline", fontSize: 13, margin: 0, color: "var(--status-success)" }}>可以导出</b></>}
+                      {p.is_demo && <span className="tag t-demo">{DEMO_TAG}</span>}
+                      <span className="go"><Icon name="right" small /></span>
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
           </div>
-          <aside className="pipeline" aria-label="工作流程">
-            <h2><span>一个项目，四步到可交付</span><span className="mono">US · Kickstarter</span></h2>
-            <ol className="pipe">
-              <li><span className="n">01</span><div><b>产品资料 → 产品事实</b><p>系统提取事实、找出冲突和缺口。资料写得明确的，你一次确认。</p><div className="tags"><span className="ly ly-company">你的资料</span></div></div></li>
-              <li className="hl"><span className="n">02</span><div><b>知乎认知洞察</b><p>“堆料”“极限压榨功耗”在知乎怎么讲、海外怎么说、直译会被怎样误解，系统默认全部用上。</p><div className="tags"><span className="ly ly-zhihu">知乎讨论</span><span className="ly ly-global">英文同类产品</span></div></div></li>
-              <li><span className="n">03</span><div><b>五段英文内容</b><p>标题、核心卖点、详细介绍、技术参数、FAQ，每条卖点都能追溯到事实与洞察。</p></div></li>
-              <li><span className="n">04</span><div><b>发布前检查</b><p>逐句检查。没有依据的夸大说法直接改掉，留痕可撤销。</p><div className="tags"><span className="ly ly-rule">官方规则提示</span><span className="ly ly-ai">AI 推断</span></div></div></li>
-              <li className="you"><span className="n">→</span><div><b>你拍板几件事，导出</b><p>比如两份资料写的重量不一样，写哪个由你定。英文页、检查报告、中英口径表和知乎草稿一起交付。</p></div></li>
+
+          <aside className="glass flow-panel" aria-label="工作流程">
+            <h2>出海内容工作流</h2>
+            <p className="sub">From Product to Global Content</p>
+            <ol className="flow">
+              {flow.map(([icon, tone, zh, desc]) => (
+                <li key={zh} className={tone === "you" ? "you" : undefined}>
+                  {tone === "zhi" ? <span className="itile lg zhi">知</span> : <span className="itile lg"><Icon name={icon} /></span>}
+                  <div><b>{zh}</b><small>{desc}</small></div>
+                </li>
+              ))}
             </ol>
           </aside>
-        </section>
-
-        <div className="section-h"><h2>最近项目</h2></div>
-        <div className="table-wrap">
-          <table>
-            <thead><tr><th>项目</th><th>渠道</th><th>状态</th><th>更新</th></tr></thead>
-            <tbody>
-              {projects === null && <tr><td colSpan={4} className="muted">正在读取…</td></tr>}
-              {projects?.length === 0 && <tr><td colSpan={4} className="muted">还没有项目。上传资料，或者先打开示例项目看看。</td></tr>}
-              {projects?.map((p) => (
-                <tr key={p.id} className="proj-row" tabIndex={0} onClick={() => onOpen(p.id)} onKeyDown={(e) => e.key === "Enter" && onOpen(p.id)}>
-                  <td className="proj-name"><b>{p.name}</b>{p.is_demo && <span className="tag tag-demo">{DEMO_TAG}</span>}</td>
-                  <td>{p.channel === "ks" ? "美国 · Kickstarter 众筹新品页" : "美国 · 独立站新品页"}</td>
-                  <td><span className={`tag ${p.open ? "st-warn" : "st-ok"}`}>{p.open ? `还需你决定 ${p.open} 件` : "可以导出"}</span></td>
-                  <td className="muted">{ago(p.updated_at)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
         </div>
       </main>
     </div>
   );
-}
-
-function ago(ts: number): string {
-  const s = Date.now() / 1000 - ts;
-  if (s < 90) return "刚刚";
-  if (s < 3600) return `${Math.round(s / 60)} 分钟前`;
-  if (s < 86400) return `${Math.round(s / 3600)} 小时前`;
-  return `${Math.round(s / 86400)} 天前`;
 }
