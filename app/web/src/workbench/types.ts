@@ -15,15 +15,15 @@ export interface Fact {
 
 export interface DecisionOption { value: string; label: string; render?: string; source?: string; preview?: string; note?: string; recommended: boolean; fact?: string }
 export interface Decision {
-  id: string; kind: "confirm_facts" | "conflict" | "roadmap_wording";
+  id: string; kind: "confirm_facts" | "conflict" | "roadmap_wording"; subject?: string;
   value: string | null; custom?: string | null; title?: string; why?: string; used_in?: string;
   fact_ids?: string[]; options?: DecisionOption[]; allow_custom?: boolean;
 }
 
 export interface Insight {
   id: string; concept: string; fact: string; strategy: string; used_in: string; enabled: boolean;
-  zhihu: string; zhihu_cite: string;
-  english: { layer: Layer; label: string; mode: string; text: string; cite: string };
+  zhihu: string; zhihu_cite: string; zhihu_mode?: string; zhihu_url?: string | null;
+  english: { layer: Layer; label: string; mode: string; text: string; cite: string; url?: string | null };
   risk: string; action: string; literal: string; localized: string;
 }
 

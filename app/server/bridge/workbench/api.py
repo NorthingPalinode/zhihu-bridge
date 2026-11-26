@@ -17,6 +17,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from . import engine
 from .demo import DEMO_DIR_NAME, SETTINGS_OPTIONS, build_demo_state, generic_state
+from .live import LiveError, build_live_state
 from .engine import WorkbenchError
 from .sources import ParsedSource, parse_pasted, parse_source
 from .store import WorkbenchStore
@@ -73,8 +74,8 @@ def _demo_sources(fixtures_dir: Path) -> list[ParsedSource]:
     return [parse_source(p.name, p.read_bytes()) for p in sorted(d.iterdir()) if p.is_file()]
 
 
-def new_state(parsed: list[ParsedSource]) -> dict:
-    core = build_demo_state(parsed) or generic_state(parsed)
+def new_state(parsed: list[ParsedSource], core: Optional[dict] = None) -> dict:
+    core = core or build_demo_state(parsed) or generic_state(parsed)
     state = {
         "id": uuid.uuid4().hex[:12],
         "created_at": time.time(),
@@ -84,6 +85,8 @@ def new_state(parsed: list[ParsedSource]) -> dict:
         "sources": [{"filename": p.filename, "kind": p.kind, "status": p.status, "size": p.size_label if p.status == "parsed" else "", "note": p.note} for p in parsed],
         **core,
     }
+    state.setdefault("pipeline_status", "done")
+    state["run"].setdefault("status", "done")
     for a in state["assets"]:
         a.update(version=1, reviewed_version=1, reviewed_fact_set=1)
     for iss in state["issues"]:
@@ -120,8 +123,34 @@ def workspace(state: dict) -> dict:
 def register_workbench(app: FastAPI, deps: Any) -> None:
     store = WorkbenchStore(deps.settings.db_path)
     rules = engine.load_rules(deps.settings.fixtures_dir)
+    zh_claims = engine.load_zh_claims(deps.settings.fixtures_dir)
     delay = max(0, deps.settings.fake_step_delay_ms) / 1000
     app.state.workbench_store = store
+    tasks: set[asyncio.Task] = set()
+
+    def live_available() -> bool:
+        return deps.generation_mode == "live" and hasattr(deps.llm, "task_json")
+
+    async def run_live(pid: str, parsed: list[ParsedSource]) -> None:
+        async def progress(title: str, result: str):
+            s = store.get(pid)
+            s["run"]["steps"].append([title, result])
+            store.put(pid, s)
+
+        async def llm_json(system: str, user: str, max_tokens: int) -> dict:
+            return await deps.call_llm(deps.llm.task_json, system, user, max_tokens)
+
+        try:
+            core = await build_live_state(parsed, llm_json, deps.zhihu if deps.zhihu.enabled else None, rules, progress, zh_claims)
+            done = new_state(parsed, {**core, "run": {"steps": store.get(pid)["run"]["steps"], "status": "done"}})
+            done.update(id=pid, created_at=store.get(pid)["created_at"])
+        except Exception as exc:  # noqa: BLE001 - 失败时如实降级，不留半成品
+            steps = store.get(pid)["run"]["steps"]
+            reason = str(exc) if isinstance(exc, LiveError) else exc.__class__.__name__
+            done = new_state(parsed)
+            done.update(id=pid, created_at=store.get(pid)["created_at"])
+            done["run"] = {"steps": steps + [["改用开发占位", f"模型或检索没有成功（{reason}），已改用启发式结果，界面标注开发占位"]], "status": "done"}
+        store.put(pid, done)
 
     def mutate(pid: str, action_type: str, fn: Callable[[dict], str], recheck: Optional[list[str]] = None):
         state = store.get(pid)
@@ -141,7 +170,7 @@ def register_workbench(app: FastAPI, deps: Any) -> None:
         return {"workspace": workspace(state), "toast": toast, "undoable": True}
 
     @app.post("/api/projects")
-    def create_project(body: CreateProject):
+    async def create_project(body: CreateProject):
         if body.demo:
             parsed = _demo_sources(deps.settings.fixtures_dir)
         else:
@@ -158,6 +187,15 @@ def register_workbench(app: FastAPI, deps: Any) -> None:
                 return _err(400, "请先放进至少一份资料，或粘贴一段文字")
             if not any(p.status == "parsed" for p in parsed):
                 return _err(422, "这些资料都读不出文字：" + "；".join(f"{p.filename}：{p.note}" for p in parsed))
+        if not body.demo and live_available():
+            pid = uuid.uuid4().hex[:12]
+            placeholder = {"id": pid, "name": "正在分析的项目", "is_demo": False, "created_at": time.time(), "pipeline_status": "running",
+                           "run": {"steps": [], "status": "running"}, "settings": {"channel": "ks"}, "decisions": [], "issues": []}
+            store.create(pid, placeholder)
+            task = asyncio.create_task(run_live(pid, parsed))
+            tasks.add(task)
+            task.add_done_callback(tasks.discard)
+            return {"id": pid, "run": placeholder["run"]}
         state = new_state(parsed)
         store.create(state["id"], state)
         return {"id": state["id"], "run": state["run"]}
@@ -166,6 +204,8 @@ def register_workbench(app: FastAPI, deps: Any) -> None:
     def list_projects():
         out = []
         for s in store.list():
+            if s.get("pipeline_status") == "running":
+                continue
             summ = engine.summary(s)
             out.append({"id": s["id"], "name": s["name"], "is_demo": s["is_demo"], "channel": s["settings"]["channel"],
                         "open": len(summ["open_decisions"]), "updated_at": s["_updated_at"]})
@@ -174,21 +214,48 @@ def register_workbench(app: FastAPI, deps: Any) -> None:
     @app.get("/api/projects/{pid}/workspace")
     def get_workspace(pid: str):
         state = store.get(pid)
-        return _err(404, "找不到这个项目") if state is None else workspace(state)
+        if state is None:
+            return _err(404, "找不到这个项目")
+        if state.get("pipeline_status") == "running":
+            return _err(409, "还在写，请稍候")
+        return workspace(state)
 
     @app.get("/api/projects/{pid}/run/events")
     async def run_events(pid: str):
         state = store.get(pid)
         if state is None:
             return _err(404, "找不到这个项目")
-        steps = state["run"]["steps"]
+        def ev(i: int, title: str, status: str, result: str = "") -> str:
+            payload = json.dumps({"index": i, "title": title, "status": status, "result": result}, ensure_ascii=False)
+            return f"event: step\ndata: {payload}\n\n"
+
+        def done_ev(s: dict) -> str:
+            return f"event: done\ndata: {json.dumps({'open': len(engine.open_decisions(s))})}\n\n"
 
         async def gen():
-            for i, (title, result) in enumerate(steps):
-                yield f"event: step\ndata: {json.dumps({'index': i, 'title': title, 'status': 'running'}, ensure_ascii=False)}\n\n"
-                await asyncio.sleep(delay)
-                yield f"event: step\ndata: {json.dumps({'index': i, 'title': title, 'status': 'done', 'result': result}, ensure_ascii=False)}\n\n"
-            yield f"event: done\ndata: {json.dumps({'open': len(engine.open_decisions(state))})}\n\n"
+            if state.get("pipeline_status") != "running":  # 已完成（示例项目）：按节奏回放每一步
+                for i, (title, result) in enumerate(state["run"]["steps"]):
+                    yield ev(i, title, "running")
+                    await asyncio.sleep(delay)
+                    yield ev(i, title, "done", result)
+                yield done_ev(state)
+                return
+            sent, started = 0, time.monotonic()
+            yield ev(0, "读取资料", "running")
+            while time.monotonic() - started < 300:  # 真实流水线：轮询存储里的进度
+                cur = store.get(pid) or {}
+                steps = cur.get("run", {}).get("steps", [])
+                while sent < len(steps):
+                    yield ev(sent, steps[sent][0], "done", steps[sent][1])
+                    sent += 1
+                    if cur.get("pipeline_status") == "running":
+                        yield ev(sent, "", "running")
+                if cur.get("pipeline_status") != "running":
+                    yield done_ev(cur)
+                    return
+                yield ": keepalive\n\n"
+                await asyncio.sleep(0.5)
+            yield "event: failed\ndata: {}\n\n"
         return StreamingResponse(gen(), media_type="text/event-stream", headers={"Cache-Control": "no-cache"})
 
     @app.post("/api/projects/{pid}/decisions/{did}")

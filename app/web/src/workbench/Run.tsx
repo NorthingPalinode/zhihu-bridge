@@ -19,6 +19,7 @@ export function Run({ id, names, onHome, onDone }: { id: string; names: string[]
       const d = JSON.parse((e as MessageEvent).data) as { open: number };
       setTimeout(() => onDone(d.open), 450);
     });
+    es.addEventListener("failed", () => { es.close(); setFailed(true); });
     es.onerror = () => { es.close(); setFailed(true); };
     return () => es.close();
   }, [id, onDone]);
@@ -30,16 +31,16 @@ export function Run({ id, names, onHome, onDone }: { id: string; names: string[]
         <h1>正在写英文页</h1>
         <p className="sub">收到：{names.join("、")}。大约需要 1 分钟，你可以先去做别的，写好后会停在结果页。</p>
         <ol className="runlist">
-          {titles.map((t, i) => {
+          {Array.from({ length: Math.max(titles.length, steps.length) }, (_, i) => titles[i] ?? "").map((t, i) => {
             const s = steps[i];
             return (
-              <li key={t} className={s?.status === "done" ? "ok" : s?.status === "running" ? "on" : ""}>
-                <span className="dot" /><div><b>{s?.title ?? t}</b><small>{s?.status === "done" ? s.result : s?.status === "running" ? "进行中…" : " "}</small></div>
+              <li key={i} className={s?.status === "done" ? "ok" : s?.status === "running" ? "on" : ""}>
+                <span className="dot" /><div><b>{s?.title || t}</b><small>{s?.status === "done" ? s.result : s?.status === "running" ? "进行中…" : " "}</small></div>
               </li>
             );
           })}
         </ol>
-        {failed && <div className="state need" role="alert" style={{ marginTop: 16 }}><span className="grow">进度连接断开了。结果已经保存，可以直接打开项目查看。</span><button type="button" className="btn btn-sm" onClick={() => onDone(-1)}>打开项目</button></div>}
+        {failed && <div className="state need" role="alert" style={{ marginTop: 16 }}><span className="grow">进度连接断开了。写完后结果会自动保存，可以稍后打开项目查看。</span><button type="button" className="btn btn-sm" onClick={() => onDone(-1)}>打开项目</button></div>}
       </main>
     </div>
   );

@@ -105,6 +105,10 @@ class OpenAICompatibleLLM:
                 raise LLMError("bad_output", "模型输出因达到 max_tokens 上限被截断，JSON 不完整") from exc
             raise LLMError("bad_output", f"模型输出不是合法 JSON（{exc.__class__.__name__}）") from exc
 
+    async def task_json(self, system: str, user: str, max_tokens: int = 1800) -> dict:
+        """通用 JSON 任务（V1.4 工作台流水线：事实提取 / 知乎洞察 / 英文页生成）。"""
+        return await self._json(self.main, system, user, max_tokens)
+
     async def extract_terms(self, text: str) -> dict:
         return await self._json(self.light, prompts.TERMS_SYSTEM, prompts.terms_user(text), 600)
 

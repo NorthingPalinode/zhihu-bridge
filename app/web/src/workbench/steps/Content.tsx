@@ -48,9 +48,9 @@ function EvidenceIndex({ active }: { active: Item | null }) {
           <>你的资料 · {confirm?.value ? "已确认" : <span className="tagx">等你确认</span>}</>))}
         {ws.decisions.filter((d) => d.kind !== "confirm_facts").map((d) => {
           const keys = (d.options ?? []).map((o) => o.fact ?? "").filter(Boolean);
-          if (d.value === null) return chip(d.id, keys, d.kind === "conflict" ? "机身重量：两份资料不一致" : "Apple Health 同步写法", <>你的资料 · <span className="tagx">等你决定</span></>, "need");
+          if (d.value === null) return chip(d.id, keys, d.kind === "conflict" ? `${d.subject ?? "数值"}：资料之间不一致` : `${d.subject ?? "计划功能"}的写法`, <>你的资料 · <span className="tagx">等你决定</span></>, "need");
           if (d.kind === "roadmap_wording" && d.value === "omit") return null;
-          const v = d.kind === "conflict" ? `机身重量 ${d.value === "custom" ? d.custom : d.options?.find((o) => o.value === d.value)?.render}` : "Apple Health：上市可导出，双向同步计划中";
+          const v = d.kind === "conflict" ? `${d.subject ?? "数值"} ${d.value === "custom" ? d.custom : d.options?.find((o) => o.value === d.value)?.render}` : `${d.subject ?? "计划功能"}：照实写上市状态与计划`;
           return chip(d.id, keys, v, "你的资料 · 你选的");
         })}
       </div></div>

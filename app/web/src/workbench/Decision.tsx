@@ -87,7 +87,7 @@ function CustomValue({ onSave, onCancel }: { onSave: (v: string) => void; onCanc
   const save = () => (v.trim() ? onSave(v.trim()) : setBad(true));
   return (
     <div className="inline-edit">
-      <input autoFocus value={v} aria-label="机身重量" placeholder={bad ? "先填一个数值" : "例如 3.4 g（8 号指围）"}
+      <input autoFocus value={v} aria-label="自己填写的数值" placeholder={bad ? "先填一个数值" : "例如 3.4 g（8 号指围）"}
         style={bad ? { borderColor: "var(--status-danger)" } : undefined}
         onChange={(e) => { setV(e.target.value); setBad(false); }} onKeyDown={(e) => e.key === "Enter" && save()} />
       <div className="row">

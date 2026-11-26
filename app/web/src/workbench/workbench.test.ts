@@ -11,7 +11,7 @@ const ws = (over: Partial<Workspace> = {}): Workspace => ({
   sources: [], facts: [], insights: [], brief: { priorities: [], faq: [], forbidden: [], glossary: [] },
   decisions: [
     { id: "facts", kind: "confirm_facts", value: null, fact_ids: ["F01", "F02"] },
-    { id: "conflict:W1", kind: "conflict", value: null, title: "机身重量写多少？", used_in: "详细介绍", options: [{ value: "3.6", label: "3.6 g", render: "3.6 g (size 9)", recommended: true }] },
+    { id: "conflict:W1", kind: "conflict", subject: "机身重量", value: null, title: "机身重量写多少？", used_in: "详细介绍", options: [{ value: "3.6", label: "3.6 g", render: "3.6 g (size 9)", recommended: true }] },
   ],
   assets: [{ id: "specs", title: "技术参数", items: [], need: 1, stale: false }],
   issues: [{ id: "R01", asset: "features", item: "f2", type: "claim", severity: "high", fix_kind: "soften_claim", status: "auto_applied", title: "删掉了“全天续航”", loc: "核心卖点", why: "" }],

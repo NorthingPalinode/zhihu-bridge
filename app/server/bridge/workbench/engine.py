@@ -29,6 +29,11 @@ def load_rules(fixtures_dir: Path) -> list[dict]:
     return json.loads(path.read_text(encoding="utf-8"))["rules"]
 
 
+def load_zh_claims(fixtures_dir: Path) -> list[dict]:
+    path = fixtures_dir / "workbench" / "claim_rules.json"
+    return json.loads(path.read_text(encoding="utf-8")).get("zh_claims", [])
+
+
 # ---------------------------------------------------------------- lookups
 def _find(items: list[dict], key: str, value: Any) -> Optional[dict]:
     return next((x for x in items if x.get(key) == value), None)
@@ -182,7 +187,7 @@ def decide(state: dict, did: str, value: Optional[str], custom: Optional[str] = 
             if facts[fid]["user_decision"] != "edited":
                 facts[fid].update(user_decision="pending", decided_via=None)
         state["fact_set_version"] += 1
-        return {"confirm_facts": "已撤销确认", "conflict": "重量改回“等你决定”", "roadmap_wording": "写法改回“等你决定”"}.get(d["kind"], "已撤回")
+        return "已撤销确认" if d["kind"] == "confirm_facts" else f"{d.get('subject', '这件事')}改回“等你决定”"
     if d["kind"] == "confirm_facts":
         if value != "confirmed":
             raise WorkbenchError("这个决定只能是“都对，确认”")
@@ -208,7 +213,7 @@ def decide(state: dict, did: str, value: Optional[str], custom: Optional[str] = 
             facts[o["fact"]].update(user_decision="confirmed" if o["value"] == value else "rejected", decided_via="inline")
         state["fact_set_version"] += 1
         shown = custom if value == "custom" else values[value]["render"]
-        return f"重量写成 {shown}，已更新详细介绍、参数和 FAQ"
+        return f"{d.get('subject', '数值')}写成 {shown}，用到它的段落都已更新"
     if d["kind"] == "roadmap_wording":
         if value not in {o["value"] for o in d["options"]}:
             raise WorkbenchError("没有这个选项")
@@ -216,7 +221,8 @@ def decide(state: dict, did: str, value: Optional[str], custom: Optional[str] = 
         for fid in _decision_fact_ids(d):
             facts[fid].update(user_decision="confirmed" if value == "mention" else "rejected", decided_via="inline")
         state["fact_set_version"] += 1
-        return "已照实写 Apple Health：上市可导出，双向同步计划中" if value == "mention" else "已去掉 Apple Health 相关的卖点和 FAQ"
+        subj = d.get("subject", "这个功能")
+        return f"已照实写“{subj}”的上市状态和计划" if value == "mention" else f"已去掉“{subj}”相关的卖点和 FAQ"
     raise WorkbenchError("未知的决定类型")
 
 
@@ -431,9 +437,9 @@ def export_report(state: dict) -> str:
             L.append(f"- 产品事实：{'已确认 ' + str(len(d['fact_ids'])) + ' 条' if d['value'] else '未确认'}")
         elif d["kind"] == "conflict":
             v = None if d["value"] is None else (d["custom"] if d["value"] == "custom" else next(o["render"] for o in d["options"] if o["value"] == d["value"]))
-            L.append(f"- 机身重量：{v or '未决定（英文页里写成 [待确认]）'}")
+            L.append(f"- {d.get('subject', '冲突数值')}：{v or '未决定（英文页里写成 [待确认]）'}")
         elif d["kind"] == "roadmap_wording":
-            L.append("- Apple Health：" + {"mention": "照实写：上市可导出，双向同步计划中", "omit": "不提", None: "未决定（英文页里写成 [待确认]）"}[d["value"]])
+            L.append(f"- {d.get('subject', '计划功能')}：" + {"mention": "照实写上市状态与计划", "omit": "不提", None: "未决定（英文页里写成 [待确认]）"}[d["value"]])
     edited = [f for f in state["facts"] if f["user_decision"] == "edited"]
     for f in edited:
         L.append(f"- 你改写了事实：{f['user_text']}（原文：{f['text']}）")

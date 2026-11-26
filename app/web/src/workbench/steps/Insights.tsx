@@ -27,7 +27,7 @@ export function Insights() {
             ))}
           </ul>
           <div className="quiet-note"><Icon name="alert" small style={{ marginTop: 3 }} />
-            <span>知乎内容目前是示例数据，未实时检索。额度由系统管理，优先用缓存；需要时可以在页面底部「生成记录与数据来源」里连接知乎账号。</span></div>
+            <span>{ws.retrieval_mode === "live" ? "知乎与英文内容来自实时检索，同一项目 24 小时内复用缓存；额度由系统管理。点卡片里的标题可以打开原文。" : "知乎内容目前是示例数据，未实时检索。额度由系统管理，优先用缓存。"}</span></div>
         </div>
         <div className="panel">
           <div className="panel-h"><h3>写作要点</h3><span className="meta">系统根据事实和在用的建议自动整理</span></div>
@@ -45,15 +45,15 @@ export function Insights() {
             <div className="icard-h"><h3>{i.concept}</h3><span className="tag st-neutral">{facts[i.fact]?.short}</span><span className="grow" /><span className="tag st-info">策略：{i.strategy}</span></div>
             <div className="bridge">
               <div className="side">
-                <h4><span className="ly ly-zhihu">知乎讨论</span><span className="mode">示例数据</span></h4>
+                <h4><span className="ly ly-zhihu">知乎讨论</span><span className="mode">{i.zhihu_mode ?? "示例数据"}</span></h4>
                 <p>{i.zhihu}</p>
-                <div className="cite"><Icon name="link" /><span>{i.zhihu_cite}</span></div>
+                <div className="cite"><Icon name="link" />{i.zhihu_url ? <a href={i.zhihu_url} target="_blank" rel="noopener noreferrer">{i.zhihu_cite}</a> : <span>{i.zhihu_cite}</span>}</div>
               </div>
               <div className="connector" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M4 26c6-12 26-12 32 0" /><path d="M4 26h32M12 26v-6M28 26v-6" /></svg></div>
               <div className={`side${i.english.layer === "ai" ? " ai" : ""}`}>
                 <h4><span className={`ly ${LAYER_CLASS[i.english.layer]}`}>{i.english.label}</span><span className="mode">{i.english.mode}</span></h4>
                 <p className="en-quote en">{i.english.text}</p>
-                <div className="cite">{i.english.layer !== "ai" && <Icon name="link" />}<span>{i.english.cite}</span></div>
+                <div className="cite">{i.english.layer !== "ai" && <Icon name="link" />}{i.english.url ? <a href={i.english.url} target="_blank" rel="noopener noreferrer">{i.english.cite}</a> : <span>{i.english.cite}</span>}</div>
               </div>
             </div>
             <div className="icard-b">

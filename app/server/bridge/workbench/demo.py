@@ -161,14 +161,14 @@ def build_demo_state(parsed: list[ParsedSource]) -> Optional[dict]:
     w = [by_id[k] for k in ("F04a", "F04b") if k in by_id]
     if len(w) == 2:
         newer = next(f for f in w if f.get("newer"))
-        decisions.append({"id": "conflict:W1", "kind": "conflict", "title": "机身重量写多少？",
+        decisions.append({"id": "conflict:W1", "kind": "conflict", "subject": "机身重量", "title": "机身重量写多少？",
                           "why": "两份资料写得不一样，系统不替你选。规格表是更新的 EVT3 样机，并写明了测量指围。",
                           "used_in": "详细介绍 · 技术参数 · FAQ", "allow_custom": True, "value": None, "custom": None,
                           "options": [{"value": f["value"], "label": f["text"].replace("机身重量 ", ""), "render": f["render"],
                                        "source": f"{f['source']['file']} · {f['source']['locator']}", "recommended": f is newer, "fact": f["id"]}
                                       for f in sorted(w, key=lambda f: not f.get("newer"))]})
     if "F07" in by_id:
-        decisions.append({"id": "roadmap:F07", "kind": "roadmap_wording", "title": "Apple Health 双向同步还没上线，怎么写？",
+        decisions.append({"id": "roadmap:F07", "kind": "roadmap_wording", "subject": "Apple Health 双向同步", "title": "Apple Health 双向同步还没上线，怎么写？",
                           "why": "资料写明：上市时只能导出，双向同步要等量产后的固件更新。", "used_in": "核心卖点 · FAQ", "value": None,
                           "options": [{"value": "mention", "label": "照实写：上市可导出，双向同步计划中", "preview": "Apple Health Export at Launch, Two-Way Sync Planned via Post-Launch Update", "recommended": True, "fact": "F07"},
                                       {"value": "omit", "label": "先不提这个功能", "note": "卖点和 FAQ 里相关的一条会去掉", "recommended": False}]})

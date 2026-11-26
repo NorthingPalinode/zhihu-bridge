@@ -44,9 +44,9 @@ export function decisionDone(d: Decision): string {
   if (d.kind === "confirm_facts") return `已确认 ${d.fact_ids?.length ?? 0} 条产品事实`;
   if (d.kind === "conflict") {
     const v = d.value === "custom" ? d.custom : d.options?.find((o) => o.value === d.value)?.render;
-    return `机身重量写成 ${v}`;
+    return `${d.subject ?? "这个数值"}写成 ${v}`;
   }
-  return d.value === "mention" ? "照实写：上市可导出，双向同步计划中" : "先不提这个功能";
+  return d.value === "mention" ? `照实写“${d.subject ?? "这个功能"}”的上市状态和计划` : `先不提“${d.subject ?? "这个功能"}”`;
 }
 
 export const isAutoFix = (i: Issue) => ["remove_claim", "soften_claim", "terminology", "unit_boundary"].includes(i.fix_kind);

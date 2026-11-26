@@ -1,12 +1,95 @@
 {
   "note": "工作台规则检查：英文正文中没有依据的夸大说法、直译黑话与不准确的防护说法。suggestion 只做弱化或替换，不引入新事实。",
   "rules": [
-    {"pattern": "all[- ]day battery( life)?", "suggestion": "power-optimized design", "why": "资料里没有续航实测"},
-    {"pattern": "industry[- ]leading", "suggestion": "carefully engineered", "why": "没有和竞品对比的依据"},
-    {"pattern": "medical[- ]grade", "suggestion": "wellness-focused", "why": "资料里没有医疗认证"},
-    {"pattern": "FDA[- ](approved|cleared|certified)", "suggestion": "not a medical device", "why": "资料里没有 FDA 证明"},
-    {"pattern": "best[- ]in[- ]class", "suggestion": "well-engineered", "why": "没有对比依据"},
-    {"pattern": "stacking (premium )?materials", "suggestion": "high-grade component selection", "why": "“堆料”直译，英文读者看不懂"},
-    {"pattern": "waterproof", "suggestion": "water-resistant (5 ATM)", "why": "5 ATM 是生活防水，不是完全防水"}
+    {
+      "pattern": "all[- ]day battery( life)?",
+      "suggestion": "power-optimized design",
+      "why": "资料里没有续航实测",
+      "severity": "high",
+      "fix_kind": "soften_claim"
+    },
+    {
+      "pattern": "industry[- ]leading",
+      "suggestion": "carefully engineered",
+      "why": "没有和竞品对比的依据",
+      "severity": "high",
+      "fix_kind": "soften_claim"
+    },
+    {
+      "pattern": "medical[- ]grade",
+      "suggestion": "wellness-focused",
+      "why": "资料里没有医疗认证",
+      "severity": "high",
+      "fix_kind": "remove_claim"
+    },
+    {
+      "pattern": "FDA[- ](approved|cleared|certified)",
+      "suggestion": "not a medical device",
+      "why": "资料里没有 FDA 证明",
+      "severity": "high",
+      "fix_kind": "remove_claim"
+    },
+    {
+      "pattern": "best[- ]in[- ]class",
+      "suggestion": "well-engineered",
+      "why": "没有对比依据",
+      "severity": "medium",
+      "fix_kind": "soften_claim"
+    },
+    {
+      "pattern": "stacking (premium )?materials",
+      "suggestion": "high-grade component selection",
+      "why": "“堆料”直译，英文读者看不懂",
+      "severity": "medium",
+      "fix_kind": "terminology"
+    },
+    {
+      "pattern": "waterproof",
+      "suggestion": "water-resistant",
+      "why": "5 ATM 是生活防水，不是完全防水",
+      "severity": "medium",
+      "fix_kind": "soften_claim"
+    },
+    {
+      "pattern": "guaranteed",
+      "suggestion": "designed to",
+      "why": "“保证”类绝对化承诺没有依据",
+      "severity": "high",
+      "fix_kind": "soften_claim"
+    },
+    {
+      "pattern": "out of the box",
+      "suggestion": "at launch",
+      "why": "容易把计划功能写成开箱即用",
+      "severity": "medium",
+      "fix_kind": "soften_claim"
+    }
+  ],
+  "zh_claims": [
+    {
+      "cue": "全天续航|超长续航|续航无忧",
+      "short": "全天续航 / 超长续航",
+      "why": "资料里没有标准工况的续航实测"
+    },
+    {
+      "cue": "行业领先|业界领先|遥遥领先|全球第一|行业第一|最强",
+      "short": "行业领先 / 第一",
+      "why": "没有和竞品对比的依据"
+    },
+    {
+      "cue": "医疗级|医用级",
+      "short": "医疗级",
+      "why": "资料里没有医疗器械认证"
+    },
+    {
+      "cue": "FDA\\s*认证|获\\s*FDA|FDA\\s*批准",
+      "short": "FDA 认证",
+      "why": "资料里没有 FDA 证明"
+    },
+    {
+      "cue": "开箱即用",
+      "short": "开箱即用",
+      "why": "容易把计划功能写成上市即有"
+    }
   ]
 }

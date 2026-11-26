@@ -33,6 +33,12 @@ class WorkbenchStore:
             self._conn.execute("INSERT INTO wb_projects(id,data,created_at,updated_at) VALUES(?,?,?,?)",
                                (pid, json.dumps(state, ensure_ascii=False), now, now))
 
+    def put(self, pid: str, state: dict) -> None:
+        """流水线运行中写入进度（不记入操作日志，不可撤销）。"""
+        with self._lock:
+            self._conn.execute("UPDATE wb_projects SET data=?, updated_at=? WHERE id=?",
+                               (json.dumps(state, ensure_ascii=False), time.time(), pid))
+
     def get(self, pid: str) -> Optional[dict]:
         with self._lock:
             row = self._conn.execute("SELECT data FROM wb_projects WHERE id=?", (pid,)).fetchone()

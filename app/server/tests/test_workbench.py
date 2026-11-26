@@ -127,7 +127,7 @@ def test_edit_rechecks_and_new_risk_becomes_a_decision(client, demo):
     x = next(i for i in xs if i["term"].lower() == "waterproof")
     assert client.post(f"/api/projects/{pid}/decisions/x:{x['id']}", json={"value": "keep"}).status_code == 400, "保留必须选理由"
     w = client.post(f"/api/projects/{pid}/decisions/x:{x['id']}", json={"value": "fix"}).json()["workspace"]
-    assert "water-resistant (5 ATM)" in text_of(w, "faq")
+    assert "water-resistant" in text_of(w, "faq") and "5 ATM" not in text_of(w, "faq").split("water-resistant")[1][:8]
 
 
 def test_cannot_edit_sentence_waiting_for_decision(client, demo):
