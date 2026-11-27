@@ -1,6 +1,6 @@
-"""资料解析：.txt / .md / .csv / .docx 抽取纯文本，并能给出“第几段 / 第几行 / 哪一节”的定位。
+"""资料解析：.txt / .md / .csv / .docx / .pdf 抽取纯文本，并能给出“第几段 / 第几行 / 哪一节 / 第几页”的定位。
 
-不支持的格式（PDF、图片等）返回 status="unsupported"，不计入依据，也不阻断流程（PLAN_V1.4 §3.3）。
+扫描件 PDF 或不支持的格式返回 status="unsupported"，损坏或加密 PDF 返回 status="failed"，均不计入依据也不阻断其他资料。
 """
 from __future__ import annotations
 
@@ -12,15 +12,17 @@ from dataclasses import dataclass, field
 from typing import Optional
 from xml.etree import ElementTree
 
-SUPPORTED = (".txt", ".md", ".csv", ".docx")
-MAX_BYTES = 2 * 1024 * 1024
+SUPPORTED = (".txt", ".md", ".csv", ".docx", ".pdf")
+MAX_BYTES = 10 * 1024 * 1024
+MAX_PDF_PAGES = 60
+MAX_EXTRACTED_CHARS = 200_000
 _W = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
 
 
 @dataclass
 class ParsedSource:
     filename: str
-    kind: str                      # txt | md | csv | docx | other
+    kind: str                      # txt | md | csv | docx | pdf | other
     status: str                    # parsed | unsupported | failed
     text: str = ""
     note: str = ""
@@ -31,13 +33,45 @@ class ParsedSource:
         if self.kind == "csv":
             return f"{max(0, len(self.blocks))} 行"
         chars = len(re.sub(r"\s", "", self.text))
+        if self.kind == "pdf":
+            return f"{len(self.blocks)} 页 · {chars:,} 字"
         return f"{chars:,} 字"
 
     def locate(self, quote: str) -> Optional[str]:
+        if not quote:
+            return None
         for loc, block in self.blocks:
             if quote in block:
                 return loc
+        # PDF 表格/正文行尾可能软折行：只在相邻换行处折叠（不跨双换行分段），避免跨列误拼
+        norm_q = re.sub(r"[ \t]*\n[ \t]*", "", quote).strip()
+        if len(norm_q) >= 4:
+            for loc, block in self.blocks:
+                for para in re.split(r"\n\s*\n", block):
+                    if norm_q in re.sub(r"[ \t]*\n[ \t]*", "", para):
+                        return loc
         return None
+
+    def to_record(self) -> dict:
+        return {
+            "filename": self.filename,
+            "kind": self.kind,
+            "status": self.status,
+            "text": self.text,
+            "note": self.note,
+            "blocks": [[loc, blk] for loc, blk in self.blocks],
+        }
+
+    @classmethod
+    def from_record(cls, rec: dict) -> "ParsedSource":
+        return cls(
+            filename=rec["filename"],
+            kind=rec["kind"],
+            status=rec["status"],
+            text=rec.get("text", ""),
+            note=rec.get("note", ""),
+            blocks=[(b[0], b[1]) for b in rec.get("blocks", [])],
+        )
 
 
 def _decode(data: bytes) -> str:
@@ -97,15 +131,66 @@ def docx_text(data: bytes) -> list[str]:
     return paras
 
 
+def pdf_pages(data: bytes) -> list[tuple[str, str]]:
+    """抽取 .pdf 每页文字，返回 [(第 N 页, 文本), ...]，受页数与总字符预算保护。"""
+    from pypdf import PdfReader
+    from pypdf.errors import PdfReadError
+
+    try:
+        reader = PdfReader(io.BytesIO(data), strict=False)
+    except PdfReadError as exc:
+        raise RuntimeError("PDF 文件已损坏或结构不完整，无法读取") from exc
+    if reader.is_encrypted:
+        try:
+            decrypted = reader.decrypt("")
+        except Exception as exc:  # noqa: BLE001
+            raise ValueError("PDF 已加密，请先解除密码后再上传") from exc
+        if not decrypted:
+            raise ValueError("PDF 已加密，请先解除密码后再上传")
+
+    try:
+        total_pages = len(reader.pages)
+    except Exception as exc:  # noqa: BLE001
+        raise RuntimeError("PDF 文件已损坏或缺少页面结构，无法读取") from exc
+    if total_pages == 0:
+        raise RuntimeError("PDF 文件缺少页面结构，无法读取")
+
+    pages: list[tuple[str, str]] = []
+    total_chars = 0
+    for idx, page in enumerate(reader.pages[:MAX_PDF_PAGES], 1):
+        try:
+            raw = (page.extract_text() or "").strip()
+        except Exception as exc:  # noqa: BLE001
+            raise RuntimeError("PDF 内容流损坏，无法读取文字") from exc
+        cleaned = re.sub(r"[ \t]+\n", "\n", raw)
+        cleaned = re.sub(r"\n{3,}", "\n\n", cleaned).strip()
+        if cleaned:
+            remaining = MAX_EXTRACTED_CHARS - total_chars
+            if remaining <= 0:
+                break
+            if len(cleaned) > remaining:
+                cleaned = cleaned[:remaining]
+            pages.append((f"第 {idx} 页", cleaned))
+            total_chars += len(cleaned)
+    return pages
+
+
 def parse_source(filename: str, data: bytes) -> ParsedSource:
     name = filename.strip() or "未命名资料"
     ext = ("." + name.rsplit(".", 1)[-1].lower()) if "." in name else ""
     if len(data) > MAX_BYTES:
-        return ParsedSource(name, "other", "failed", note="文件超过 2 MB，请拆分后再上传")
+        return ParsedSource(name, "other", "failed", note="文件超过 10 MB，请拆分后再上传")
     if ext not in SUPPORTED:
-        why = "扫描件或 PDF 暂时读不出文字" if ext == ".pdf" else f"暂不支持 {ext or '这种'} 格式"
-        return ParsedSource(name, "other", "unsupported", note=f"{why}，所以没有用作依据，不影响其他内容。")
+        return ParsedSource(name, "other", "unsupported", note=f"暂不支持 {ext or '这种'} 格式，所以没有用作依据，不影响其他内容。")
     try:
+        if ext == ".pdf":
+            if not data.lstrip().startswith(b"%PDF"):
+                return ParsedSource(name, "pdf", "failed", note="文件已损坏或不是有效的 PDF 文档")
+            pages = pdf_pages(data)
+            if not pages:
+                return ParsedSource(name, "pdf", "unsupported", note="PDF 为扫描件或不含可提取文字，未用作依据，不影响其他内容。")
+            text = "\n\n".join(p for _, p in pages)
+            return ParsedSource(name, "pdf", "parsed", text, blocks=pages)
         if ext == ".docx":
             paras = docx_text(data)
             text = "\n\n".join(paras)
@@ -116,6 +201,10 @@ def parse_source(filename: str, data: bytes) -> ParsedSource:
         return ParsedSource(name, ext[1:], "failed", note="文件已损坏或不是有效的 Word 文档")
     except ValueError as exc:
         return ParsedSource(name, ext[1:], "failed", note=str(exc))
+    except RuntimeError as exc:
+        return ParsedSource(name, ext[1:], "failed", note=str(exc))
+    except Exception:  # noqa: BLE001
+        return ParsedSource(name, ext[1:], "failed", note="文件解析失败，请检查文件是否完整")
     if ext == ".csv":
         return ParsedSource(name, "csv", "parsed", text, blocks=_csv_blocks(text))
     if ext == ".md":

@@ -1,29 +1,39 @@
 import { useEffect, useRef, useState } from "react";
-import { api, downloadText } from "./api";
-import { DEMO_TAG, DEV_TAG, stepSummary } from "./copy";
+import { api } from "./api";
+import { DEMO_TAG, DEV_TAG, hasStage, stepSummary } from "./copy";
 import { useWb, type Step } from "./context";
 import { Icon, ProductTile, Ring } from "./icons";
+import { ExportDrawer } from "./PosterExport";
 import { Content } from "./steps/Content";
 import { Insights } from "./steps/Insights";
 import { Materials } from "./steps/Materials";
 import { Review } from "./steps/Review";
 import { TopNav } from "./TopNav";
-import type { ExportPack, Trace } from "./types";
+import type { Trace } from "./types";
 
 const STEPS: [Step, string, string][] = [["materials", "产品资料", "box"], ["insights", "知乎认知洞察", "layers"], ["content", "海外内容", "globe"], ["review", "发布前审校", "shield"]];
 
 export function Workbench({ onHome, onDemo }: { onHome: () => void; onDemo: () => void }) {
   const { ws, step, goStep, setReviewSel } = useWb();
-  const [drawer, setDrawer] = useState<"export" | "trace" | null>(null);
+  const [drawer, setDrawer] = useState<"export" | "export-landing" | "export-docs" | "trace" | null>(null);
   const open = ws.summary.open_decisions;
   const total = ws.decisions.length + ws.issues.filter((i) => i.fix_kind === "user_introduced").length;
   const decided = Math.max(0, total - open.length);
+  const reviewed = hasStage(ws, "review");
+  const hasContent = hasStage(ws, "content") && ws.assets.length > 0;
 
   const toNext = () => { goStep("review"); if (open.length) setReviewSel(open[0]); };
   const stepState = (s: Step): "done" | "need" | "" => {
-    if (s === "materials") return ws.decisions.some((d) => d.value === null) ? "need" : "done";
-    if (s === "insights") return ws.summary.insights_on > 0 ? "done" : "";
-    if (s === "content") return ws.summary.sections_need.length ? "need" : "done";
+    if (s === "materials") {
+      if (!hasStage(ws, "facts")) return "need";
+      return ws.decisions.some((d) => d.value === null) ? "need" : "done";
+    }
+    if (s === "insights") return hasStage(ws, "insights") ? "done" : "";
+    if (s === "content") {
+      if (!hasStage(ws, "content")) return "";
+      return ws.summary.sections_need.length ? "need" : "done";
+    }
+    if (!hasStage(ws, "review")) return "";
     return ws.summary.ready ? "done" : open.length ? "need" : "";
   };
   const onStepKey = (e: React.KeyboardEvent) => {
@@ -33,6 +43,15 @@ export function Workbench({ onHome, onDemo }: { onHome: () => void; onDemo: () =
     goStep(nx);
     requestAnimationFrame(() => document.getElementById(`t-${nx}`)?.focus());
   };
+
+  const nextMissingStep = (): Step => {
+    if (!hasStage(ws, "facts")) return "materials";
+    if (!hasStage(ws, "insights")) return "insights";
+    if (!hasStage(ws, "content")) return "content";
+    return "review";
+  };
+
+  const progressRatio = reviewed ? (total ? decided / total : 1) : (ws.completed_stages?.length ?? 1) / 5;
 
   return (
     <div>
@@ -50,18 +69,30 @@ export function Workbench({ onHome, onDemo }: { onHome: () => void; onDemo: () =
           <div>
             <div className="pname">
               <h1>{ws.name}</h1>
-              <span className={`tag ${open.length ? "t-need" : "t-ok"}`}><span className="dot-i" />{open.length ? "进行中" : "可以导出"}</span>
+              <span className={`tag ${!reviewed ? "t-info" : open.length ? "t-need" : "t-ok"}`}>
+                <span className="dot-i" />{!reviewed ? "分步体验中" : open.length ? "进行中" : "可以导出"}
+              </span>
               {ws.is_demo && <span className="tag t-demo">{DEMO_TAG}</span>}
               {ws.llm_mode === "fake" && <span className="tag t-demo">{DEV_TAG}</span>}
             </div>
             <SettingsRow />
           </div>
           <div className="pstats">
-            <Ring value={total ? decided / total : 1} label={`已决定 ${decided}/${total}`} />
-            <div className="pstat"><b>{decided}/{total}</b><small>你的决定</small></div>
-            <button type="button" className={`btn ${open.length ? "btn-outline-glow" : "btn-primary"}`} onClick={open.length ? toNext : () => setDrawer("export")}>
-              {open.length ? <><Icon name="hand" small />还需你决定 {open.length} 件</> : <><Icon name="download" small />导出交付</>}
-            </button>
+            <Ring value={progressRatio} label={reviewed ? `已决定 ${decided}/${total}` : `流程进度 ${Math.round(progressRatio * 100)}%`} />
+            {reviewed ? (
+              <div className="pstat"><b>{decided}/{total}</b><small>你的决定</small></div>
+            ) : (
+              <div className="pstat"><b>{ws.completed_stages?.length ?? 1}/5</b><small>流程阶段</small></div>
+            )}
+            {!reviewed ? (
+              <button type="button" className="btn btn-primary" onClick={() => goStep(nextMissingStep())}>
+                <Icon name="play" small />继续下一步
+              </button>
+            ) : (
+              <button type="button" className={`btn ${open.length ? "btn-outline-glow" : "btn-primary"}`} onClick={open.length ? toNext : () => setDrawer("export")}>
+                {open.length ? <><Icon name="hand" small />还需你决定 {open.length} 件</> : <><Icon name="download" small />导出宣传物料</>}
+              </button>
+            )}
           </div>
         </section>
 
@@ -79,9 +110,10 @@ export function Workbench({ onHome, onDemo }: { onHome: () => void; onDemo: () =
               </span>
             );
           })}
-          <span className="step-line dim" />
+          <span className={`step-line${reviewed ? "" : " dim"}`} />
           <button type="button" className="step" onClick={() => setDrawer("export")}>
-            <span className="num"><Icon name="download" /></span><span><b>导出交付</b><small>{open.length ? "未决定处写成 [待确认]" : "都确认好了"}</small></span>
+            <span className="num"><Icon name="download" /></span>
+            <span><b>导出交付</b><small>{!hasContent ? "生成内容后可导出海报" : open.length ? "可导出海报 / 未定处标 [待确认]" : "海报 · 落地页 · 社媒 · MD"}</small></span>
           </button>
         </div>
 
@@ -89,7 +121,7 @@ export function Workbench({ onHome, onDemo }: { onHome: () => void; onDemo: () =
           {step === "materials" && <Materials />}
           {step === "insights" && <Insights />}
           {step === "content" && <Content />}
-          {step === "review" && <Review onExport={() => setDrawer("export")} />}
+          {step === "review" && <Review onExport={(tab) => setDrawer(tab === "landing" ? "export-landing" : tab === "docs" ? "export-docs" : "export")} />}
         </section>
       </main>
 
@@ -99,7 +131,14 @@ export function Workbench({ onHome, onDemo }: { onHome: () => void; onDemo: () =
         <button type="button" className="link quiet" onClick={() => setDrawer("trace")}>生成记录与数据来源</button>
       </footer>
 
-      {drawer === "export" && <ExportDrawer onClose={() => setDrawer(null)} onDecide={() => { setDrawer(null); toNext(); }} />}
+      {(drawer === "export" || drawer === "export-landing" || drawer === "export-docs") && (
+        <ExportDrawer
+          initialTab={drawer === "export-landing" ? "landing" : drawer === "export-docs" ? "docs" : "poster"}
+          onClose={() => setDrawer(null)}
+          onDecide={() => { setDrawer(null); toNext(); }}
+          onGoReview={() => { setDrawer(null); goStep("review"); }}
+        />
+      )}
       {drawer === "trace" && <TraceDrawer onClose={() => setDrawer(null)} />}
     </div>
   );
@@ -145,69 +184,6 @@ function useDialog(onClose: () => void) {
     return () => d.removeEventListener("close", close);
   }, []);
   return ref;
-}
-
-function ExportDrawer({ onClose, onDecide }: { onClose: () => void; onDecide: () => void }) {
-  const { ws, toast } = useWb();
-  const ref = useDialog(onClose);
-  const [pack, setPack] = useState<ExportPack | null>(null);
-  const [copied, setCopied] = useState<string | null>(null);
-  useEffect(() => { api.exportPack(ws.id).then(setPack, () => toast("导出内容没有生成成功，请再试一次")); }, [ws.id, toast]);
-  const copy = (key: string, text: string) => navigator.clipboard?.writeText(text).then(() => { setCopied(key); setTimeout(() => setCopied(null), 1600); }, () => toast("浏览器不允许复制，请手动选择文字"));
-  const open = pack?.open.length ?? 0;
-  const draftText = pack?.draft ? [pack.draft.title, "", ...pack.draft.outline.map((o, i) => `${i + 1}. ${o}`)].join("\n") : "";
-  return (
-    <dialog className="drawer" ref={ref} aria-labelledby="exportTitle" onClick={(e) => { if (e.target === ref.current) ref.current?.close(); }}>
-      <div className="dlg-h"><span className="itile sm"><Icon name="box" /></span><h2 id="exportTitle">最终交付 <small className="muted" style={{ fontSize: 13, fontWeight: 500 }}>/ Deliverables</small></h2>{ws.is_demo && <span className="tag t-demo">{DEMO_TAG}</span>}
-        <button type="button" className="btn btn-ghost btn-sm" aria-label="关闭" onClick={() => ref.current?.close()}><Icon name="x" /></button></div>
-      <div className="dlg-b">
-        {!pack ? <p className="muted">正在整理…</p> : (
-          <>
-            {open ? (
-              <div className="state need"><Icon name="hand" /><span className="grow">还有 {open} 件事没决定。现在导出也可以，这些地方会写成 <b>[待确认]</b>，其他内容不受影响。</span>
-                <button type="button" className="btn btn-sm" onClick={onDecide}>先去决定</button></div>
-            ) : (
-              <div className="state ok"><Icon name="checkCircle" /><span className="grow">都确认好了，可以发布。检查报告和中英口径表会一起下载。</span></div>
-            )}
-            <div>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}><b style={{ fontSize: 15 }}>英文产品页面</b><span className="muted" style={{ fontSize: 12.5 }}>English Product Page · Markdown，可直接贴进 Kickstarter 编辑器</span></div>
-              <pre className="md">{pack.markdown}</pre>
-            </div>
-            <div>
-              <b style={{ fontSize: 15, display: "block", marginBottom: 8 }}>一起生成好的</b>
-              <ul className="extras">
-                <li><details><summary><span className="itile sm"><Icon name="doc" /></span><span><b>审校报告</b><small>Review Report · 系统改了什么、为什么、你决定了什么、还缺什么</small></span><Icon name="down" /></summary>
-                  <div className="inner"><pre className="md">{pack.report}</pre></div></details></li>
-                {pack.glossary && <li><details><summary><span className="itile sm teal"><Icon name="file" /></span><span><b>中英口径表</b><small>给客服、KOL 和海外代理商统一说法</small></span><Icon name="down" /></summary>
-                  <div className="inner"><table className="tbl"><thead><tr><th>中文说法</th><th>对外英文说法</th><th>不要说</th></tr></thead>
-                    <tbody>{ws.brief.glossary.map((g) => <tr key={g[0]}><td>{g[0]}</td><td className="en">{g[1]}</td><td>{g[2]}</td></tr>)}</tbody></table></div></details></li>}
-                {pack.draft && <li><details><summary><span className="itile sm zhi">知</span><span><b>知乎知识回流草稿</b><small>Zhihu Knowledge Feedback Draft · 系统不会替你发布</small></span><Icon name="down" /></summary>
-                  <div className="inner draft">
-                    <h4>{pack.draft.title}</h4><p className="muted" style={{ margin: 0, fontSize: 13 }}>{pack.draft.meta}</p>
-                    <ol>{pack.draft.outline.map((o) => <li key={o}>{o}</li>)}</ol>
-                    <ul className="checks">{pack.draft.checks.map(([c, who], i) => who === "system"
-                      ? <li key={c}><Icon name="check" small />{c}（系统已查）</li>
-                      : <li key={c}><input type="checkbox" id={`ck${i}`} /><label htmlFor={`ck${i}`}>{c}（只有你能确认）</label></li>)}</ul>
-                    <div style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
-                      <button type="button" className="btn btn-sm" onClick={() => copy("draft", draftText)}><Icon name={copied === "draft" ? "check" : "copy"} small />{copied === "draft" ? "已复制" : "复制草稿"}</button>
-                      <a className="btn btn-sm" href="https://www.zhihu.com/" target="_blank" rel="noopener noreferrer"><Icon name="external" small />打开知乎，自己决定是否发布</a>
-                    </div>
-                  </div></details></li>}
-              </ul>
-            </div>
-          </>
-        )}
-      </div>
-      <div className="dlg-f">
-        <button type="button" className="btn" disabled={!pack} onClick={() => pack && copy("md", pack.markdown)}><Icon name={copied === "md" ? "check" : "copy"} small />{copied === "md" ? "已复制" : "复制英文页"}</button>
-        <button type="button" className="btn btn-primary" disabled={!pack} onClick={() => {
-          if (!pack) return;
-          downloadText(`${ws.name.split(" ")[0] || "zhihu-bridge"}-launch-pack.md`, [pack.markdown, pack.report, pack.glossary].filter(Boolean).join("\n\n---\n\n"));
-          toast("已下载发布包（英文页 + 审校报告 + 中英口径表）");
-        }}><Icon name="download" small />导出 Markdown（全部）</button>
-      </div>
-    </dialog>
-  );
 }
 
 function TraceDrawer({ onClose }: { onClose: () => void }) {

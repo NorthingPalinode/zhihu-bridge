@@ -90,7 +90,11 @@ def render_item(state: dict, item: dict) -> list[dict]:
             parts.append({"type": "ph", "decision": seg["slot"], "text": seg["ph"]} if text is None else {"type": "text", "text": text})
         elif "fix" in seg:
             iss = issue(state, seg["fix"])
-            if iss["status"] == "kept":
+            if iss is None:
+                continue
+            if iss["status"] == "pending_review":
+                parts.append({"type": "text", "text": iss["original"]})
+            elif iss["status"] == "kept":
                 parts.append({"type": "kept", "issue": iss["id"], "text": iss["original"]})
             else:
                 text = iss["applied"]
@@ -153,6 +157,7 @@ def section_need(state: dict, aid: str) -> int:
 
 
 def summary(state: dict) -> dict:
+    completed = set(state.get("completed_stages") or ("materials", "facts", "insights", "content", "review"))
     od = open_decisions(state)
     facts_need = sum(1 for d in state["decisions"] if d["value"] is None)
     auto = [i for i in state["issues"] if i["status"] == "auto_applied" or (i["fix_kind"] == "user_introduced" and i["status"] == "resolved")]
@@ -167,7 +172,7 @@ def summary(state: dict) -> dict:
         "auto_fixed": len(auto),
         "kept": len(kept),
         "blocked": len(state["blocked"]),
-        "ready": not od,
+        "ready": ("review" in completed) and not od,
     }
 
 
@@ -375,11 +380,14 @@ def set_setting(state: dict, key: str, value: str, options: dict) -> str:
     state["settings"][key] = value
     state["settings"]["source"][key] = "user"
     label = next(o[1] for o in options[key] if o[0] == value)
+    if not state["assets"]:
+        return f"已设为「{label}」，生成海外内容时将按此口径撰写"
     if key == "channel":
         for a in state["assets"]:
             _bump(state, a["id"])
         return f"已按“{label}”调整全文（示例数据里文字不变）"
-    _bump(state, "headline")
+    if _find(state["assets"], "id", "headline") is not None:
+        _bump(state, "headline")
     return f"已按“{label}”重写标题区"
 
 
@@ -421,9 +429,13 @@ def export_markdown(state: dict) -> str:
 
 
 def export_report(state: dict) -> str:
-    L = ["# 检查报告（内部）", "", ("示例产品 · 虚构 · " if state["is_demo"] else "") + "AI 辅助撰写和检查，只覆盖下列检查项，不构成法律意见，也不保证通过平台或监管审核", "", "## 系统修改"]
+    completed = set(state.get("completed_stages") or ("materials", "facts", "insights", "content", "review"))
+    L = ["# 检查报告（内部）", "", ("示例产品（基于中国智能硬件公开资料改编） · " if state["is_demo"] else "") + "AI 辅助撰写和检查，只覆盖下列检查项，不构成法律意见，也不保证通过平台或监管审核"]
+    if "review" not in completed:
+        L += ["", "> 【未审校初稿】尚未执行发布前合规审校，当前正文可能仍含未改写的夸大或风险说法，请先完成审校后再正式对外发布。"]
+    L += ["", "## 系统修改"]
     for iss in state["issues"]:
-        if iss["fix_kind"] in AUTO_FIX_KINDS:
+        if iss["fix_kind"] in AUTO_FIX_KINDS and iss["status"] in ("auto_applied", "kept"):
             L.append(f"- {'【你保留了原句】' if iss['status'] == 'kept' else '【已修改】'}{iss['title']}" + (f"。理由：{iss['keep_reason']}" if iss["status"] == "kept" else ""))
     for b in state["blocked"]:
         L.append(f"- 【已挡下】{b['title']}：资料里没有证明")

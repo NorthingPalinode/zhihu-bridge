@@ -10,7 +10,7 @@ import kanshanStill from "./assets/kanshan-still.png";
 const ACCEPT = ".txt,.md,.csv,.docx,.pdf";
 const reducedMotion = () => typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 
-export function Home({ onOpen, onRun }: { onOpen: (id: string) => void; onRun: (id: string, names: string[]) => void }) {
+export function Home({ onOpen, onRun }: { onOpen: (id: string, toastMsg?: string) => void; onRun: (id: string, names: string[]) => void }) {
   const [projects, setProjects] = useState<ProjectRow[] | null>(null);
   const [pasting, setPasting] = useState(false);
   const [text, setText] = useState("");
@@ -37,12 +37,11 @@ export function Home({ onOpen, onRun }: { onOpen: (id: string) => void; onRun: (
   };
 
   const openDemo = async () => {
-    const existing = projects?.find((p) => p.is_demo);
-    if (existing) return onOpen(existing.id);
+    setError(null);
     setWorking(true);
     try {
       const { id } = await api.createDemo();
-      onRun(id, ["PulseRing X1 示例资料包（5 份）"]);
+      onOpen(id, "已预载 PulseRing X1 产品资料包（5 份，含 PDF），请按步骤体验完整流程");
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "示例项目没有打开成功");
     } finally {
@@ -83,7 +82,7 @@ export function Home({ onOpen, onRun }: { onOpen: (id: string) => void; onRun: (
                   <small>上传资料就开始 · Create a New Global Launch Project</small>
                 </button>
                 <input ref={input} type="file" multiple hidden accept={ACCEPT} onChange={(e) => { const fs = [...(e.target.files ?? [])]; e.target.value = ""; if (fs.length) void start(fs); }} />
-                <p className="hero-hint">支持 .txt · .md · .csv · .docx，可以一次放多份，也可以直接拖到这里，或 <button type="button" className="link" onClick={() => setPasting((v) => !v)}>粘贴文字</button>。不用填表。</p>
+                <p className="hero-hint">支持 .txt · .md · .csv · .docx · .pdf，可以一次放多份，也可以直接拖到这里，或 <button type="button" className="link" onClick={() => setPasting((v) => !v)}>粘贴文字</button>。不用填表。</p>
                 {pasting && (
                   <div className="paste">
                     <textarea autoFocus value={text} onChange={(e) => setText(e.target.value)} placeholder="把产品介绍、参数或现有中文文案直接粘贴进来" maxLength={20000} />
@@ -128,7 +127,8 @@ export function Home({ onOpen, onRun }: { onOpen: (id: string) => void; onRun: (
                     <b>{p.name}</b>
                     <div className="row"><Icon name="shield" small />美国市场<span className="sep" />英文<span className="sep" />{p.channel === "ks" ? "Kickstarter" : "独立站"}</div>
                     <div className="row">
-                      {p.open ? <><span className="dot-i" style={{ color: "var(--need)" }} /><b style={{ display: "inline", fontSize: 13, margin: 0, color: "var(--need)" }}>还需你决定 {p.open} 件</b></>
+                      {p.staged ? <><span className="dot-i" style={{ color: "var(--accent-cyan)" }} /><b style={{ display: "inline", fontSize: 13, margin: 0, color: "var(--accent-cyan)" }}>分步体验进行中</b></>
+                        : p.open ? <><span className="dot-i" style={{ color: "var(--need)" }} /><b style={{ display: "inline", fontSize: 13, margin: 0, color: "var(--need)" }}>还需你决定 {p.open} 件</b></>
                         : <><Icon name="checkCircle" small className="ok-ic" /><b style={{ display: "inline", fontSize: 13, margin: 0, color: "var(--status-success)" }}>可以导出</b></>}
                       {p.is_demo && <span className="tag t-demo">{DEMO_TAG}</span>}
                       <span className="go"><Icon name="right" small /></span>

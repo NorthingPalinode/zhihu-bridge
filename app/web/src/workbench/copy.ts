@@ -1,16 +1,23 @@
 // 全站唯一叫法（DESIGN.md §0、PRODUCT.md §7）。界面文案中的状态与派生说法只从这里取。
-import type { Asset, Decision, Issue, Part, Workspace } from "./types";
+import type { Asset, Decision, Issue, Part, Stage, Workspace } from "./types";
 
 export const SECTION_NAMES: Record<string, string> = { headline: "标题与宣传语", features: "核心卖点", story: "详细介绍", specs: "技术参数", faq: "FAQ" };
 export const KEEP_REASONS: [string, string][] = [["has_data_later", "已有实测数据，稍后补上"], ["owner_approved", "负责人确认保留"], ["will_revise", "上线前会再改"]];
 export const SEVERITY: Record<string, string> = { high: "高", medium: "中", low: "低" };
 export const LAYER_CLASS: Record<string, string> = { company: "ly-company", zhihu: "ly-zhihu", global: "ly-global", rule: "ly-rule", ai: "ly-ai" };
-export const DEMO_TAG = "示例产品 · 虚构";
+export const DEMO_TAG = "示例产品 · 真实硬件改编";
 export const DEV_TAG = "开发占位 · 非真实运行";
 
 export const plainText = (parts: Part[]) => parts.map((p) => (p.type === "ph" ? "[待确认]" : p.text)).join("");
 
+export const hasStage = (ws: Workspace, stage: Stage): boolean => {
+  const stages = ws.completed_stages;
+  if (!stages || stages.length === 0) return true;
+  return stages.includes(stage);
+};
+
 export function statusLabel(ws: Workspace): string {
+  if (!hasStage(ws, "review")) return "按步骤体验中";
   const n = ws.summary.open_decisions.length;
   return n ? `还需你决定 ${n} 件` : "可以导出了";
 }
@@ -18,14 +25,20 @@ export function statusLabel(ws: Workspace): string {
 export function stepSummary(ws: Workspace, step: "materials" | "insights" | "content" | "review"): { text: string; tone?: "need" | "ok"; tail?: string } {
   const s = ws.summary;
   if (step === "materials") {
+    if (!hasStage(ws, "facts")) return { text: `已载入 ${ws.sources.length} 份资料 · `, tail: "待提取事实", tone: "need" };
     const n = ws.decisions.filter((d) => d.value === null).length;
     return { text: `${s.facts_total} 条事实 · `, tail: n ? `${n} 件等你决定` : "都已确认", tone: n ? "need" : "ok" };
   }
-  if (step === "insights") return { text: s.insights_total ? `${s.insights_total} 条知乎建议 · ${s.insights_on} 条在用` : "骨架阶段只为示例资料提供" };
-  if (step === "content") {
-    const n = s.sections_need.length;
-    return { text: `${ws.assets.length} 段 · `, tail: n ? `${n} 段有空位等你定` : "都已检查", tone: n ? "need" : "ok" };
+  if (step === "insights") {
+    if (!hasStage(ws, "insights")) return { text: "待你启动分析" };
+    return { text: s.insights_total ? `${s.insights_total} 条知乎建议 · ${s.insights_on} 条在用` : "本次未触发知乎建议" };
   }
+  if (step === "content") {
+    if (!hasStage(ws, "content")) return { text: "待生成英文页" };
+    const n = s.sections_need.length;
+    return { text: `${ws.assets.length} 段 · `, tail: n ? `${n} 段有空位等你定` : (hasStage(ws, "review") ? "都已检查" : "初稿已生成"), tone: n ? "need" : "ok" };
+  }
+  if (!hasStage(ws, "review")) return { text: "待执行发布前审校" };
   return { text: `系统改了 ${s.auto_fixed} 处` + (s.blocked ? ` · 挡下 ${s.blocked} 处` : ""), tail: s.kept ? ` · 你保留 ${s.kept} 处` : undefined, tone: s.kept ? "need" : undefined };
 }
 

@@ -24,9 +24,13 @@ const P = (id: string) => `/api/projects/${encodeURIComponent(id)}`;
 
 export const api = {
   list: () => call<{ projects: ProjectRow[] }>("GET", "/api/projects"),
-  createDemo: () => call<{ id: string }>("POST", "/api/projects", { demo: true }),
-  create: (files: { name: string; content_b64: string }[], text?: string) => call<{ id: string }>("POST", "/api/projects", { files, text }),
+  createDemo: () => call<{ id: string; staged?: boolean }>("POST", "/api/projects", { demo: true, staged: true }),
+  create: (files: { name: string; content_b64: string }[], text?: string) => call<{ id: string; staged?: boolean }>("POST", "/api/projects", { files, text }),
   workspace: (id: string) => call<Workspace>("GET", `${P(id)}/workspace`),
+  runStage: (id: string, stage: "facts" | "insights" | "content" | "review") =>
+    call<Mutation>("POST", `${P(id)}/steps/${encodeURIComponent(stage)}`),
+  addSources: (id: string, files: { name: string; content_b64: string }[], text?: string) =>
+    call<Mutation>("POST", `${P(id)}/sources`, { files, text }),
   decide: (id: string, did: string, value: string | null, extra: { custom?: string; reason?: string } = {}) =>
     call<Mutation>("POST", `${P(id)}/decisions/${encodeURIComponent(did)}`, { value, ...extra }),
   editFact: (id: string, fid: string, text: string) => call<Mutation>("PATCH", `${P(id)}/facts/${fid}`, { text }),
@@ -51,11 +55,16 @@ export function fileToBase64(file: File): Promise<string> {
   });
 }
 
-export function downloadText(name: string, text: string) {
+export function downloadBlob(name: string, blob: Blob) {
   const a = document.createElement("a");
-  a.href = URL.createObjectURL(new Blob([text], { type: "text/markdown" }));
+  const url = URL.createObjectURL(blob);
+  a.href = url;
   a.download = name;
   document.body.appendChild(a);
   a.click();
-  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 800);
+}
+
+export function downloadText(name: string, text: string, mime = "text/markdown;charset=utf-8") {
+  downloadBlob(name, new Blob([text], { type: mime }));
 }

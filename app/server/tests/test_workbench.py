@@ -17,7 +17,7 @@ def client(make_settings):
 
 @pytest.fixture
 def demo(client):
-    r = client.post("/api/projects", json={"demo": True})
+    r = client.post("/api/projects", json={"demo": True, "staged": False})
     assert r.status_code == 200, r.text
     pid = r.json()["id"]
     return pid, client.get(f"/api/projects/{pid}/workspace").json()
@@ -37,17 +37,147 @@ def export(client, pid):
 
 
 # ---------------------------------------------------------------- pipeline & facts
-def test_demo_facts_have_real_locators_and_unreadable_pdf_is_not_used(demo):
+def test_demo_facts_have_real_locators_and_pdf_is_parsed(demo):
     _, w = demo
     facts = {f["id"]: f for f in w["facts"]}
-    assert set(facts) == {"F01", "F02", "F03", "F05", "F04a", "F04b", "F07", "F06"}
+    assert set(facts) == {"F01", "F02", "F03", "F05", "F08", "F04a", "F04b", "F07", "F06"}
     assert facts["F01"]["source"]["locator"] == "第 4 行"
     assert facts["F04b"]["source"]["locator"] == "第 11 行"
     assert facts["F04a"]["source"]["locator"] == "第 2 节"
     assert facts["F06"]["source"]["file"].endswith(".docx")
+    assert facts["F08"]["source"]["file"].endswith(".pdf") and facts["F08"]["source"]["locator"] == "第 1 页"
     pdf = next(s for s in w["sources"] if s["filename"].endswith(".pdf"))
-    assert pdf["status"] == "unsupported" and "没有用作依据" in pdf["note"]
+    assert pdf["status"] == "parsed" and "页" in pdf["size"] and "FCC Part 15C" in pdf["preview"]
     assert all(f["user_decision"] == "pending" for f in facts.values()), "模型/流水线不得写入用户决定"
+
+
+def test_demo_default_is_staged_for_interactive_walkthrough(client):
+    r = client.post("/api/projects", json={"demo": True})
+    assert r.status_code == 200 and r.json()["staged"] is True
+    pid = r.json()["id"]
+    w0 = ws(client, pid)
+    assert w0["completed_stages"] == ["materials"]
+    assert len(w0["sources"]) == 5 and all(s["status"] == "parsed" for s in w0["sources"])
+    assert w0["facts"] == [] and w0["insights"] == [] and w0["assets"] == [] and w0["issues"] == []
+    assert w0["summary"]["ready"] is False
+
+    # Step 1: 评委触发事实提取
+    w1 = client.post(f"/api/projects/{pid}/steps/facts").json()["workspace"]
+    assert w1["completed_stages"] == ["materials", "facts"]
+    assert len(w1["facts"]) == 9 and len(w1["decisions"]) == 3 and len(w1["blocked"]) == 1
+    assert w1["insights"] == [] and w1["assets"] == []
+
+    # Step 2: 评委触发知乎认知洞察
+    w2 = client.post(f"/api/projects/{pid}/steps/insights").json()["workspace"]
+    assert w2["completed_stages"] == ["materials", "facts", "insights"]
+    assert len(w2["insights"]) == 3 and w2["assets"] == []
+
+    # Step 3: 评委触发海外内容生成（此时尚未审校，呈现初稿措辞）
+    w3 = client.post(f"/api/projects/{pid}/steps/content").json()["workspace"]
+    assert w3["completed_stages"] == ["materials", "facts", "insights", "content"]
+    assert len(w3["assets"]) == 5 and w3["issues"] == []
+    assert "All-Day Battery Life" in text_of(w3, "features")
+
+    # Step 4: 评委触发发布前审校（保守自动修订生效）
+    w4 = client.post(f"/api/projects/{pid}/steps/review").json()["workspace"]
+    assert w4["completed_stages"] == ["materials", "facts", "insights", "content", "review"]
+    assert len(w4["issues"]) == 3
+    assert "Runtime Testing in Progress" in text_of(w4, "features")
+    assert "All-Day Battery Life" not in text_of(w4, "features")
+
+
+def test_add_sources_and_real_pdf_upload(client):
+    r = client.post("/api/projects", json={"demo": True})
+    pid = r.json()["id"]
+    extra = {"name": "extra_lab.txt", "content_b64": _b64("实验室温箱测试温度范围 0–45°C，充电仓容量 320 mAh。".encode())}
+    added = client.post(f"/api/projects/{pid}/sources", json={"files": [extra]})
+    assert added.status_code == 200
+    w_sources = added.json()["workspace"]["sources"]
+    assert any(s["filename"] == "extra_lab.txt" and s["status"] == "parsed" for s in w_sources)
+    w_facts = client.post(f"/api/projects/{pid}/steps/facts").json()["workspace"]
+    assert any(f["source"]["file"] == "extra_lab.txt" for f in w_facts["facts"])
+
+    # 直接上传真实 PDF 文件也能独立建项目
+    from pathlib import Path
+    pdf_path = Path(__file__).resolve().parents[2] / "fixtures" / "workbench" / "pulsering" / "PulseRing_X1_认证清单.pdf"
+    r_pdf = client.post("/api/projects", json={"files": [{"name": "cert.pdf", "content_b64": _b64(pdf_path.read_bytes())}]})
+    assert r_pdf.status_code == 200, r_pdf.text
+    w_pdf = ws(client, r_pdf.json()["id"])
+    assert w_pdf["sources"][0]["status"] == "parsed" and w_pdf["sources"][0]["kind"] == "pdf"
+    assert any(f["source"]["locator"] == "第 1 页" for f in w_pdf["facts"])
+
+
+def test_stage_prerequisites_early_settings_and_staged_undo(client):
+    pid = client.post("/api/projects", json={"demo": True}).json()["id"]
+    # 跳步直接执行审校必须被 409 拦截
+    assert client.post(f"/api/projects/{pid}/steps/review").status_code == 409
+    assert client.post(f"/api/projects/{pid}/steps/content").status_code == 409
+    # 内容生成前修改受众和语气应正常生效，不得报 404
+    assert client.patch(f"/api/projects/{pid}/settings", json={"key": "audience", "value": "everyday"}).status_code == 200
+    assert client.patch(f"/api/projects/{pid}/settings", json={"key": "tone", "value": "plain"}).status_code == 200
+    # 推进事实阶段后可正常撤销，不破坏操作日志链
+    r1 = client.post(f"/api/projects/{pid}/steps/facts")
+    assert r1.status_code == 200 and r1.json()["undoable"] is True
+    # 重复执行幂等
+    r_dup = client.post(f"/api/projects/{pid}/steps/facts")
+    assert r_dup.status_code == 200 and r_dup.json()["undoable"] is False
+    # 撤销刚才的阶段推进
+    u = client.post(f"/api/projects/{pid}/actions/undo")
+    assert u.status_code == 200 and u.json()["workspace"]["completed_stages"] == ["materials"]
+
+
+def test_pre_review_export_is_draft_and_edited_claim_not_overcounted(client):
+    pid = client.post("/api/projects", json={"demo": True}).json()["id"]
+    for st in ("facts", "insights", "content"):
+        assert client.post(f"/api/projects/{pid}/steps/{st}").status_code == 200
+    # 即使三个决定全部完成，未执行审校前也不得标为 ready
+    client.post(f"/api/projects/{pid}/decisions/facts", json={"value": "confirmed"})
+    client.post(f"/api/projects/{pid}/decisions/conflict:W1", json={"value": "3.6"})
+    client.post(f"/api/projects/{pid}/decisions/roadmap:F07", json={"value": "mention"})
+    exp_draft = export(client, pid)
+    assert exp_draft["reviewed"] is False and exp_draft["ready"] is False
+    assert "未审校初稿" in exp_draft["report"]
+
+    # 在审校前手动编辑 f2 且仍保留 All-Day Battery Life，审校后不得虚报 R01 已自动改写
+    client.patch(f"/api/projects/{pid}/content/features", json={"items": {"f2": "Custom copy with All-Day Battery Life"}})
+    w_rev = client.post(f"/api/projects/{pid}/steps/review").json()["workspace"]
+    assert not any(i["id"] == "R01" and i["status"] == "auto_applied" for i in w_rev["issues"])
+    assert any(i["fix_kind"] == "user_introduced" and i["status"] == "open" for i in w_rev["issues"])
+
+
+def test_source_replacement_safety_and_reopen_confirmation(client, demo):
+    pid, _ = demo
+    client.post(f"/api/projects/{pid}/decisions/facts", json={"value": "confirmed"})
+    client.post(f"/api/projects/{pid}/decisions/conflict:W1", json={"value": "3.6"})
+    client.post(f"/api/projects/{pid}/decisions/roadmap:F07", json={"value": "mention"})
+    assert ws(client, pid)["summary"]["ready"] is True
+
+    # 用损坏 PDF 替换已解析认证清单必须被 422 拒绝，并保留原 FCC 事实
+    bad_rep = client.post(f"/api/projects/{pid}/sources", json={"files": [{"name": "PulseRing_X1_认证清单.pdf", "content_b64": _b64(b"%PDF-1.4")}]})
+    assert bad_rep.status_code == 422
+    assert "FCC Part 15C" in export(client, pid)["markdown"]
+
+    # 新增有效资料后，批量确认必须重新打开（ready 变为 False），且撤销不报 409
+    extra = {"name": "case_spec.txt", "content_b64": _b64("便携充电仓容量 320 mAh，支持 USB-C 快充。".encode())}
+    ok_add = client.post(f"/api/projects/{pid}/sources", json={"files": [extra]})
+    assert ok_add.status_code == 200 and ok_add.json()["workspace"]["summary"]["ready"] is False
+    assert client.post(f"/api/projects/{pid}/actions/undo").status_code == 200
+
+
+def test_pdf_diagnostics_distinguish_corrupt_and_scanned():
+    from bridge.workbench.sources import parse_source
+    corrupt = parse_source("broken.pdf", b"%PDF-1.4\ntruncated")
+    assert corrupt.status == "failed" and "损坏" in corrupt.note
+    # 合法单页空白 PDF（模拟扫描件无文字）
+    blank_pdf = (
+        b"%PDF-1.4\n1 0 obj<< /Type /Catalog /Pages 2 0 R >>endobj\n"
+        b"2 0 obj<< /Type /Pages /Kids [3 0 R] /Count 1 >>endobj\n"
+        b"3 0 obj<< /Type /Page /Parent 2 0 R /MediaBox [0 0 200 200] >>endobj\n"
+        b"xref\n0 4\n0000000000 65535 f \n0000000009 00000 n \n0000000058 00000 n \n0000000115 00000 n \n"
+        b"trailer<< /Size 4 /Root 1 0 R >>\nstartxref\n183\n%%EOF\n"
+    )
+    scanned = parse_source("scan.pdf", blank_pdf)
+    assert scanned.status == "unsupported" and "扫描件" in scanned.note
 
 
 def test_conflict_keeps_both_sides_recommends_but_never_picks(client, demo):
@@ -195,7 +325,7 @@ def test_generic_upload_with_docx_and_unsupported_pdf(client):
     assert r.status_code == 200, r.text
     w = ws(client, r.json()["id"])
     assert w["is_demo"] is False and w["facts"] and w["facts"][0]["source"]["file"] == "spec.docx"
-    assert any(s["status"] == "unsupported" for s in w["sources"])
+    assert any(s["status"] in ("unsupported", "failed") for s in w["sources"])
     assert "开发占位" in text_of(w, "features")
 
 

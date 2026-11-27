@@ -1,8 +1,12 @@
 // 与 server/bridge/workbench/api.py::workspace() 一一对应（ADR-002）。
 export type Layer = "company" | "zhihu" | "global" | "rule" | "ai";
 export type Basis = [Layer, string, string, string]; // 层, 标签, 获取方式/定位, 内容
+export type Stage = "materials" | "facts" | "insights" | "content" | "review";
 
-export interface Source { filename: string; kind: string; status: "parsed" | "unsupported" | "failed"; size: string; note: string }
+export interface Source {
+  filename: string; kind: string; status: "parsed" | "unsupported" | "failed";
+  size: string; note: string; preview?: string;
+}
 
 export interface Fact {
   id: string; short: string; text: string;
@@ -52,6 +56,7 @@ export interface Summary {
 
 export interface Workspace {
   id: string; name: string; is_demo: boolean; llm_mode: string; retrieval_mode: string;
+  completed_stages: Stage[];
   settings: { channel: string; audience: string; tone: string; source: Record<string, string> };
   settings_options: Record<"channel" | "audience" | "tone", [string, string][]>;
   sources: Source[]; facts: Fact[]; decisions: Decision[]; insights: Insight[];
@@ -61,6 +66,13 @@ export interface Workspace {
 }
 
 export interface Mutation { workspace: Workspace; toast: string; undoable: boolean }
-export interface ProjectRow { id: string; name: string; is_demo: boolean; channel: string; open: number; updated_at: number }
-export interface ExportPack { markdown: string; report: string; glossary: string; draft: { title: string; meta: string; outline: string[]; checks: [string, "system" | "user"][] } | null; open: string[]; is_demo: boolean }
+export interface ProjectRow {
+  id: string; name: string; is_demo: boolean; channel: string; open: number;
+  staged?: boolean; completed_stages?: Stage[]; updated_at: number;
+}
+export interface ExportPack {
+  markdown: string; report: string; glossary: string;
+  draft: { title: string; meta: string; outline: string[]; checks: [string, "system" | "user"][] } | null;
+  open: string[]; reviewed?: boolean; ready?: boolean; is_demo: boolean;
+}
 export interface Trace { steps: { step: string; llm_mode: string; data: string; quota: number }[]; actions: { id: number; label: string; undone: boolean }[] }

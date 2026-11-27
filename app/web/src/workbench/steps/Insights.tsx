@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { api } from "../api";
-import { LAYER_CLASS, plainText } from "../copy";
+import { LAYER_CLASS, hasStage, plainText } from "../copy";
 import { useWb } from "../context";
 import { Icon } from "../icons";
 import { factIcon } from "./Materials";
@@ -16,11 +17,24 @@ const reducedMotion = () => typeof window !== "undefined" && window.matchMedia?.
 
 export function Insights() {
   const { ws, run, goStep } = useWb();
+  const [running, setRunning] = useState(false);
+  const insightsDone = hasStage(ws, "insights");
+  const factsDone = hasStage(ws, "facts");
   const facts = Object.fromEntries(ws.facts.map((f) => [f.id, f]));
   const audience = ws.settings_options.audience.find((o) => o[0] === ws.settings.audience)?.[1];
   const tone = ws.settings_options.tone.find((o) => o[0] === ws.settings.tone)?.[1];
   const headline = ws.assets.find((a) => a.id === "headline")?.items.find((i) => i.kind === "tagline");
   const live = ws.retrieval_mode === "live";
+
+  const trigger = async () => {
+    setRunning(true);
+    try {
+      await run(() => api.runStage(ws.id, "insights"));
+    } finally {
+      setRunning(false);
+    }
+  };
+
   return (
     <>
       <section className="ins-hero">
@@ -38,9 +52,34 @@ export function Insights() {
         <img className="ins-mascot" src={reducedMotion() ? kanshanStill : kanshanLaptop} alt="" />
       </section>
 
-      {!ws.insights.length ? (
+      {!insightsDone ? (
+        <section className="glass stage-gate">
+          <span className="itile lg zhi">知</span>
+          <h3>尚未执行知乎认知洞察分析</h3>
+          <p>
+            {factsDone
+              ? `系统已提取 ${ws.facts.length} 条产品事实。点击下方按钮，将针对资料中的中文工程黑话（如“堆料”“极限压榨功耗”“底层协议调试”）检索知乎语境与英文同类表达，识别直译误读风险并生成内容策略 Brief。`
+              : "请先在第 1 步「产品资料」中提取产品事实档案，再启动知乎认知洞察分析。"}
+          </p>
+          <div className="meta-row">
+            <span className="tag t-info">识别直译踩坑术语</span>
+            <span className="tag t-ok">对照英文同类众筹表达</span>
+            <span className="tag t-need">自动生成内容策略 Brief</span>
+          </div>
+          {factsDone ? (
+            <button type="button" className="btn btn-primary btn-lg" disabled={running} onClick={trigger}>
+              {running ? <><span className="spin" />正在分析知乎社区洞察…</> : <><Icon name="layers" />启动知乎认知洞察分析 <Icon name="right" /></>}
+            </button>
+          ) : (
+            <button type="button" className="btn btn-primary btn-lg" onClick={() => goStep("materials")}>
+              <Icon name="left" />先去第 1 步：提取产品事实
+            </button>
+          )}
+        </section>
+      ) : !ws.insights.length ? (
         <section className="glass" style={{ padding: 24 }}>
           <p style={{ margin: 0 }}>这次没有找到直译容易被误读的说法，或者知乎检索没有开启。英文页按产品事实直接写成，发布前检查照常进行。</p>
+          <button type="button" className="btn btn-primary" style={{ marginTop: 14 }} onClick={() => goStep("content")}>进入下一步：海外内容 <Icon name="right" small /></button>
         </section>
       ) : (
         <div className="cols cols-ins main-first">
@@ -94,7 +133,9 @@ export function Insights() {
                 {ws.brief.priorities.length > 0 && <ul className="checks">{ws.brief.priorities.map((p) => <li key={p}><Icon name="check" small />{p}</li>)}</ul>}
               </div>
               {ws.brief.forbidden.length > 0 && <div className="bsec"><h4><span className="itile sm red"><Icon name="x" /></span>不会出现的说法</h4><div className="forbid">{ws.brief.forbidden.map((p) => <span key={p}>{p}</span>)}</div></div>}
-              <button type="button" className="btn btn-primary" style={{ width: "100%", marginTop: 14 }} onClick={() => goStep("content")}>看这些要点写成的英文页 <Icon name="right" small /></button>
+              <button type="button" className="btn btn-primary" style={{ width: "100%", marginTop: 14 }} onClick={() => goStep("content")}>
+                {hasStage(ws, "content") ? "看这些要点写成的英文页" : "下一步：生成海外内容"} <Icon name="right" small />
+              </button>
             </div>
           </aside>
         </div>

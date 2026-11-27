@@ -1,9 +1,12 @@
-import { useState } from "react";
-import { api } from "../api";
+import { useRef, useState } from "react";
+import { api, fileToBase64 } from "../api";
+import { hasStage } from "../copy";
 import { useWb } from "../context";
 import { DecisionCard } from "../Decision";
 import { Icon } from "../icons";
 import type { Fact } from "../types";
+
+const ACCEPT = ".txt,.md,.csv,.docx,.pdf";
 
 /** 事实的图标按内容推断（只是视觉提示，不改变任何判定）。 */
 export function factIcon(text: string): string {
@@ -11,7 +14,7 @@ export function factIcon(text: string): string {
   if (/功耗|低功耗|power/i.test(text)) return "bolt";
   if (/防水|ATM|water/i.test(text)) return "drop";
   if (/PCB|主板|芯片|元器件|chip/i.test(text)) return "chip";
-  if (/调试|协议|固件|UART|BLE|蓝牙/i.test(text)) return "gear";
+  if (/调试|协议|固件|UART|BLE|蓝牙|FCC/i.test(text)) return "gear";
   if (/重量|克|\bg\b|尺寸/i.test(text)) return "scale";
   if (/健康|心率|睡眠|医疗|FDA/i.test(text)) return "heart";
   if (/同步|Apple|App/i.test(text)) return "reflow";
@@ -24,11 +27,39 @@ const ftype = (name: string) => {
 };
 
 export function Materials() {
-  const { ws, toast } = useWb();
+  const { ws, run, goStep, toast } = useWb();
+  const [openFile, setOpenFile] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [extracting, setExtracting] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
   const parsed = ws.sources.filter((s) => s.status === "parsed").length;
+  const factsDone = hasStage(ws, "facts");
   const conflicts = ws.decisions.filter((d) => d.kind === "conflict");
   const openConflicts = conflicts.filter((d) => d.value === null).length;
-  const stub = (what: string) => toast(`骨架阶段暂未开放${what}。正式版补充后，系统会自动更新事实，并重写、重查受影响的句子`);
+
+  const uploadExtra = async (files: File[]) => {
+    if (!files.length) return;
+    setUploading(true);
+    try {
+      const payload = await Promise.all(files.map(async (f) => ({ name: f.name, content_b64: await fileToBase64(f) })));
+      await run(() => api.addSources(ws.id, payload));
+    } catch (e) {
+      toast(e instanceof Error ? e.message : "上传资料失败");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const runExtract = async () => {
+    setExtracting(true);
+    try {
+      await run(() => api.runStage(ws.id, "facts"));
+    } finally {
+      setExtracting(false);
+    }
+  };
+
   return (
     <div className="cols cols-mat main-first">
       <div className="stack">
@@ -37,35 +68,58 @@ export function Materials() {
             <span className="itile"><Icon name="file" /></span>
             <h2>产品资料 <small>/ Product Materials</small></h2>
             <span className="grow" />
-            <button type="button" className="btn btn-outline-glow btn-sm" onClick={() => stub("补充资料")}><Icon name="upload" small />上传资料</button>
+            {ws.is_demo && (
+              <>
+                <input ref={fileRef} type="file" multiple hidden accept={ACCEPT} onChange={(e) => { const fs = [...(e.target.files ?? [])]; e.target.value = ""; void uploadExtra(fs); }} />
+                <button type="button" className="btn btn-outline-glow btn-sm" disabled={uploading} onClick={() => fileRef.current?.click()}>
+                  {uploading ? <span className="spin" /> : <Icon name="upload" small />}补充资料 (.pdf/.docx/...)
+                </button>
+              </>
+            )}
           </div>
           <div className="ph-body">
             <ul className="files">
-              {ws.sources.map((s) => (
-                <li key={s.filename} className="glass-inner file">
-                  <span className={`ftype ${ftype(s.filename)}`}>{ftype(s.filename) === "other" ? "FILE" : ftype(s.filename).toUpperCase()}</span>
-                  <div>
-                    <b>{s.filename}</b>
-                    <small>{s.status === "parsed" ? s.size : s.note}</small>
-                    {s.status !== "parsed" && <div className="acts"><button type="button" className="link" onClick={() => stub("粘贴补充")}>粘贴其中文字</button></div>}
-                  </div>
-                  <span className="st">{s.status === "parsed" ? <><Icon name="checkCircle" className="ok-ic" />已解析</> : <><Icon name="info" className="need-ic" />未使用</>}</span>
-                </li>
-              ))}
+              {ws.sources.map((s) => {
+                const expanded = openFile === s.filename;
+                return (
+                  <li key={s.filename} className="glass-inner file-item">
+                    <div className="file">
+                      <span className={`ftype ${ftype(s.filename)}`}>{ftype(s.filename) === "other" ? "FILE" : ftype(s.filename).toUpperCase()}</span>
+                      <div>
+                        <b>{s.filename}</b>
+                        <small>{s.status === "parsed" ? s.size : s.note}</small>
+                        {s.status === "parsed" && s.preview && (
+                          <div className="acts">
+                            <button type="button" className="link" onClick={() => setOpenFile(expanded ? null : s.filename)}>
+                              {expanded ? "收起原文" : "查看原文"}
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                      <span className="st">{s.status === "parsed" ? <><Icon name="checkCircle" className="ok-ic" />已解析</> : <><Icon name="info" className="need-ic" />未使用</>}</span>
+                    </div>
+                    {expanded && s.preview && <pre className="file-preview">{s.preview}</pre>}
+                  </li>
+                );
+              })}
             </ul>
-            <p className="muted" style={{ margin: "12px 2px 0", fontSize: 12.5 }}>{parsed} 份已解析{ws.sources.length > parsed ? ` · ${ws.sources.length - parsed} 份读不出文字，没有用作依据` : ""}</p>
+            <p className="muted" style={{ margin: "12px 2px 0", fontSize: 12.5 }}>
+              已支持 .txt · .md · .csv · .docx · .pdf ｜ {parsed} 份已解析{ws.sources.length > parsed ? ` · ${ws.sources.length - parsed} 份读不出文字，没有用作依据` : ""}
+            </p>
           </div>
         </section>
 
-        <section className="glass conflict-row">
-          <span className={`itile sm${openConflicts ? " amber" : " teal"}`}><Icon name="shield" /></span>
-          <b>冲突检查</b><span className="muted" style={{ fontSize: 13 }}>Conflict Check</span><span className="grow" />
-          {conflicts.length === 0 ? <span className="tag t-ok"><Icon name="check" />未发现明显冲突</span>
-            : openConflicts ? <span className="tag t-need"><Icon name="hand" />{openConflicts} 处资料互相矛盾，等你定</span>
-              : <span className="tag t-ok"><Icon name="check" />冲突都已拍板</span>}
-        </section>
+        {factsDone && (
+          <section className="glass conflict-row">
+            <span className={`itile sm${openConflicts ? " amber" : " teal"}`}><Icon name="shield" /></span>
+            <b>冲突检查</b><span className="muted" style={{ fontSize: 13 }}>Conflict Check</span><span className="grow" />
+            {conflicts.length === 0 ? <span className="tag t-ok"><Icon name="check" />未发现明显冲突</span>
+              : openConflicts ? <span className="tag t-need"><Icon name="hand" />{openConflicts} 处资料互相矛盾，等你定</span>
+                : <span className="tag t-ok"><Icon name="check" />冲突都已拍板</span>}
+          </section>
+        )}
 
-        {(ws.blocked.length > 0 || ws.gaps.length > 0) && (
+        {factsDone && (ws.blocked.length > 0 || ws.gaps.length > 0) && (
           <section className="glass">
             <div className="ph-head"><span className="itile sm teal"><Icon name="shield" /></span><h3>系统已替你处理 <small>/ Handled</small></h3></div>
             <div className="ph-body facts-list">
@@ -73,14 +127,14 @@ export function Materials() {
                 <div key={b.id} className="glass-inner fact">
                   <span className="itile sm red"><Icon name="x" /></span>
                   <div><b>已挡下“{b.short}”</b><div className="txt">资料里没有任何证明，英文页不会出现这类说法。</div><div className="src">{b.quote.file} · {b.quote.locator}</div></div>
-                  <button type="button" className="link" onClick={() => stub("补充证书")}>有证书？</button>
+                  {ws.is_demo && <button type="button" className="link" onClick={() => fileRef.current?.click()}>上传证书</button>}
                 </div>
               ))}
               {ws.gaps.map((g) => (
                 <div key={g.id} className="glass-inner fact">
                   <span className="itile sm amber"><Icon name="clock" /></span>
                   <div><b>不写：{g.title}</b><div className="txt">{g.why}</div></div>
-                  <button type="button" className="link" onClick={() => stub("上传实测报告")}>补资料</button>
+                  {ws.is_demo && <button type="button" className="link" onClick={() => fileRef.current?.click()}>补实测报告</button>}
                 </div>
               ))}
             </div>
@@ -88,7 +142,36 @@ export function Materials() {
         )}
       </div>
 
-      <div className="stack main"><FactPanel /></div>
+      <div className="stack main">
+        {!factsDone ? (
+          <section className="glass stage-gate">
+            <span className="itile lg"><Icon name="sparkle" /></span>
+            <h3>产品资料已就绪，开始提取产品事实档案</h3>
+            <p>
+              已为你预载 <b>{parsed} 份</b>基于中国真实智能硬件（RingConn Gen 2 / StarV Ring 2）公开规格改编的产品资料，涵盖 Markdown、CSV、TXT、Word 与 PDF 认证清单。可先在左侧点击「查看原文」审阅或补充上传你自己的文件，确认无误后点击下方按钮开始提取事实。
+            </p>
+            <div className="meta-row">
+              <span className="tag t-info">自动核对原文定位</span>
+              <span className="tag t-need">识别跨文档参数冲突</span>
+              <span className="tag t-risk">自动拦截无依据医疗/认证声称</span>
+            </div>
+            <button type="button" className="btn btn-primary btn-lg" disabled={extracting} onClick={runExtract}>
+              {extracting ? <><span className="spin" />正在提取产品事实…</> : <><Icon name="sparkle" />开始提取产品事实档案 <Icon name="right" /></>}
+            </button>
+          </section>
+        ) : (
+          <>
+            <FactPanel />
+            <div className="bottom-actions" style={{ marginTop: 0 }}>
+              <span className="muted" style={{ fontSize: 13 }}>可现在拍板冲突或直接进入下一步，未决定项会在后续审校中集中提示。</span>
+              <span className="grow" />
+              <button type="button" className="btn btn-lg btn-primary" onClick={() => goStep("insights")}>
+                下一步：知乎认知洞察 <Icon name="right" />
+              </button>
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }
@@ -128,7 +211,7 @@ function FactPanel() {
         {confirm && (
           <div>
             <div className={`group-h${confirm.value ? "" : " need"}`}><Icon name="checkCircle" small />资料写得明确的 {okFacts.length} 条{confirm.value ? " · 已确认" : ""}
-              <small>{confirm.value ? <UndoConfirm /> : "英文页已经用上，等你确认"}</small></div>
+              <small>{confirm.value ? <UndoConfirm /> : "英文页会直接引用，等你确认"}</small></div>
             <div className="facts-list">{okFacts.map((f) => <FactRow key={f.id} fact={f} confirmed={!!confirm.value} />)}</div>
             {!confirm.value && <div style={{ marginTop: 12, display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
               <ConfirmButton n={okFacts.length} /><span className="muted" style={{ fontSize: 12.5 }}>哪条不对就点“不对？”就地改，改完再确认</span></div>}

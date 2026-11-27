@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { api, downloadText } from "../api";
-import { SECTION_NAMES, SEVERITY, decisionTitle, isAutoFix } from "../copy";
+import { SECTION_NAMES, SEVERITY, decisionTitle, hasStage, isAutoFix } from "../copy";
 import { useWb } from "../context";
 import { BasisList, DecisionCard, Reasons } from "../Decision";
 import { Icon } from "../icons";
@@ -32,11 +32,52 @@ const GROUPS: [Group, string, string][] = [["need", "需要你决定", "need"], 
 const PILL: Record<Group, [string, string]> = { need: ["待决定", "t-need"], kept: ["已保留", "t-risk"], sys: ["已处理", "t-ok"], done: ["已决定", "t-ok"] };
 const ICO: Record<Group, [string, string]> = { need: ["alert", "need-ic"], kept: ["alert", "risk-ic"], sys: ["checkCircle", "ok-ic"], done: ["checkCircle", "ok-ic"] };
 
-export function Review({ onExport }: { onExport: () => void }) {
-  const { ws, reviewSel, setReviewSel, toast } = useWb();
-  const rows = reviewRows(ws);
+export function Review({ onExport }: { onExport: (tab?: "poster" | "landing" | "docs") => void }) {
+  const { ws, run, goStep, reviewSel, setReviewSel, toast } = useWb();
+  const [auditing, setAuditing] = useState(false);
+  const reviewed = hasStage(ws, "review");
+  const contentDone = hasStage(ws, "content") && ws.assets.length > 0;
+  const rows = reviewed ? reviewRows(ws) : [];
   const sel = rows.find((r) => r.key === reviewSel) ?? rows.find((r) => r.group === "need") ?? rows[0];
-  useEffect(() => { if (sel && sel.key !== reviewSel) setReviewSel(sel.key); }, [sel, reviewSel, setReviewSel]);
+  useEffect(() => { if (reviewed && sel && sel.key !== reviewSel) setReviewSel(sel.key); }, [reviewed, sel, reviewSel, setReviewSel]);
+
+  const triggerReview = async () => {
+    setAuditing(true);
+    try {
+      await run(() => api.runStage(ws.id, "review"));
+    } finally {
+      setAuditing(false);
+    }
+  };
+
+  if (!reviewed) {
+    return (
+      <section className="glass stage-gate">
+        <span className="itile lg teal"><Icon name="shield" /></span>
+        <h3>尚未执行发布前合规审校</h3>
+        <p>
+          {contentDone
+            ? "点击下方按钮后，系统将逐句检查英文内容（含你手动修改过的句子）：自动弱化无依据的续航与排名声称、将直译黑话改为工程表达、补全 5 ATM 防水边界，并汇总仍需你拍板的冲突与路线图事项。完成后可一键导出高清宣传海报（PNG/SVG）、独立站落地页（HTML）与社媒文案包。"
+            : "请先完成第 3 步「海外内容」生成，再执行发布前合规审校。"}
+        </p>
+        <div className="meta-row">
+          <span className="tag t-ok">保守自动修订 · 留痕可撤销</span>
+          <span className="tag t-risk">拦截 FDA / 医疗级声称</span>
+          <span className="tag t-info">解锁高清海报与落地页导出</span>
+        </div>
+        {contentDone ? (
+          <button type="button" className="btn btn-primary btn-lg" disabled={auditing} onClick={triggerReview}>
+            {auditing ? <><span className="spin" />正在逐句审校海外内容…</> : <><Icon name="shield" />执行发布前合规审校 <Icon name="right" /></>}
+          </button>
+        ) : (
+          <button type="button" className="btn btn-primary btn-lg" onClick={() => goStep(hasStage(ws, "insights") ? "content" : hasStage(ws, "facts") ? "insights" : "materials")}>
+            <Icon name="left" />先去完成上一步：{hasStage(ws, "insights") ? "生成海外内容" : hasStage(ws, "facts") ? "知乎认知洞察" : "提取产品事实"}
+          </button>
+        )}
+      </section>
+    );
+  }
+
   const count = (g: Group) => rows.filter((r) => r.group === g).length;
   const ordered = GROUPS.flatMap(([g]) => rows.filter((r) => r.group === g));
   const numbers: Record<string, number> = {};
@@ -141,11 +182,11 @@ export function Review({ onExport }: { onExport: () => void }) {
       <section className="glass deliver">
         <div className="lead" style={{ display: "flex", gap: 14, alignItems: "center" }}>
           <span className="itile lg"><Icon name="box" /></span>
-          <div><b>最终交付：导出海外内容</b><small>{ws.summary.ready ? "都确认好了，可以一键导出。" : "现在导出也可以，未决定的地方会写成 [待确认]。"}</small></div>
+          <div><b>最终交付：直接可用的宣传物料</b><small>{ws.summary.ready ? "都确认好了，可直接下载海报、落地页与文案包。" : "现在导出也可以，未决定的地方会写成 [待确认]。"}</small></div>
         </div>
-        <button type="button" className="dtile" onClick={onExport}><span className="itile teal"><Icon name="globe" /></span><b>导出海外内容</b><small>英文页 Markdown · 可直接贴进编辑器</small><Icon name="download" /></button>
-        <button type="button" className="dtile" onClick={downloadReport}><span className="itile"><Icon name="doc" /></span><b>审校报告</b><small>改了什么、为什么、你决定了什么</small><Icon name="download" /></button>
-        <button type="button" className="dtile" onClick={onExport}><span className="itile zhi">知</span><b>知乎知识回流草稿</b><small>中英口径表 · 技术拆解草稿 · 不自动发布</small><Icon name="right" /></button>
+        <button type="button" className="dtile" onClick={() => onExport("poster")}><span className="itile teal"><Icon name="sparkle" /></span><b>导出宣传海报</b><small>高清 PNG / 矢量 SVG · 3 种尺寸 × 3 套主题</small><Icon name="download" /></button>
+        <button type="button" className="dtile" onClick={() => onExport("landing")}><span className="itile"><Icon name="globe" /></span><b>独立站落地页 & 社媒包</b><small>单文件 HTML 落地页 · X / Reddit 首发帖</small><Icon name="right" /></button>
+        <button type="button" className="dtile" onClick={downloadReport}><span className="itile zhi">知</span><b>审校报告 & 口径表</b><small>留痕报告 · 也可点开看知乎回流草稿</small><Icon name="download" /></button>
       </section>
     </>
   );
@@ -156,7 +197,7 @@ const Sec = ({ icon, h, children, tone }: { icon: string; h: string; children: R
 );
 
 function Detail({ rowKey, num }: { rowKey: string; num?: number }) {
-  const { ws, run, goStep, setReviewSel, toast } = useWb();
+  const { ws, run, goStep, setReviewSel } = useWb();
   const [asking, setAsking] = useState(false);
   useEffect(() => {
     setAsking(false);
@@ -208,7 +249,7 @@ function Detail({ rowKey, num }: { rowKey: string; num?: number }) {
           <Sec icon="file" h="资料原文"><div className="ctx"><span className="loc">{b.quote.file} · {b.quote.locator}</span><mark>{b.quote.quote}</mark></div></Sec>
           <Sec icon="alert" h="为什么挡下" tone="red"><p>{b.why}</p></Sec>
           <Sec icon="layers" h="事实依据"><BasisList basis={b.basis} /></Sec>
-          <div className="detail-sec"><div className="actions"><button type="button" className="btn" onClick={() => toast("骨架阶段暂未开放补充资料。正式版补充证书后，系统会重新判断并更新英文页")}>有证书？补充资料</button></div></div>
+          <div className="detail-sec"><div className="actions"><button type="button" className="btn" onClick={() => goStep("materials")}>去「产品资料」补充证书</button></div></div>
         </div>
       </>
     );

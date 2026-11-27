@@ -49,21 +49,19 @@ export function App() {
 
   useEffect(() => { window.scrollTo(0, 0); }, [route.view, projectId]);
 
-  /** 顶部导航的 Demo：已有示例项目就直接打开，没有才创建（不重复建项目）。 */
+  /** 顶部导航的 Demo：每次新建一个只预载产品资料的示例项目，让评委从头逐步体验完整流程。 */
   const openDemo = useCallback(async () => {
     try {
-      const { projects } = await api.list();
-      const demo = projects.find((p) => p.is_demo);
-      if (demo) { go(`#/p/${demo.id}/materials`); return; }
       const { id } = await api.createDemo();
-      setRunNames(["PulseRing X1 示例资料包（5 份）"]);
-      go(`#/run/${id}`);
+      setWs(null);
+      setArrivalToast("已预载 PulseRing X1 产品资料包（5 份，含 PDF），后续步骤请按流程自行体验");
+      go(`#/p/${id}/materials`);
     } catch { go("#/"); }
   }, []);
 
   let view: React.ReactNode;
   if (route.view === "home") {
-    view = <Home onOpen={(id) => go(`#/p/${id}/materials`)} onRun={(id, names) => { setRunNames(names); go(`#/run/${id}`); }} />;
+    view = <Home onOpen={(id, msg) => { if (msg) setArrivalToast(msg); setWs(null); go(`#/p/${id}/materials`); }} onRun={(id, names) => { setRunNames(names); go(`#/run/${id}`); }} />;
   } else if (route.view === "run") {
     view = <Run id={route.id} names={runNames.length ? runNames : ["你的资料"]} onHome={() => go("#/")} onDemo={openDemo} onDone={onDone} />;
   } else if (loadError) {

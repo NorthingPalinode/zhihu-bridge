@@ -1,6 +1,6 @@
 import { useRef, useState, type ReactNode } from "react";
 import { api } from "../api";
-import { SECTION_NAMES, plainText } from "../copy";
+import { SECTION_NAMES, hasStage, plainText } from "../copy";
 import { useWb } from "../context";
 import { DecisionPop, FixPop } from "../Decision";
 import { Icon } from "../icons";
@@ -12,8 +12,53 @@ const MOD_EN: Record<string, string> = { headline: "Headline", features: "Core F
 
 export function Content() {
   const { ws, goStep, run } = useWb();
+  const [generating, setGenerating] = useState(false);
+  const contentDone = hasStage(ws, "content") && ws.assets.length > 0;
+  const reviewed = hasStage(ws, "review");
   const [activeMod, setActiveMod] = useState<string>(ws.assets[0]?.id ?? "headline");
   const [activeItem, setActiveItem] = useState<Item | null>(null);
+
+  const trigger = async () => {
+    setGenerating(true);
+    try {
+      await run(() => api.runStage(ws.id, "content"));
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  if (!contentDone) {
+    const insightsDone = hasStage(ws, "insights");
+    const ch = ws.settings_options.channel.find((o) => o[0] === ws.settings.channel)?.[1];
+    const aud = ws.settings_options.audience.find((o) => o[0] === ws.settings.audience)?.[1];
+    const tone = ws.settings_options.tone.find((o) => o[0] === ws.settings.tone)?.[1];
+    return (
+      <section className="glass stage-gate">
+        <span className="itile lg"><Icon name="globe" /></span>
+        <h3>尚未生成海外上市内容</h3>
+        <p>
+          {insightsDone
+            ? "将基于已提取的产品事实与启用的知乎本地化建议，生成面向美国市场的 5 个英文页面模块（主标题与宣传语、核心卖点、产品详细介绍、技术参数表、FAQ）。冲突参数与未上线功能将保留占位等你拍板。"
+            : "请先完成第 2 步「知乎认知洞察」，系统才能结合知乎本地化建议生成高质量英文上市内容。"}
+        </p>
+        <div className="meta-row">
+          <span className="tag t-info">渠道：{ch}</span>
+          <span className="tag t-info">受众：{aud}</span>
+          <span className="tag t-info">语气：{tone}</span>
+        </div>
+        {insightsDone ? (
+          <button type="button" className="btn btn-primary btn-lg" disabled={generating} onClick={trigger}>
+            {generating ? <><span className="spin" />正在撰写英文产品页…</> : <><Icon name="sparkle" />生成海外上市内容 <Icon name="right" /></>}
+          </button>
+        ) : (
+          <button type="button" className="btn btn-primary btn-lg" onClick={() => goStep(hasStage(ws, "facts") ? "insights" : "materials")}>
+            <Icon name="left" />先去完成上一步：{hasStage(ws, "facts") ? "知乎认知洞察" : "提取产品事实"}
+          </button>
+        )}
+      </section>
+    );
+  }
+
   const pickMod = (id: string, scroll = true) => {
     setActiveMod(id);
     setActiveItem(null);
@@ -22,11 +67,18 @@ export function Content() {
   const current = ws.assets.find((a) => a.id === activeMod) ?? ws.assets[0];
   return (
     <>
+      {!reviewed && (
+        <div className="state need" style={{ marginBottom: 16 }}>
+          <Icon name="alert" />
+          <span className="grow">当前为英文初稿，尚未执行第 4 步「发布前合规审校」。你可以先自由编辑、点开琥珀色占位拍板，再点击下方按钮进入发布前审校。</span>
+          <button type="button" className="btn btn-sm btn-primary" onClick={() => goStep("review")}>去执行审校</button>
+        </div>
+      )}
       <div className="cols cols-content">
         <nav className="glass mod-nav" aria-label="内容模块">
           <h3><span className="itile sm"><Icon name="layers" /></span>内容模块</h3>
           {ws.assets.map((a) => (
-            <button key={a.id} type="button" className={`mod-btn${a.id === activeMod ? " on" : ""}`} aria-current={a.id === activeMod ? "true" : undefined} onClick={() => pickMod(a.id)}>
+            <button key={a.id} type="button" className={`mod-btn${a.id === current.id ? " on" : ""}`} aria-current={a.id === current.id ? "true" : undefined} onClick={() => pickMod(a.id)}>
               <Icon name={MOD_ICON[a.id] ?? "doc"} />{a.title}
               <span className="badge">{a.need ? <span className="tag t-need">{a.need}</span> : <Icon name="chev" small />}</span>
             </button>
@@ -41,7 +93,7 @@ export function Content() {
           </div>
           <div className="legend"><span><i className="sw" />系统改过，点开可看原句、可撤销</span><span><i className="sw need" />等你决定，点开直接选</span></div>
           {ws.assets.map((a) => (
-            <Module key={a.id} asset={a} active={a.id === activeMod} activeItemId={activeItem?.id ?? null}
+            <Module key={a.id} asset={a} active={a.id === current.id} activeItemId={activeItem?.id ?? null} reviewed={reviewed}
               onFocus={() => setActiveMod(a.id)} onPick={(it) => { setActiveMod(a.id); setActiveItem(it); }} />
           ))}
         </section>
@@ -108,7 +160,7 @@ function LinksPanel({ asset, item }: { asset: Asset; item: Item | null }) {
   );
 }
 
-function Module({ asset, active, activeItemId, onFocus, onPick }: { asset: Asset; active: boolean; activeItemId: string | null; onFocus: () => void; onPick: (i: Item) => void }) {
+function Module({ asset, active, activeItemId, reviewed, onFocus, onPick }: { asset: Asset; active: boolean; activeItemId: string | null; reviewed: boolean; onFocus: () => void; onPick: (i: Item) => void }) {
   const { ws, busy, editing, setEditing, run, openPop, closePop, toast } = useWb();
   const refs = useRef<Record<string, HTMLElement | null>>({});
   const isEditing = editing === asset.id;
@@ -154,9 +206,9 @@ function Module({ asset, active, activeItemId, onFocus, onPick }: { asset: Asset
     <article className={`glass-inner module${active ? " active" : ""}${isEditing ? " editing" : ""}`} id={`m-${asset.id}`} onClickCapture={onFocus}>
       <div className="module-h">
         <h3>{asset.title.toUpperCase()} · {MOD_EN[asset.id] ?? ""}</h3>
-        <span className={`st ${isBusy ? "busy" : n ? "need" : "ok"}`}>
+        <span className={`st ${isBusy ? "busy" : n ? "need" : reviewed ? "ok" : ""}`}>
           {isBusy ? <><span className="spin" style={{ width: 12, height: 12, borderWidth: 1.5 }} />检查中…</>
-            : n ? <><Icon name="hand" />{n} 处等你决定</> : <><Icon name="checkCircle" />已检查</>}
+            : n ? <><Icon name="hand" />{n} 处等你决定</> : reviewed ? <><Icon name="checkCircle" />已检查</> : <>待审校初稿</>}
         </span>
         <span className="tools">
           {isEditing ? (
