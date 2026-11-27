@@ -66,17 +66,17 @@ try {
         contentType: "text/html; charset=utf-8",
         body: readFileSync(reference),
       });
-      await actual.route(base + "/", route);
-      await actual.goto(base + "/");
+      await actual.route(base + "/legacy.html", route);
+      await actual.goto(base + "/legacy.html");
       referenceStyle = await actual.locator("style").first().textContent();
       referenceHomeLayout = await actual.locator("#app").innerHTML();
       referenceHome = await capture(actual, "reference-home", size);
       await enterA(actual);
       referenceWorkLayout = await actual.locator("#app").innerHTML();
       referenceWork = await capture(actual, "reference-workbench", size);
-      await actual.unroute(base + "/", route);
+      await actual.unroute(base + "/legacy.html", route);
     }
-    await actual.goto(base + "/?demo=1");
+    await actual.goto(base + "/legacy.html?demo=1");
     assert.equal(await actual.locator("#heroChips .chip").count(), 3);
     assert.match(await actual.locator("h1").innerText(), /也让他们信得过/);
     if (referenceHome) {

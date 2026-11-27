@@ -34,6 +34,7 @@ from ..pipeline.deps import Deps, build_deps
 from ..pipeline.questions import DraftError, make_draft
 from ..pipeline.runs import InputError, execute_run, validate_request
 from ..pipeline.tests import TestRequestError, run_test
+from ..workbench.api import register_workbench
 from .zhihu_sessions import COOKIE, PersonalSession, ZhihuSessions
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
@@ -635,6 +636,9 @@ def create_app(settings: Optional[Settings] = None, deps: Optional[Deps] = None)
         except DraftError as exc:
             return _err(exc.status, str(exc))
         return result.model_dump()
+
+    # V1.4 四步工作台（ADR-002）。必须在 SPA 回退之前注册。
+    register_workbench(app, deps)
 
     dist: Path = deps.settings.web_dist
     if (dist / "index.html").exists():
